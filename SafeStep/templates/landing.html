@@ -899,118 +899,166 @@
     </section>
 
     <!-- Footer -->
-    <footer class="bg-dark text-white py-5" id="contact">
-        <div class="container">
-            <div class="row g-4">
-                <div class="col-lg-4">
-                    <div class="footer-brand">
-                        <h5 class="fw-bold mb-3">
-                            <i class="fas fa-shield-alt me-2"></i>SAFE-Step
-                        </h5>
-                        <p class="text-white-50 mb-4">
-                            Empowering safety through technology for the epilepsy community.
-                        </p>
-                        <div class="social-links">
-                            <a href="#" class="text-white-50 me-3" aria-label="Facebook">
-                                <i class="fab fa-facebook-f"></i>
-                            </a>
-                            <a href="#" class="text-white-50 me-3" aria-label="Twitter">
-                                <i class="fab fa-twitter"></i>
-                            </a>
-                            <a href="#" class="text-white-50 me-3" aria-label="LinkedIn">
-                                <i class="fab fa-linkedin-in"></i>
-                            </a>
-                            <a href="#" class="text-white-50" aria-label="Instagram">
-                                <i class="fab fa-instagram"></i>
-                            </a>
-                        </div>
+    <footer class="modern-footer" id="contact">
+        <!-- Newsletter Subscription Section -->
+        <div class="newsletter-section">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-lg-6">
+                        <h4 class="text-white fw-bold mb-2">Stay Updated with SAFE-Step</h4>
+                        <p class="text-white-50 mb-0">Get the latest updates on epilepsy safety technology and MINDS community news.</p>
                     </div>
-                </div>
-                
-                <div class="col-lg-2">
-                    <h6 class="fw-bold mb-3">Product</h6>
-                    <ul class="list-unstyled footer-links">
-                        <li><a href="#features" class="text-white-50">Features</a></li>
-                        <li><a href="#dashboard" class="text-white-50">Dashboard</a></li>
-                        <li><a href="#how-it-works" class="text-white-50">How It Works</a></li>
-                        <li><a href="#" class="text-white-50">Pricing</a></li>
-                        <li><a href="#" class="text-white-50">Mobile App</a></li>
-                    </ul>
-                </div>
-                
-                <div class="col-lg-2">
-                    <h6 class="fw-bold mb-3">Company</h6>
-                    <ul class="list-unstyled footer-links">
-                        <li><a href="#" class="text-white-50">About Us</a></li>
-                        <li><a href="#" class="text-white-50">Our Team</a></li>
-                        <li><a href="#" class="text-white-50">Careers</a></li>
-                        <li><a href="#" class="text-white-50">News</a></li>
-                        <li><a href="#" class="text-white-50">Partners</a></li>
-                    </ul>
-                </div>
-                
-                <div class="col-lg-2">
-                    <h6 class="fw-bold mb-3">Support</h6>
-                    <ul class="list-unstyled footer-links">
-                        <li><a href="#" class="text-white-50">Help Center</a></li>
-                        <li><a href="#" class="text-white-50">Documentation</a></li>
-                        <li><a href="#" class="text-white-50">API Reference</a></li>
-                        <li><a href="#" class="text-white-50">Training</a></li>
-                        <li><a href="#" class="text-white-50">Status</a></li>
-                    </ul>
-                </div>
-                
-                <div class="col-lg-2">
-                    <h6 class="fw-bold mb-3">Legal</h6>
-                    <ul class="list-unstyled footer-links">
-                        <li><a href="#" class="text-white-50">Privacy Policy</a></li>
-                        <li><a href="#" class="text-white-50">Terms of Service</a></li>
-                        <li><a href="#" class="text-white-50">Security</a></li>
-                        <li><a href="#" class="text-white-50">GDPR</a></li>
-                        <li><a href="#" class="text-white-50">Compliance</a></li>
-                    </ul>
+                    <div class="col-lg-6">
+                        <form class="newsletter-form d-flex gap-2 mt-3 mt-lg-0">
+                            <input type="email" class="form-control" placeholder="Enter your email address" required>
+                            <button type="submit" class="btn btn-light px-4">
+                                <i class="fas fa-paper-plane me-1"></i>Subscribe
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
-            
-            <hr class="my-4 border-secondary">
-            
-            <div class="row align-items-center">
-                <div class="col-lg-6">
-                    <div class="contact-info">
-                        <h6 class="fw-bold mb-3">Get in Touch</h6>
-                        <p class="text-white-50 mb-2">
-                            <i class="fas fa-envelope me-2"></i>
-                            <a href="mailto:hello@safestep.sg" class="text-white-50">hello@safestep.sg</a>
-                        </p>
-                        <p class="text-white-50 mb-2">
-                            <i class="fas fa-phone me-2"></i>
-                            <a href="tel:+6512345678" class="text-white-50">+65 1234 5678</a>
-                        </p>
-                        <p class="text-white-50 mb-0">
-                            <i class="fas fa-map-marker-alt me-2"></i>
-                            Singapore, SG
-                        </p>
+        </div>
+
+        <!-- Main Footer Content -->
+        <div class="footer-main">
+            <div class="container">
+                <div class="row g-4">
+                    <!-- Brand Section -->
+                    <div class="col-lg-4">
+                        <div class="footer-brand">
+                            <div class="brand-logo mb-4">
+                                <i class="fas fa-shield-alt me-2"></i>
+                                <span class="fw-bold fs-3">SAFE-Step</span>
+                            </div>
+                            <p class="text-white-50 mb-4 pe-3">
+                                Empowering safety through technology for the epilepsy community. 
+                                Specifically designed for MINDS Schools and Centres in Singapore.
+                            </p>
+                            
+                            <!-- Enhanced Social Links -->
+                            <div class="social-links">
+                                <a href="#" class="social-link" aria-label="Facebook" data-bs-toggle="tooltip" title="Follow us on Facebook">
+                                    <i class="fab fa-facebook-f"></i>
+                                </a>
+                                <a href="#" class="social-link" aria-label="Twitter" data-bs-toggle="tooltip" title="Follow us on Twitter">
+                                    <i class="fab fa-twitter"></i>
+                                </a>
+                                <a href="#" class="social-link" aria-label="LinkedIn" data-bs-toggle="tooltip" title="Connect on LinkedIn">
+                                    <i class="fab fa-linkedin-in"></i>
+                                </a>
+                                <a href="#" class="social-link" aria-label="Instagram" data-bs-toggle="tooltip" title="Follow us on Instagram">
+                                    <i class="fab fa-instagram"></i>
+                                </a>
+                                <a href="#" class="social-link" aria-label="YouTube" data-bs-toggle="tooltip" title="Watch our videos">
+                                    <i class="fab fa-youtube"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Links -->
+                    <div class="col-lg-2 col-md-6">
+                        <h6 class="footer-heading">Product</h6>
+                        <ul class="footer-links">
+                            <li><a href="#features"><i class="fas fa-star me-2"></i>Features</a></li>
+                            <li><a href="#dashboard"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
+                            <li><a href="#how-it-works"><i class="fas fa-cogs me-2"></i>How It Works</a></li>
+                            <li><a href="#"><i class="fas fa-tags me-2"></i>Pricing</a></li>
+                            <li><a href="#"><i class="fas fa-mobile-alt me-2"></i>Mobile App</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="col-lg-2 col-md-6">
+                        <h6 class="footer-heading">Company</h6>
+                        <ul class="footer-links">
+                            <li><a href="#"><i class="fas fa-info-circle me-2"></i>About Us</a></li>
+                            <li><a href="#"><i class="fas fa-users me-2"></i>Our Team</a></li>
+                            <li><a href="#"><i class="fas fa-briefcase me-2"></i>Careers</a></li>
+                            <li><a href="#"><i class="fas fa-newspaper me-2"></i>News</a></li>
+                            <li><a href="#"><i class="fas fa-handshake me-2"></i>Partners</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="col-lg-2 col-md-6">
+                        <h6 class="footer-heading">Support</h6>
+                        <ul class="footer-links">
+                            <li><a href="#"><i class="fas fa-question-circle me-2"></i>Help Center</a></li>
+                            <li><a href="#"><i class="fas fa-book me-2"></i>Documentation</a></li>
+                            <li><a href="#"><i class="fas fa-code me-2"></i>API Reference</a></li>
+                            <li><a href="#"><i class="fas fa-graduation-cap me-2"></i>Training</a></li>
+                            <li><a href="#"><i class="fas fa-heartbeat me-2"></i>Status</a></li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Contact & Legal Combined -->
+                    <div class="col-lg-2 col-md-6">
+                        <h6 class="footer-heading">Get in Touch</h6>
+                        <div class="contact-item">
+                            <i class="fas fa-envelope text-primary me-2"></i>
+                            <a href="mailto:hello@safestep.sg">hello@safestep.sg</a>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-phone text-success me-2"></i>
+                            <a href="tel:+6512345678">+65 1234 5678</a>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                            <span>Singapore, SG</span>
+                        </div>
+                        
+                        <!-- Quick Legal Links -->
+                        <div class="legal-quick mt-4">
+                            <h6 class="footer-heading small">Legal</h6>
+                            <ul class="footer-links small">
+                                <li><a href="#"><i class="fas fa-shield-alt me-1"></i>Privacy</a></li>
+                                <li><a href="#"><i class="fas fa-file-contract me-1"></i>Terms</a></li>
+                                <li><a href="#"><i class="fas fa-lock me-1"></i>Security</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer Bottom -->
+        <div class="footer-bottom">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-lg-6">
+                        <div class="footer-certifications">
+                            <div class="cert-badges">
+                                <span class="cert-badge cert-badge-success" data-bs-toggle="tooltip" title="Health Insurance Portability and Accountability Act Compliant">
+                                    <i class="fas fa-shield-alt me-1"></i>HIPAA Compliant
+                                </span>
+                                <span class="cert-badge cert-badge-info" data-bs-toggle="tooltip" title="International Organization for Standardization 27001">
+                                    <i class="fas fa-certificate me-1"></i>ISO 27001
+                                </span>
+                                <span class="cert-badge cert-badge-primary" data-bs-toggle="tooltip" title="Service Organization Control 2">
+                                    <i class="fas fa-check-circle me-1"></i>SOC 2
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6 text-lg-end">
+                        <div class="footer-copyright">
+                            <p class="mb-1">
+                                <strong>&copy; 2025 SAFE-Step</strong> | Built for <strong>Dell InnovateFest 2025</strong>
+                            </p>
+                            <p class="text-white-50 small mb-0">
+                                <i class="fas fa-heart text-danger me-1"></i>
+                                Empowering safety through technology for the epilepsy community
+                            </p>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="col-lg-6 text-lg-end">
-                    <div class="footer-certifications">
-                        <div class="cert-badges">
-                            <span class="badge bg-success me-2">
-                                <i class="fas fa-shield-alt me-1"></i>HIPAA Compliant
-                            </span>
-                            <span class="badge bg-info me-2">
-                                <i class="fas fa-lock me-1"></i>ISO 27001
-                            </span>
-                            <span class="badge bg-primary">
-                                <i class="fas fa-check-circle me-1"></i>SOC 2
-                            </span>
-                        </div>
-                        <p class="text-white-50 small mt-2 mb-0">
-                            &copy; 2025 SAFE-Step. Built for Dell InnovateFest 2025.<br>
-                            Empowering safety through technology.
-                        </p>
-                    </div>
+                <!-- Back to Top Button -->
+                <div class="back-to-top-container text-center mt-4">
+                    <button class="back-to-top-btn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" aria-label="Back to top">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -1019,6 +1067,83 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Newsletter subscription
+            const newsletterForm = document.querySelector('.newsletter-form');
+            if (newsletterForm) {
+                newsletterForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const email = this.querySelector('input[type="email"]').value;
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    const originalText = submitBtn.innerHTML;
+                    
+                    // Simulate subscription process
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Subscribing...';
+                    submitBtn.disabled = true;
+                    
+                    setTimeout(() => {
+                        submitBtn.innerHTML = '<i class="fas fa-check me-1"></i>Subscribed!';
+                        submitBtn.classList.remove('btn-light');
+                        submitBtn.classList.add('btn-success');
+                        
+                        setTimeout(() => {
+                            submitBtn.innerHTML = originalText;
+                            submitBtn.classList.remove('btn-success');
+                            submitBtn.classList.add('btn-light');
+                            submitBtn.disabled = false;
+                            this.reset();
+                        }, 2000);
+                    }, 1500);
+                });
+            }
+
+            // Enhanced social link interactions
+            document.querySelectorAll('.social-link').forEach(link => {
+                link.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-3px) scale(1.1)';
+                });
+                
+                link.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+
+            // Footer contact item hover effects
+            document.querySelectorAll('.contact-item').forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    const icon = this.querySelector('i');
+                    if (icon) {
+                        icon.style.transform = 'scale(1.2)';
+                    }
+                });
+                
+                item.addEventListener('mouseleave', function() {
+                    const icon = this.querySelector('i');
+                    if (icon) {
+                        icon.style.transform = 'scale(1)';
+                    }
+                });
+            });
+
+            // Back to top button functionality with smooth reveal
+            const backToTopBtn = document.querySelector('.back-to-top-btn');
+            if (backToTopBtn) {
+                window.addEventListener('scroll', function() {
+                    if (window.scrollY > 300) {
+                        backToTopBtn.style.opacity = '1';
+                        backToTopBtn.style.transform = 'scale(1)';
+                    } else {
+                        backToTopBtn.style.opacity = '0';
+                        backToTopBtn.style.transform = 'scale(0.8)';
+                    }
+                });
+            }
+
             // Navigation active state
             const navLinks = document.querySelectorAll('.nav-link[href^="#"]');
             const sections = document.querySelectorAll('section[id]');
@@ -1086,6 +1211,7 @@
             window.addEventListener('scroll', updateActiveNavLink);
             updateActiveNavLink();
         });
+    </script>
     </script>
 </body>
 </html>
