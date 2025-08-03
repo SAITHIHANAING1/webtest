@@ -1,0 +1,100 @@
+<footer class="bg-dark text-light mt-5">
+    <div class="container py-4">
+        <div class="row">
+            <div class="col-md-6">
+                <h5><i class="fas fa-shield-alt me-2"></i>Safe-Step</h5>
+                <p class="text-muted">Advanced seizure monitoring and prediction system for caregivers.</p>
+            </div>
+            <div class="col-md-3">
+                <h6>Quick Links</h6>
+                <ul class="list-unstyled">
+                    {% if current_user.role == 'caregiver' %}
+                        <li><a href="{{ url_for('seizure_monitoring') }}" class="text-muted text-decoration-none">Start Monitoring</a></li>
+                        <li><a href="{{ url_for('safety_zones') }}" class="text-muted text-decoration-none">Safety Zones</a></li>
+                        <li><a href="{{ url_for('training_modules') }}" class="text-muted text-decoration-none">Training</a></li>
+                    {% else %}
+                        <li><a href="{{ url_for('user_management') }}" class="text-muted text-decoration-none">User Management</a></li>
+                        <li><a href="{{ url_for('analytics') }}" class="text-muted text-decoration-none">Analytics</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+            <div class="col-md-3">
+                <h6>Support</h6>
+                <ul class="list-unstyled">
+                    <li><a href="{{ url_for('support_ticket') }}" class="text-muted text-decoration-none">Get Help</a></li>
+                    <li><a href="mailto:support@safestep.com" class="text-muted text-decoration-none">Email Support</a></li>
+                    <li><a href="tel:+1-800-SAFE-STEP" class="text-muted text-decoration-none">Emergency: (800) 723-3783</a></li>
+                </ul>
+            </div>
+        </div>
+        <hr class="my-4">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <p class="mb-0 text-muted">&copy; <span id="currentYear"></span> Safe-Step. All rights reserved.</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <div class="d-flex justify-content-end">
+                    <span class="badge bg-success me-2" id="connectionStatus">
+                        <i class="fas fa-wifi me-1"></i>Connected
+                    </span>
+                    <span class="text-muted small" id="lastSync">
+                        Last sync: <span id="syncTime"></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Emergency Alert Modal -->
+<div class="modal fade" id="emergencyModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-danger">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Emergency Alert
+                </h5>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-heartbeat text-danger" style="font-size: 3rem;"></i>
+                <h4 class="mt-3">Seizure Activity Detected</h4>
+                <p class="lead">Immediate attention required</p>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-danger btn-lg" onclick="callEmergency()">
+                        <i class="fas fa-phone me-2"></i>Call Emergency Services
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="acknowledgeAlert()">
+                        <i class="fas fa-check me-2"></i>I'm Handling This
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize footer date/time displays
+document.addEventListener('DOMContentLoaded', function() {
+    // Set current year
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+    
+    // Set current time for sync
+    updateSyncTime();
+    
+    // Update sync time every minute
+    setInterval(updateSyncTime, 60000);
+});
+
+function updateSyncTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+    });
+    const syncTimeElement = document.getElementById('syncTime');
+    if (syncTimeElement) {
+        syncTimeElement.textContent = timeString;
+    }
+}
+</script>

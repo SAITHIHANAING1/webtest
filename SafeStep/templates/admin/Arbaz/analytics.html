@@ -1,0 +1,750 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard - SAFE-Step Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Analytics Specific Styles */
+.admin-header {
+    background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 0 0 25px 25px;
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='m0 40l40-40h-40v40zm40 0v-40h-40l40 40z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.admin-title {
+    font-size: 2.5rem;
+    font-weight: 900;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    position: relative;
+    z-index: 1;
+}
+
+.analytics-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    height: 100%;
+}
+
+.analytics-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #fc466b 0%, #3f5efb 100%);
+    transform: scaleX(0);
+    transition: transform 0.4s ease;
+}
+
+.analytics-card:hover::before {
+    transform: scaleX(1);
+}
+
+.analytics-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+}
+
+.metric-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+}
+
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    transition: transform 0.3s ease;
+    transform: scaleX(0);
+}
+
+.metric-card:hover::before {
+    transform: scaleX(1);
+}
+
+.metric-users::before { background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%); }
+.metric-sessions::before { background: linear-gradient(90deg, #fc466b 0%, #3f5efb 100%); }
+.metric-alerts::before { background: linear-gradient(90deg, #fa709a 0%, #fee140 100%); }
+.metric-response::before { background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); }
+
+.metric-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.metric-icon-users { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+.metric-icon-sessions { background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%); }
+.metric-icon-alerts { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+.metric-icon-response { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+
+.metric-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+}
+
+.metric-label {
+    color: #718096;
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.metric-change {
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.metric-change.positive { color: #48bb78; }
+.metric-change.negative { color: #f56565; }
+
+.chart-container {
+    position: relative;
+    height: 350px;
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+}
+
+.time-filter {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.time-filter.active, .time-filter:hover {
+    background: #fc466b;
+    color: white;
+    border-color: #fc466b;
+}
+
+.insights-item {
+    padding: 1rem;
+    border-left: 4px solid transparent;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 1rem;
+    background: rgba(252, 70, 107, 0.02);
+    border-left-color: #fc466b;
+}
+
+.insights-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+}
+
+.heatmap {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    margin: 1rem 0;
+}
+
+.heatmap-cell {
+    aspect-ratio: 1;
+    border-radius: 3px;
+    background: #e2e8f0;
+    transition: background-color 0.3s ease;
+}
+
+.heatmap-cell.intensity-1 { background: rgba(252, 70, 107, 0.2); }
+.heatmap-cell.intensity-2 { background: rgba(252, 70, 107, 0.4); }
+.heatmap-cell.intensity-3 { background: rgba(252, 70, 107, 0.6); }
+.heatmap-cell.intensity-4 { background: rgba(252, 70, 107, 0.8); }
+.heatmap-cell.intensity-5 { background: #fc466b; }
+
+.alert-summary {
+    background: linear-gradient(135deg, rgba(252, 70, 107, 0.1) 0%, rgba(63, 94, 251, 0.1) 100%);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.alert-type {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.alert-type:last-child {
+    border-bottom: none;
+}
+
+.alert-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.alert-critical {
+    background: rgba(245, 101, 101, 0.1);
+    color: #f56565;
+}
+
+.alert-warning {
+    background: rgba(237, 137, 54, 0.1);
+    color: #ed8936;
+}
+
+.alert-info {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Admin Header -->
+<div class="admin-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="admin-title mb-2">
+                    <i class="fas fa-chart-bar me-3"></i>Analytics Dashboard
+                </h1>
+                <p class="mb-0" style="font-size: 1.1rem; opacity: 0.9; position: relative; z-index: 1;">
+                    Comprehensive insights and system performance metrics
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="d-flex gap-2 justify-content-md-end">
+                    <button class="btn btn-light" onclick="exportReport()">
+                        <i class="fas fa-download me-2"></i>Export
+                    </button>
+                    <button class="btn btn-outline-light" onclick="refreshData()">
+                        <i class="fas fa-sync-alt me-2"></i>Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- Key Metrics Row -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="metric-card metric-users">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <div class="metric-icon metric-icon-users">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="metric-number">2,486</div>
+                        <div class="metric-label">Active Users</div>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+12.5% vs last month</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="metric-card metric-sessions">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <div class="metric-icon metric-icon-sessions">
+                            <i class="fas fa-heartbeat"></i>
+                        </div>
+                        <div class="metric-number">15,247</div>
+                        <div class="metric-label">Monitoring Sessions</div>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+8.3% vs last month</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="metric-card metric-alerts">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <div class="metric-icon metric-icon-alerts">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="metric-number">847</div>
+                        <div class="metric-label">Alert Events</div>
+                        <div class="metric-change negative">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>-5.2% vs last month</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="metric-card metric-response">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <div class="metric-icon metric-icon-response">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="metric-number">2.3m</div>
+                        <div class="metric-label">Avg Response Time</div>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>-15% vs last month</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <!-- Usage Trends -->
+        <div class="col-lg-8 mb-4">
+            <div class="analytics-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="h5 mb-0">
+                        <i class="fas fa-chart-line me-2 text-primary"></i>System Usage Trends
+                    </h3>
+                    <div class="d-flex gap-2">
+                        <button class="time-filter active" data-period="7d">7 Days</button>
+                        <button class="time-filter" data-period="30d">30 Days</button>
+                        <button class="time-filter" data-period="90d">90 Days</button>
+                        <button class="time-filter" data-period="1y">1 Year</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="usageTrendsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Distribution -->
+        <div class="col-lg-4 mb-4">
+            <div class="analytics-card">
+                <h3 class="h5 mb-4">
+                    <i class="fas fa-exclamation-circle me-2 text-danger"></i>Alert Distribution
+                </h3>
+                <div class="chart-container">
+                    <canvas id="alertDistributionChart"></canvas>
+                </div>
+                <div class="mt-3">
+                    <div class="alert-type">
+                        <span>Seizure Detected</span>
+                        <span class="alert-badge alert-critical">342</span>
+                    </div>
+                    <div class="alert-type">
+                        <span>Zone Breach</span>
+                        <span class="alert-badge alert-warning">156</span>
+                    </div>
+                    <div class="alert-type">
+                        <span>Device Offline</span>
+                        <span class="alert-badge alert-info">89</span>
+                    </div>
+                    <div class="alert-type">
+                        <span>Low Battery</span>
+                        <span class="alert-badge alert-warning">67</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Analytics Row -->
+    <div class="row mb-4">
+        <!-- Geographic Heat Map -->
+        <div class="col-lg-6 mb-4">
+            <div class="analytics-card">
+                <h3 class="h5 mb-4">
+                    <i class="fas fa-map me-2 text-success"></i>Activity Heat Map
+                </h3>
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="small text-muted">Less Active</span>
+                    <span class="small text-muted">More Active</span>
+                </div>
+                <div class="heatmap" id="activityHeatmap">
+                    <!-- Heatmap cells will be generated by JavaScript -->
+                </div>
+                <div class="text-center mt-3">
+                    <small class="text-muted">Last 7 days activity pattern</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Performance -->
+        <div class="col-lg-6 mb-4">
+            <div class="analytics-card">
+                <h3 class="h5 mb-4">
+                    <i class="fas fa-server me-2 text-info"></i>System Performance
+                </h3>
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insights and Reports Row -->
+    <div class="row">
+        <!-- AI Insights -->
+        <div class="col-lg-8 mb-4">
+            <div class="analytics-card">
+                <h3 class="h5 mb-4">
+                    <i class="fas fa-lightbulb me-2 text-warning"></i>AI-Powered Insights
+                </h3>
+                
+                <div class="insights-item">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="insights-icon">
+                            <i class="fas fa-trend-up"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1">Seizure Activity Increased</h6>
+                            <p class="text-muted mb-1">There's been a 15% increase in seizure events between 2-4 PM across all users. Consider reviewing medication schedules.</p>
+                            <small class="text-muted">Confidence: 89% • Impact: High • Action Required</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="insights-item">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="insights-icon">
+                            <i class="fas fa-map-marked-alt"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1">Safety Zone Optimization</h6>
+                            <p class="text-muted mb-1">Several users frequently exit their safety zones at the same locations. Consider expanding zone boundaries at these hotspots.</p>
+                            <small class="text-muted">Confidence: 76% • Impact: Medium • Suggested Action</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="insights-item">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="insights-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1">Caregiver Response Time</h6>
+                            <p class="text-muted mb-1">Average response time has improved by 23% this month. The new training modules appear to be effective.</p>
+                            <small class="text-muted">Confidence: 94% • Impact: High • Positive Trend</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="insights-item">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="insights-icon">
+                            <i class="fas fa-battery-quarter"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1">Device Battery Patterns</h6>
+                            <p class="text-muted mb-1">Device batteries tend to drain faster during high-activity periods. Consider power-saving mode recommendations.</p>
+                            <small class="text-muted">Confidence: 82% • Impact: Low • Monitor</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="col-lg-4 mb-4">
+            <div class="analytics-card">
+                <h3 class="h5 mb-4">
+                    <i class="fas fa-tachometer-alt me-2"></i>Quick Statistics
+                </h3>
+                
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <span class="fw-medium">System Uptime</span>
+                    <span class="text-success fw-bold">99.8%</span>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <span class="fw-medium">Avg Session Duration</span>
+                    <span class="text-info fw-bold">4.2 hours</span>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <span class="fw-medium">False Positive Rate</span>
+                    <span class="text-warning fw-bold">2.1%</span>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <span class="fw-medium">User Satisfaction</span>
+                    <span class="text-success fw-bold">4.7/5</span>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <span class="fw-medium">Training Completion</span>
+                    <span class="text-info fw-bold">87%</span>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-medium">API Response Time</span>
+                    <span class="text-success fw-bold">145ms</span>
+                </div>
+            </div>
+
+            <!-- Alert Summary -->
+            <div class="analytics-card">
+                <h3 class="h5 mb-4">
+                    <i class="fas fa-bell me-2"></i>Recent Alerts
+                </h3>
+                
+                <div class="alert-summary">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-medium text-danger">Critical Alerts</span>
+                        <span class="badge bg-danger">3</span>
+                    </div>
+                    <small class="text-muted">2 seizure events, 1 system failure</small>
+                </div>
+                
+                <div class="alert-summary">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-medium text-warning">Warning Alerts</span>
+                        <span class="badge bg-warning">12</span>
+                    </div>
+                    <small class="text-muted">8 zone breaches, 4 low battery</small>
+                </div>
+                
+                <div class="alert-summary">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-medium text-info">Info Alerts</span>
+                        <span class="badge bg-info">28</span>
+                    </div>
+                    <small class="text-muted">System updates, user registrations</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Analytics Dashboard JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    generateHeatmap();
+    
+    // Time filter functionality
+    document.querySelectorAll('.time-filter').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.time-filter').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            updateCharts(this.dataset.period);
+        });
+    });
+});
+
+function initializeCharts() {
+    // Usage Trends Chart
+    const usageCtx = document.getElementById('usageTrendsChart').getContext('2d');
+    new Chart(usageCtx, {
+        type: 'line',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'Active Users',
+                data: [2100, 2300, 2400, 2200, 2600, 2400, 2100],
+                borderColor: '#fc466b',
+                backgroundColor: 'rgba(252, 70, 107, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }, {
+                label: 'Monitoring Sessions',
+                data: [1800, 2100, 2200, 1900, 2300, 2100, 1800],
+                borderColor: '#3f5efb',
+                backgroundColor: 'rgba(63, 94, 251, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Alert Distribution Chart
+    const alertCtx = document.getElementById('alertDistributionChart').getContext('2d');
+    new Chart(alertCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Seizure Detected', 'Zone Breach', 'Device Offline', 'Low Battery'],
+            datasets: [{
+                data: [342, 156, 89, 67],
+                backgroundColor: ['#f56565', '#ed8936', '#667eea', '#fbb040'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Performance Chart
+    const perfCtx = document.getElementById('performanceChart').getContext('2d');
+    new Chart(perfCtx, {
+        type: 'bar',
+        data: {
+            labels: ['CPU Usage', 'Memory', 'Network', 'Storage', 'Response Time'],
+            datasets: [{
+                label: 'Performance %',
+                data: [65, 78, 45, 82, 92],
+                backgroundColor: [
+                    'rgba(252, 70, 107, 0.8)',
+                    'rgba(63, 94, 251, 0.8)',
+                    'rgba(72, 187, 120, 0.8)',
+                    'rgba(237, 137, 54, 0.8)',
+                    'rgba(102, 126, 234, 0.8)'
+                ],
+                borderWidth: 0,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+}
+
+function generateHeatmap() {
+    const heatmapContainer = document.getElementById('activityHeatmap');
+    const days = 49; // 7x7 grid for week pattern
+    
+    for (let i = 0; i < days; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'heatmap-cell';
+        
+        // Random intensity for demo
+        const intensity = Math.floor(Math.random() * 6);
+        if (intensity > 0) {
+            cell.classList.add(`intensity-${intensity}`);
+        }
+        
+        heatmapContainer.appendChild(cell);
+    }
+}
+
+function updateCharts(period) {
+    showNotification(`Charts updated for ${period} period`, 'info');
+}
+
+function exportReport() {
+    showNotification('Analytics report exported successfully!', 'success');
+}
+
+function refreshData() {
+    showNotification('Data refreshed successfully!', 'success');
+}
+
+function showNotification(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

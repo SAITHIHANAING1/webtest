@@ -1,0 +1,644 @@
+{% extends "base.html" %}
+
+{% block title %}Safety Zones - SAFE-Step{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Safety Zones Specific Styles */
+.zones-header {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 0 0 25px 25px;
+    position: relative;
+    overflow: hidden;
+}
+
+.zones-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='m0 40l40-40h-40v40zm40 0v-40h-40l40 40z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.zones-title {
+    font-size: 2.5rem;
+    font-weight: 900;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    position: relative;
+    z-index: 1;
+}
+
+.zones-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    height: 100%;
+}
+
+.zones-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%);
+    transform: scaleX(0);
+    transition: transform 0.4s ease;
+}
+
+.zones-card:hover::before {
+    transform: scaleX(1);
+}
+
+.zones-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+}
+
+.zone-item {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.zone-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.zone-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    transition: transform 0.3s ease;
+    transform: scaleX(0);
+}
+
+.zone-item:hover::before {
+    transform: scaleX(1);
+}
+
+.zone-safe::before { background: linear-gradient(90deg, #48bb78 0%, #38ef7d 100%); }
+.zone-warning::before { background: linear-gradient(90deg, #ed8936 0%, #fbb040 100%); }
+.zone-restricted::before { background: linear-gradient(90deg, #f56565 0%, #fc466b 100%); }
+
+.zone-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.zone-safe .zone-icon { background: linear-gradient(135deg, #48bb78 0%, #38ef7d 100%); }
+.zone-warning .zone-icon { background: linear-gradient(135deg, #ed8936 0%, #fbb040 100%); }
+.zone-restricted .zone-icon { background: linear-gradient(135deg, #f56565 0%, #fc466b 100%); }
+
+.zone-status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-active {
+    background: rgba(72, 187, 120, 0.1);
+    color: #48bb78;
+}
+
+.status-inactive {
+    background: rgba(113, 128, 150, 0.1);
+    color: #718096;
+}
+
+.status-alert {
+    background: rgba(245, 101, 101, 0.1);
+    color: #f56565;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(245, 101, 101, 0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(245, 101, 101, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(245, 101, 101, 0); }
+}
+
+.zone-map {
+    height: 300px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #718096;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+}
+
+.action-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.btn-edit {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+}
+
+.btn-edit:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-toggle {
+    background: rgba(237, 137, 54, 0.1);
+    color: #ed8936;
+}
+
+.btn-toggle:hover {
+    background: #ed8936;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-delete {
+    background: rgba(245, 101, 101, 0.1);
+    color: #f56565;
+}
+
+.btn-delete:hover {
+    background: #f56565;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.quick-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+}
+
+.stat-number {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #11998e;
+}
+
+.stat-label {
+    color: #718096;
+    font-size: 0.9rem;
+}
+
+.zone-type-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-right: 0.5rem;
+}
+
+.type-safe {
+    background: rgba(72, 187, 120, 0.1);
+    color: #48bb78;
+}
+
+.type-warning {
+    background: rgba(237, 137, 54, 0.1);
+    color: #ed8936;
+}
+
+.type-restricted {
+    background: rgba(245, 101, 101, 0.1);
+    color: #f56565;
+}
+
+.current-location {
+    background: rgba(17, 153, 142, 0.1);
+    border: 2px solid rgba(17, 153, 142, 0.3);
+    border-radius: 15px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.location-indicator {
+    width: 12px;
+    height: 12px;
+    background: #11998e;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 0.5rem;
+    animation: blink 2s infinite;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Zones Header -->
+<div class="zones-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="zones-title mb-2">
+                    <i class="fas fa-map-marker-alt me-3"></i>Safety Zones
+                </h1>
+                <p class="mb-0" style="font-size: 1.1rem; opacity: 0.9; position: relative; z-index: 1;">
+                    Monitor and manage GPS safety boundaries
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{{ url_for('new_zone') }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-plus me-2"></i>Create New Zone
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- Current Location -->
+    <div class="current-location">
+        <div class="d-flex align-items-center">
+            <span class="location-indicator"></span>
+            <div class="flex-grow-1">
+                <h6 class="mb-1">
+                    <i class="fas fa-map-pin me-2"></i>Current Location
+                </h6>
+                <p class="mb-0 text-muted">MINDS Centre - Activity Room • Last updated: 2 minutes ago</p>
+            </div>
+            <div>
+                <span class="badge bg-success">Inside Safe Zone</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="quick-stats">
+        <div class="stat-item">
+            <div class="stat-number">{{ zones|length or 5 }}</div>
+            <div class="stat-label">Total Zones</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">{{ zones|selectattr("is_active")|list|length or 4 }}</div>
+            <div class="stat-label">Active Zones</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">12</div>
+            <div class="stat-label">Zone Entries Today</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">2</div>
+            <div class="stat-label">Alerts This Week</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Zone Map -->
+        <div class="col-lg-8">
+            <div class="zones-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="h5 mb-0">
+                        <i class="fas fa-map me-2"></i>Zone Overview Map
+                    </h3>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="centerMap()">
+                            <i class="fas fa-crosshairs me-1"></i>Center
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="refreshLocation()">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="zone-map">
+                    <div class="text-center">
+                        <i class="fas fa-map text-muted mb-2" style="font-size: 3rem;"></i>
+                        <p class="mb-0">Interactive map showing all safety zones</p>
+                        <small class="text-muted">Real-time location tracking with zone boundaries</small>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div class="d-flex gap-3">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-success rounded-circle me-2" style="width: 12px; height: 12px;"></div>
+                            <small>Safe Zones</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-warning rounded-circle me-2" style="width: 12px; height: 12px;"></div>
+                            <small>Warning Zones</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-danger rounded-circle me-2" style="width: 12px; height: 12px;"></div>
+                            <small>Restricted Zones</small>
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-user-circle me-1"></i>Current Position
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Zone List -->
+        <div class="col-lg-4">
+            <div class="zones-card">
+                <h3 class="h5 mb-4">
+                    <i class="fas fa-list me-2"></i>All Safety Zones
+                </h3>
+                
+                {% if zones %}
+                    {% for zone in zones %}
+                    <div class="zone-item zone-{{ zone.type }}">
+                        <div class="d-flex align-items-start">
+                            <div class="zone-icon me-3">
+                                <i class="fas fa-{{ 'shield-alt' if zone.type == 'safe' else 'exclamation-triangle' if zone.type == 'warning' else 'ban' }}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="fw-bold mb-1">{{ zone.name }}</h6>
+                                    <span class="zone-status status-{{ 'active' if zone.is_active else 'inactive' }}">
+                                        {{ 'Active' if zone.is_active else 'Inactive' }}
+                                    </span>
+                                </div>
+                                <span class="zone-type-badge type-{{ zone.type }}">{{ zone.type.title() }}</span>
+                                <p class="text-muted small mb-2">{{ zone.description }}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-expand-arrows-alt me-1"></i>{{ zone.radius or '50' }}m radius
+                                    </small>
+                                    <div class="d-flex gap-1">
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="editZone({{ zone.id }})">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleZone({{ zone.id }})">
+                                            <i class="fas fa-{{ 'pause' if zone.is_active else 'play' }}"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <!-- Sample Zones -->
+                    <div class="zone-item zone-safe">
+                        <div class="d-flex align-items-start">
+                            <div class="zone-icon me-3">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="fw-bold mb-1">MINDS Centre Main</h6>
+                                    <span class="zone-status status-active">Active</span>
+                                </div>
+                                <span class="zone-type-badge type-safe">Safe</span>
+                                <p class="text-muted small mb-2">Primary safe zone covering the main building and activity areas</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-expand-arrows-alt me-1"></i>100m radius
+                                    </small>
+                                    <div class="d-flex gap-1">
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="editZone(1)">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleZone(1)">
+                                            <i class="fas fa-pause"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="zone-item zone-safe">
+                        <div class="d-flex align-items-start">
+                            <div class="zone-icon me-3">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="fw-bold mb-1">Garden Area</h6>
+                                    <span class="zone-status status-active">Active</span>
+                                </div>
+                                <span class="zone-type-badge type-safe">Safe</span>
+                                <p class="text-muted small mb-2">Outdoor therapeutic garden space for supervised activities</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-expand-arrows-alt me-1"></i>75m radius
+                                    </small>
+                                    <div class="d-flex gap-1">
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="editZone(2)">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleZone(2)">
+                                            <i class="fas fa-pause"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="zone-item zone-warning">
+                        <div class="d-flex align-items-start">
+                            <div class="zone-icon me-3">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="fw-bold mb-1">Parking Area</h6>
+                                    <span class="zone-status status-active">Active</span>
+                                </div>
+                                <span class="zone-type-badge type-warning">Warning</span>
+                                <p class="text-muted small mb-2">Vehicle area requiring extra caution and supervision</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-expand-arrows-alt me-1"></i>30m radius
+                                    </small>
+                                    <div class="d-flex gap-1">
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="editZone(3)">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleZone(3)">
+                                            <i class="fas fa-pause"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="zone-item zone-restricted">
+                        <div class="d-flex align-items-start">
+                            <div class="zone-icon me-3">
+                                <i class="fas fa-ban"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="fw-bold mb-1">Main Road</h6>
+                                    <span class="zone-status status-alert">Alert</span>
+                                </div>
+                                <span class="zone-type-badge type-restricted">Restricted</span>
+                                <p class="text-muted small mb-2">High-traffic road - immediate alert if entered</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-expand-arrows-alt me-1"></i>20m radius
+                                    </small>
+                                    <div class="d-flex gap-1">
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="editZone(4)">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleZone(4)">
+                                            <i class="fas fa-pause"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="zone-item zone-safe">
+                        <div class="d-flex align-items-start">
+                            <div class="zone-icon me-3">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="fw-bold mb-1">Cafeteria</h6>
+                                    <span class="zone-status status-inactive">Inactive</span>
+                                </div>
+                                <span class="zone-type-badge type-safe">Safe</span>
+                                <p class="text-muted small mb-2">Dining area for meal times and social activities</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-expand-arrows-alt me-1"></i>40m radius
+                                    </small>
+                                    <div class="d-flex gap-1">
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="editZone(5)">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleZone(5)">
+                                            <i class="fas fa-play"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Safety Zones JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize map would go here
+    console.log('Safety zones loaded');
+    updateLocationPeriodically();
+});
+
+function editZone(zoneId) {
+    showNotification(`Edit zone ${zoneId} functionality would be implemented here`, 'info');
+}
+
+function toggleZone(zoneId) {
+    showNotification(`Zone ${zoneId} status toggled!`, 'success');
+}
+
+function centerMap() {
+    showNotification('Map centered on current location', 'info');
+}
+
+function refreshLocation() {
+    showNotification('Location updated successfully!', 'success');
+    
+    // Simulate location update
+    const locationElement = document.querySelector('.current-location p');
+    if (locationElement) {
+        locationElement.innerHTML = 'MINDS Centre - Activity Room • Last updated: Just now';
+    }
+}
+
+function updateLocationPeriodically() {
+    setInterval(() => {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString();
+        const locationElement = document.querySelector('.current-location p');
+        if (locationElement) {
+            locationElement.innerHTML = `MINDS Centre - Activity Room • Last updated: ${timeString}`;
+        }
+    }, 60000); // Update every minute
+}
+
+function showNotification(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,736 @@
+{% extends "base.html" %}
+
+{% block title %}Support Tickets - SAFE-Step Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Ticket Management Specific Styles */
+.admin-header {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 0 0 25px 25px;
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='m0 40l40-40h-40v40zm40 0v-40h-40l40 40z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.admin-title {
+    font-size: 2.5rem;
+    font-weight: 900;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    position: relative;
+    z-index: 1;
+}
+
+.ticket-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+    border-left: 4px solid transparent;
+}
+
+.ticket-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.ticket-open {
+    border-left-color: #f56565;
+    background: linear-gradient(135deg, rgba(245, 101, 101, 0.02) 0%, white 100%);
+}
+
+.ticket-in-progress {
+    border-left-color: #ed8936;
+    background: linear-gradient(135deg, rgba(237, 137, 54, 0.02) 0%, white 100%);
+}
+
+.ticket-resolved {
+    border-left-color: #48bb78;
+    background: linear-gradient(135deg, rgba(72, 187, 120, 0.02) 0%, white 100%);
+}
+
+.ticket-closed {
+    border-left-color: #718096;
+    background: linear-gradient(135deg, rgba(113, 128, 150, 0.02) 0%, white 100%);
+}
+
+.priority-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.priority-low {
+    background: rgba(72, 187, 120, 0.1);
+    color: #48bb78;
+}
+
+.priority-medium {
+    background: rgba(237, 137, 54, 0.1);
+    color: #ed8936;
+}
+
+.priority-high {
+    background: rgba(245, 101, 101, 0.1);
+    color: #f56565;
+}
+
+.priority-urgent {
+    background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+    color: white;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(252, 70, 107, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(252, 70, 107, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(252, 70, 107, 0); }
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-open {
+    background: rgba(245, 101, 101, 0.1);
+    color: #f56565;
+}
+
+.status-in-progress {
+    background: rgba(237, 137, 54, 0.1);
+    color: #ed8936;
+}
+
+.status-resolved {
+    background: rgba(72, 187, 120, 0.1);
+    color: #48bb78;
+}
+
+.status-closed {
+    background: rgba(113, 128, 150, 0.1);
+    color: #718096;
+}
+
+.management-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.management-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #fa709a 0%, #fee140 100%);
+    transform: scaleX(0);
+    transition: transform 0.4s ease;
+}
+
+.management-card:hover::before {
+    transform: scaleX(1);
+}
+
+.management-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+}
+
+.filter-btn {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.filter-btn.active, .filter-btn:hover {
+    background: #fa709a;
+    color: white;
+    border-color: #fa709a;
+}
+
+.search-bar {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 15px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.search-bar:focus {
+    border-color: #fa709a;
+    box-shadow: 0 0 0 3px rgba(250, 112, 154, 0.1);
+}
+
+.ticket-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #fa709a;
+}
+
+.stat-label {
+    color: #718096;
+    font-size: 0.9rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.btn-assign {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+}
+
+.btn-assign:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-resolve {
+    background: rgba(72, 187, 120, 0.1);
+    color: #48bb78;
+}
+
+.btn-resolve:hover {
+    background: #48bb78;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-close-ticket {
+    background: rgba(113, 128, 150, 0.1);
+    color: #718096;
+}
+
+.btn-close-ticket:hover {
+    background: #718096;
+    color: white;
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Admin Header -->
+<div class="admin-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="admin-title mb-2">
+                    <i class="fas fa-ticket-alt me-3"></i>Support Tickets
+                </h1>
+                <p class="mb-0" style="font-size: 1.1rem; opacity: 0.9; position: relative; z-index: 1;">
+                    Manage and resolve user support requests
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <button class="btn btn-light btn-lg">
+                    <i class="fas fa-download me-2"></i>Export Report
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- Statistics Row -->
+    <div class="management-card">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number">{{ tickets|selectattr("status", "equalto", "open")|list|length or 7 }}</div>
+                    <div class="stat-label">Open Tickets</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number">{{ tickets|selectattr("status", "equalto", "in_progress")|list|length or 12 }}</div>
+                    <div class="stat-label">In Progress</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number">{{ tickets|selectattr("status", "equalto", "resolved")|list|length or 45 }}</div>
+                    <div class="stat-label">Resolved Today</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number">{{ tickets|length or 64 }}</div>
+                    <div class="stat-label">Total Tickets</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="management-card">
+        <div class="row align-items-center mb-4">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input type="text" class="form-control search-bar border-start-0" placeholder="Search tickets by subject, user, or ID..." id="ticketSearch">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex flex-wrap justify-content-md-end justify-content-start">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="open">Open</button>
+                    <button class="filter-btn" data-filter="in_progress">In Progress</button>
+                    <button class="filter-btn" data-filter="resolved">Resolved</button>
+                    <button class="filter-btn" data-filter="closed">Closed</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tickets List -->
+        <div id="ticketsList">
+            {% if tickets %}
+                {% for ticket in tickets %}
+                <div class="ticket-card ticket-{{ ticket.status }}" data-status="{{ ticket.status }}" data-priority="{{ ticket.priority }}">
+                    <div class="ticket-meta">
+                        <div class="user-avatar">
+                            {{ ticket.user.first_name[0] }}{{ ticket.user.last_name[0] }}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1 fw-bold">{{ ticket.subject }}</h6>
+                                    <p class="mb-0 text-muted small">
+                                        <i class="fas fa-user me-1"></i>{{ ticket.user.first_name }} {{ ticket.user.last_name }}
+                                        <span class="mx-2">•</span>
+                                        <i class="fas fa-calendar me-1"></i>{{ ticket.created_at.strftime('%Y-%m-%d %H:%M') if ticket.created_at else 'N/A' }}
+                                    </p>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <span class="priority-badge priority-{{ ticket.priority }}">
+                                        {{ ticket.priority.title() }}
+                                    </span>
+                                    <span class="status-badge status-{{ ticket.status }}">
+                                        {{ ticket.status.replace('_', ' ').title() }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="ticket-content mb-3">
+                        <p class="text-muted">{{ ticket.description[:200] }}{{ '...' if ticket.description|length > 200 else '' }}</p>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="action-buttons">
+                            {% if ticket.status == 'open' %}
+                                <button class="action-btn btn-assign" onclick="assignTicket({{ ticket.id }})">
+                                    <i class="fas fa-user-plus me-1"></i>Assign
+                                </button>
+                            {% endif %}
+                            {% if ticket.status in ['open', 'in_progress'] %}
+                                <button class="action-btn btn-resolve" onclick="resolveTicket({{ ticket.id }})">
+                                    <i class="fas fa-check me-1"></i>Resolve
+                                </button>
+                            {% endif %}
+                            {% if ticket.status != 'closed' %}
+                                <button class="action-btn btn-close-ticket" onclick="closeTicket({{ ticket.id }})">
+                                    <i class="fas fa-times me-1"></i>Close
+                                </button>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="viewTicket({{ ticket.id }})">
+                                <i class="fas fa-eye me-1"></i>View Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <!-- Sample Tickets -->
+                <div class="ticket-card ticket-open" data-status="open" data-priority="urgent">
+                    <div class="ticket-meta">
+                        <div class="user-avatar">SC</div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1 fw-bold">Emergency Alert Not Working</h6>
+                                    <p class="mb-0 text-muted small">
+                                        <i class="fas fa-user me-1"></i>Sarah Chen
+                                        <span class="mx-2">•</span>
+                                        <i class="fas fa-calendar me-1"></i>2024-01-15 14:30
+                                    </p>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <span class="priority-badge priority-urgent">Urgent</span>
+                                    <span class="status-badge status-open">Open</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="ticket-content mb-3">
+                        <p class="text-muted">The emergency alert system is not triggering notifications when a seizure is detected. This is a critical safety issue that needs immediate attention.</p>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="action-buttons">
+                            <button class="action-btn btn-assign" onclick="assignTicket(1)">
+                                <i class="fas fa-user-plus me-1"></i>Assign
+                            </button>
+                            <button class="action-btn btn-resolve" onclick="resolveTicket(1)">
+                                <i class="fas fa-check me-1"></i>Resolve
+                            </button>
+                            <button class="action-btn btn-close-ticket" onclick="closeTicket(1)">
+                                <i class="fas fa-times me-1"></i>Close
+                            </button>
+                        </div>
+                        <div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="viewTicket(1)">
+                                <i class="fas fa-eye me-1"></i>View Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ticket-card ticket-in-progress" data-status="in_progress" data-priority="high">
+                    <div class="ticket-meta">
+                        <div class="user-avatar">ML</div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1 fw-bold">GPS Tracking Inaccurate</h6>
+                                    <p class="mb-0 text-muted small">
+                                        <i class="fas fa-user me-1"></i>Michael Lim
+                                        <span class="mx-2">•</span>
+                                        <i class="fas fa-calendar me-1"></i>2024-01-15 10:15
+                                    </p>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <span class="priority-badge priority-high">High</span>
+                                    <span class="status-badge status-in-progress">In Progress</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="ticket-content mb-3">
+                        <p class="text-muted">The GPS location shown in the safety zones is not accurate. It's showing the patient in a different location than where they actually are.</p>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="action-buttons">
+                            <button class="action-btn btn-resolve" onclick="resolveTicket(2)">
+                                <i class="fas fa-check me-1"></i>Resolve
+                            </button>
+                            <button class="action-btn btn-close-ticket" onclick="closeTicket(2)">
+                                <i class="fas fa-times me-1"></i>Close
+                            </button>
+                        </div>
+                        <div>
+                            <small class="text-muted me-2">Assigned to: Tech Team</small>
+                            <button class="btn btn-outline-primary btn-sm" onclick="viewTicket(2)">
+                                <i class="fas fa-eye me-1"></i>View Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ticket-card ticket-resolved" data-status="resolved" data-priority="medium">
+                    <div class="ticket-meta">
+                        <div class="user-avatar">DT</div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1 fw-bold">Password Reset Request</h6>
+                                    <p class="mb-0 text-muted small">
+                                        <i class="fas fa-user me-1"></i>David Tan
+                                        <span class="mx-2">•</span>
+                                        <i class="fas fa-calendar me-1"></i>2024-01-15 09:00
+                                    </p>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <span class="priority-badge priority-medium">Medium</span>
+                                    <span class="status-badge status-resolved">Resolved</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="ticket-content mb-3">
+                        <p class="text-muted">Unable to access account. Need password reset for MINDS ID: david.tan</p>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="action-buttons">
+                            <button class="action-btn btn-close-ticket" onclick="closeTicket(3)">
+                                <i class="fas fa-times me-1"></i>Close
+                            </button>
+                        </div>
+                        <div>
+                            <small class="text-success me-2">
+                                <i class="fas fa-check-circle me-1"></i>Resolved by Admin
+                            </small>
+                            <button class="btn btn-outline-primary btn-sm" onclick="viewTicket(3)">
+                                <i class="fas fa-eye me-1"></i>View Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ticket-card ticket-closed" data-status="closed" data-priority="low">
+                    <div class="ticket-meta">
+                        <div class="user-avatar">AL</div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1 fw-bold">Feature Request: Dark Mode</h6>
+                                    <p class="mb-0 text-muted small">
+                                        <i class="fas fa-user me-1"></i>Alice Loh
+                                        <span class="mx-2">•</span>
+                                        <i class="fas fa-calendar me-1"></i>2024-01-14 16:45
+                                    </p>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <span class="priority-badge priority-low">Low</span>
+                                    <span class="status-badge status-closed">Closed</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="ticket-content mb-3">
+                        <p class="text-muted">Would be great to have a dark mode option for the interface, especially for night shifts.</p>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted">
+                                <i class="fas fa-archive me-1"></i>Archived - Feature request logged for future consideration
+                            </small>
+                        </div>
+                        <div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="viewTicket(4)">
+                                <i class="fas fa-eye me-1"></i>View Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Ticket Detail Modal -->
+<div class="modal fade" id="ticketDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-ticket-alt me-2"></i>Ticket Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="ticketDetailContent">
+                <!-- Ticket details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Update Ticket</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Support Ticket Management JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // Search functionality
+    document.getElementById('ticketSearch').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const ticketCards = document.querySelectorAll('.ticket-card');
+        
+        ticketCards.forEach(card => {
+            const text = card.textContent.toLowerCase();
+            if (text.includes(searchTerm)) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+    
+    // Filter functionality
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const filter = this.dataset.filter;
+            const ticketCards = document.querySelectorAll('.ticket-card');
+            
+            ticketCards.forEach(card => {
+                if (filter === 'all') {
+                    card.style.display = 'block';
+                } else {
+                    if (card.dataset.status === filter) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                }
+            });
+        });
+    });
+});
+
+function assignTicket(ticketId) {
+    showNotification('Ticket assigned to support team!', 'success');
+}
+
+function resolveTicket(ticketId) {
+    showNotification('Ticket marked as resolved!', 'success');
+}
+
+function closeTicket(ticketId) {
+    if (confirm('Are you sure you want to close this ticket?')) {
+        showNotification('Ticket closed successfully!', 'success');
+    }
+}
+
+function viewTicket(ticketId) {
+    // Load ticket details
+    document.getElementById('ticketDetailContent').innerHTML = `
+        <div class="row">
+            <div class="col-md-8">
+                <h6>Emergency Alert Not Working</h6>
+                <p class="text-muted">The emergency alert system is not triggering notifications when a seizure is detected. This is a critical safety issue that needs immediate attention.</p>
+                
+                <h6>Additional Details:</h6>
+                <ul>
+                    <li>User has tried restarting the app</li>
+                    <li>Issue persists across multiple devices</li>
+                    <li>Last working: 3 days ago</li>
+                </ul>
+                
+                <h6>Conversation History:</h6>
+                <div class="border rounded p-2 mb-2">
+                    <small class="text-muted">Sarah Chen - 2 hours ago</small>
+                    <p class="mb-0">This is really urgent, please help!</p>
+                </div>
+                <div class="border rounded p-2 mb-2">
+                    <small class="text-muted">Admin - 1 hour ago</small>
+                    <p class="mb-0">We're looking into this issue. Our technical team has been notified.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h6>Ticket Information</h6>
+                        <p><strong>ID:</strong> #${ticketId}</p>
+                        <p><strong>Status:</strong> <span class="badge bg-danger">Open</span></p>
+                        <p><strong>Priority:</strong> <span class="badge bg-warning">Urgent</span></p>
+                        <p><strong>Created:</strong> 2024-01-15 14:30</p>
+                        <p><strong>User:</strong> Sarah Chen</p>
+                        <p><strong>Category:</strong> Technical Issue</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    new bootstrap.Modal(document.getElementById('ticketDetailModal')).show();
+}
+
+function showNotification(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

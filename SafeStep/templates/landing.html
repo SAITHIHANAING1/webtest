@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAFE-Step - Epilepsy Safety for MINDS</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <style>
+        /* Navigation */
+        .navbar-dark {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand, .nav-link, .dropdown-item {
+            color: #2c3e50 !important;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-link:hover, .nav-link.active, .dropdown-item:hover {
+            color: #6f42c1 !important;
+            font-weight: 600;
+        }
+        
+        .dropdown-item:hover {
+            background: rgba(111, 66, 193, 0.1);
+        }
+        
+        /* Animations */
+        .pulse-button {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        /* Cards */
+        .how-it-works-card, .feature-card, .testimonial-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.1);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        
+        .how-it-works-card:hover, .feature-card:hover, .testimonial-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.2);
+        }
+        
+        .step-number {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .step-icon {
+            font-size: 3rem;
+            color: #06beb6;
+            margin: 2rem 0 1rem;
+        }
+
+        .fw-bold.mb-3 {
+            color: #000;
+        }
+        
+        /* Dashboard Mockups */
+        .dashboard-mockup {
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            filter: drop-shadow(0 10px 25px rgba(0,0,0,0.1));
+        }
+        
+        .phone-mockup {
+            width: 300px;
+            max-width: 300px;
+            background: #000;
+            border-radius: 30px;
+            padding: 20px;
+            margin: 0 auto;
+        }
+        
+        .phone-screen {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 15px;
+            min-height: 500px;
+            height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .mockup-map {
+            background: linear-gradient(45deg, #e3f2fd, #bbdefb);
+            height: 280px;
+            border-radius: 10px;
+            position: relative;
+            margin: 1rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+        }
+        
+        .safe-zone {
+            width: 80px;
+            height: 80px;
+            border: 3px solid #4caf50;
+            border-radius: 50%;
+            background: rgba(76, 175, 80, 0.2);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .location-dot {
+            width: 12px;
+            height: 12px;
+            background: #f44336;
+            border-radius: 50%;
+            animation: bounce 2s infinite;
+            position: absolute;
+            top: 50%;
+            left: 60%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .mockup-status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .mockup-alert {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        
+        .mockup-bottom {
+            display: flex;
+            gap: 10px;
+            justify-content: space-around;
+            margin-top: 15px;
+        }
+        
+        .mockup-bottom .btn {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 12px;
+            border-radius: 15px;
+        }
+        
+        .desktop-mockup {
+            background: #333;
+            border-radius: 10px;
+            padding: 5px;
+        }
+        
+        .mockup-browser {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .browser-bar {
+            background: #f5f5f5;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            color: white;
+        }
+        
+        .training-mockup {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .module-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .module-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+        
+        /* Carousel */
+        .carousel-control-prev, .carousel-control-next {
+            width: 40px;
+            height: 40px;
+            background: rgba(111, 66, 193, 0.8);
+            border-radius: 50%;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .carousel-control-prev {
+            left: 15px;
+        }
+        
+        .carousel-control-next {
+            right: 15px;
+        }
+        
+        .carousel-control-prev:hover, .carousel-control-next:hover {
+            opacity: 1;
+            background: rgba(111, 66, 193, 1);
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .carousel-control-prev i, .carousel-control-next i {
+            font-size: 18px;
+            color: white;
+        }
+        
+        .carousel-item {
+            min-height: 500px;
+        }
+        
+        .carousel-item .row {
+            min-height: 500px;
+            align-items: center;
+        }
+        
+        /* Stats Section */
+        .stats .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .stats .stat-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        /* Testimonials */
+        .testimonial-stars {
+            color: #ffc107;
+            margin-bottom: 1rem;
+        }
+        
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .author-photo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        /* Footer */
+        .footer-links a {
+            transition: color 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            color: #6f42c1 !important;
+        }
+        
+        .social-links a {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            transition: all 0.3s ease;
+        }
+        
+        .social-links a:hover {
+            background: #6f42c1;
+            color: white !important;
+            transform: translateY(-3px);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .carousel-item {
+                min-height: 600px;
+            }
+        }
+        
+        /* Accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg fixed-top navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#" aria-label="SAFE-Step Home">
+                <i class="fas fa-shield-alt me-2"></i>
+                <span class="fw-bold">SAFE-Step</span>
+                <small class="d-none d-md-inline ms-2">| Epilepsy Safety</small>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="navbar-nav ms-auto d-flex flex-row flex-nowrap align-items-center">
+                    <a class="nav-link d-flex align-items-center px-2" href="#how-it-works">
+                        <i class="fas fa-play-circle me-1"></i>How It Works
+                    </a>
+                    <a class="nav-link d-flex align-items-center px-2" href="#features">
+                        <i class="fas fa-star me-1"></i>Features
+                    </a>
+                    <a class="nav-link d-flex align-items-center px-2" href="#dashboard">
+                        <i class="fas fa-desktop me-1"></i>Dashboard
+                    </a>
+                    <a class="nav-link d-flex align-items-center px-2" href="#testimonials">
+                        <i class="fas fa-heart me-1"></i>Reviews
+                    </a>
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center px-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user me-1"></i>Account
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item d-flex align-items-center" href="{{ url_for('login') }}">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login
+                            </a></li>
+                            <li><a class="dropdown-item d-flex align-items-center" href="{{ url_for('signup') }}">
+                                <i class="fas fa-user-plus me-2"></i>Sign Up
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8 mx-auto text-center">
+                    <div class="hero-content">
+                        <h1 class="hero-title">SAFE-Step</h1>
+                        <p class="hero-subtitle">
+                            Empowering safety and support for Persons with Intellectual Disabilities (PWIDs) 
+                            with epilepsy through innovative technology and real-time monitoring.
+                        </p>
+                        <div class="d-flex gap-3 flex-wrap justify-content-center">
+                            <a href="{{ url_for('signup') }}" class="btn btn-light btn-lg pulse-button" aria-label="Sign up for SAFE-Step">
+                                <i class="fas fa-rocket me-2"></i>Get Started
+                            </a>
+                            <a href="#how-it-works" class="btn btn-outline-light btn-lg" aria-label="Learn how SAFE-Step works">
+                                <i class="fas fa-play-circle me-2"></i>See How It Works
+                            </a>
+                        </div>
+                        <div class="mt-4">
+                            <small class="text-light opacity-75">
+                                <i class="fas fa-check-circle me-1"></i>No setup fees 
+                                <span class="mx-2">•</span>
+                                <i class="fas fa-shield-alt me-1"></i>HIPAA Compliant
+                                <span class="mx-2">•</span>
+                                <i class="fas fa-headset me-1"></i>24/7 Support
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="py-5" id="how-it-works" style="background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold text-dark">How SAFE-Step Works</h2>
+                <p class="lead text-muted">Simple setup, powerful protection in 4 easy steps</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-lg-3 col-md-6">
+                    <div class="how-it-works-card text-center">
+                        <div class="step-number">1</div>
+                        <div class="step-icon">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <h5 class="fw-bold mb-3">Enroll PWID</h5>
+                        <p class="text-muted">Quick profile setup with medical information and emergency contacts</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="how-it-works-card text-center">
+                        <div class="step-number">2</div>
+                        <div class="step-icon">
+                            <i class="fas fa-map-marked-alt"></i>
+                        </div>
+                        <h5 class="fw-bold mb-3">Define Safe Zones</h5>
+                        <p class="text-muted">Draw virtual boundaries on the map around safe areas like classrooms and dormitories</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="how-it-works-card text-center">
+                        <div class="step-number">3</div>
+                        <div class="step-icon">
+                            <i class="fas fa-heartbeat"></i>
+                        </div>
+                        <h5 class="fw-bold mb-3">Real-time Monitoring</h5>
+                        <p class="text-muted">24/7 location tracking and health monitoring with instant alerts to caregivers</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="how-it-works-card text-center">
+                        <div class="step-number">4</div>
+                        <div class="step-icon">
+                            <i class="fas fa-phone-alt"></i>
+                        </div>
+                        <h5 class="fw-bold mb-3">Emergency Response</h5>
+                        <p class="text-muted">One-tap emergency alerts with automated staff notifications and guided response protocols</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-5">
+                <a href="{{ url_for('signup') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-rocket me-2"></i>Get Started Today
+                </a>
+                <p class="mt-3 text-muted">
+                    <small><i class="fas fa-clock me-1"></i>Setup takes less than 10 minutes</small>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-5" id="features">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Comprehensive Safety Features</h2>
+                <p class="lead text-muted">Designed specifically for MINDS Schools and Centres</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card text-center">
+                        <div class="feature-icon feature-icon-location"><i class="fas fa-map-marker-alt"></i></div>
+                        <h5 class="fw-bold mb-3 text-dark">GPS Safe Zones</h5>
+                        <p class="text-secondary">Create and monitor virtual boundaries around safe areas. Get instant alerts when individuals enter or leave designated zones.</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card text-center">
+                        <div class="feature-icon feature-icon-health"><i class="fas fa-heartbeat"></i></div>
+                        <h5 class="fw-bold mb-3 text-dark">Real-time Monitoring</h5>
+                        <p class="text-secondary">24/7 health monitoring with seizure detection and immediate caregiver notifications for rapid response.</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card text-center">
+                        <div class="feature-icon feature-icon-emergency"><i class="fas fa-phone-alt"></i></div>
+                        <h5 class="fw-bold mb-3 text-dark">Emergency Response</h5>
+                        <p class="text-secondary">One-touch emergency calling with automated staff alerts and step-by-step seizure first aid protocols.</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card text-center">
+                        <div class="feature-icon feature-icon-training"><i class="fas fa-graduation-cap"></i></div>
+                        <h5 class="fw-bold mb-3 text-dark">Training Modules</h5>
+                        <p class="text-secondary">Interactive training for caregivers and staff on epilepsy awareness and emergency response procedures.</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card text-center">
+                        <div class="feature-icon feature-icon-analytics"><i class="fas fa-chart-bar"></i></div>
+                        <h5 class="fw-bold mb-3 text-dark">Analytics Dashboard</h5>
+                        <p class="text-secondary">Comprehensive reporting and analytics to track patterns, incidents, and improvement opportunities.</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card text-center">
+                        <div class="feature-icon feature-icon-users"><i class="fas fa-users"></i></div>
+                        <h5 class="fw-bold mb-3 text-dark">Multi-User Support</h5>
+                        <p class="text-secondary">Role-based access for caregivers, administrators, and family members with appropriate permissions.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Screenshots Section -->
+    <section class="py-5" id="dashboard" style="background: linear-gradient(135deg, #f8fbff 0%, #f0f7ff 100%);">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold text-dark">See SAFE-Step in Action</h2>
+                <p class="lead text-muted">Real dashboards and interfaces that keep everyone safe</p>
+            </div>
+            
+            <div id="dashboardCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-indicators">
+                    <button type="button" data-bs-target="#dashboardCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Mobile App Interface"></button>
+                    <button type="button" data-bs-target="#dashboardCarousel" data-bs-slide-to="1" aria-label="Admin Dashboard"></button>
+                    <button type="button" data-bs-target="#dashboardCarousel" data-bs-slide-to="2" aria-label="Training Portal"></button>
+                </div>
+                
+                <div class="carousel-inner">
+                    <div class="carousel-item active">
+                        <div class="row align-items-center">
+                            <div class="col-lg-6">
+                                <div class="dashboard-mockup">
+                                    <div class="phone-mockup">
+                                        <div class="phone-screen">
+                                            <div class="mockup-header">
+                                                <div class="mockup-status-bar">
+                                                    <span>9:41 AM</span>
+                                                    <span>📶 🔋</span>
+                                                </div>
+                                                <h6 class="text-center mt-2">📍 Live Location</h6>
+                                            </div>
+                                            <div class="mockup-map">
+                                                <div class="safe-zone"></div>
+                                                <div class="location-dot"></div>
+                                                <div class="mockup-alert">
+                                                    <i class="fas fa-check-circle text-success"></i>
+                                                    <span>Sarah is in Safe Zone</span>
+                                                </div>
+                                            </div>
+                                            <div class="mockup-bottom">
+                                                <button class="btn btn-danger btn-sm">🚨 Emergency</button>
+                                                <button class="btn btn-info btn-sm">📞 Call Caregiver</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <h3 class="fw-bold mb-4 text-dark">Mobile App Interface</h3>
+                                <ul class="list-unstyled">
+                                    <li class="mb-3">
+                                        <i class="fas fa-map-marker-alt text-primary me-3"></i>
+                                        <strong class="text-dark">Real-time GPS tracking</strong><span class="text-dark"> with safe zone visualization</span>
+                                    </li>
+                                    <li class="mb-3">
+                                        <i class="fas fa-bell text-warning me-3"></i>
+                                        <strong class="text-dark">Instant notifications</strong><span class="text-dark"> when entering/leaving zones</span>
+                                    </li>
+                                    <li class="mb-3">
+                                        <i class="fas fa-phone text-danger me-3"></i>
+                                        <strong class="text-dark">One-tap emergency button</strong><span class="text-dark"> for immediate help</span>
+                                    </li>
+                                    <li class="mb-3">
+                                        <i class="fas fa-users text-success me-3"></i>
+                                        <strong class="text-dark">Quick access</strong><span class="text-dark"> to caregiver contacts</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="carousel-item">
+                        <div class="row align-items-center">
+                            <div class="col-lg-6">
+                                <div class="dashboard-mockup">
+                                    <div class="desktop-mockup">
+                                        <div class="mockup-browser">
+                                            <div class="browser-bar">
+                                                <span>🔴 🟡 🟢</span>
+                                                <span>SAFE-Step Admin Dashboard</span>
+                                            </div>
+                                            <div class="dashboard-content">
+                                                <div class="dashboard-stats">
+                                                    <div class="stat-card bg-success">
+                                                        <h4>24</h4>
+                                                        <small>Active Users</small>
+                                                    </div>
+                                                    <div class="stat-card bg-warning">
+                                                        <h4>2</h4>
+                                                        <small>Alerts Today</small>
+                                                    </div>
+                                                    <div class="stat-card bg-info">
+                                                        <h4>8</h4>
+                                                        <small>Safe Zones</small>
+                                                    </div>
+                                                </div>
+                                                <div class="alert-list">
+                                                    <div class="alert-item">
+                                                        <span class="text-success">✅ Sarah entered Classroom A</span>
+                                                        <small>2 min ago</small>
+                                                    </div>
+                                                    <div class="alert-item">
+                                                        <span class="text-warning">⚠️ Alex left Safe Zone</span>
+                                                        <small>15 min ago</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <h3 class="fw-bold mb-4 text-dark">Admin Dashboard</h3>
+                                <ul class="list-unstyled">
+                                    <li class="mb-3">
+                                        <i class="fas fa-chart-bar text-primary me-3"></i>
+                                        <strong class="text-dark">Live monitoring dashboard</strong><span class="text-dark"> for all enrolled individuals</span>
+                                    </li>
+                                    <li class="mb-3">
+                                        <i class="fas fa-exclamation-triangle text-warning me-3"></i>
+                                        <strong class="text-dark">Real-time alerts</strong><span class="text-dark"> with instant staff notifications</span>
+                                    </li>
+                                    <li class="mb-3">
+                                        <i class="fas fa-history text-info me-3"></i>
+                                        <strong class="text-dark">Incident history</strong><span class="text-dark"> and response time tracking</span>
+                                    </li>
+                                    <li class="mb-3">
+                                        <i class="fas fa-users-cog text-success me-3"></i>
+                                        <strong class="text-dark">Staff management</strong><span class="text-dark"> and permission controls</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="carousel-item">
+                        <div class="row align-items-center">
+                            <div class="col-lg-6">
+                                <div class="dashboard-mockup">
+                                    <div class="training-mockup">
+                                        <div class="training-header">
+                                            <h5>🎓 Training Modules</h5>
+                                        </div>
+                                        <div class="training-modules">
+                                            <div class="module-item completed">
+                                                <i class="fas fa-check-circle text-success"></i>
+                                                <span>Seizure First Aid Basics</span>
+                                                <span class="badge bg-success">Completed</span>
+                                            </div>
+                                            <div class="module-item current">
+                                                <i class="fas fa-play-circle text-primary"></i>
+                                                <span>GPS Zone Management</span>
+                                                <span class="badge bg-primary">In Progress</span>
+                                            </div>
+                                            <div class="module-item">
+                                                <i class="fas fa-lock text-muted"></i>
+                                                <span>Emergency Response Protocol</span>
+                                                <span class="badge bg-secondary">Locked</span>
+                                            </div>
+                                            <div class="module-item">
+                                                <i class="fas fa-lock text-muted"></i>
+                                                <span>Understanding Epilepsy</span>
+                                                <span class="badge bg-secondary">Locked</span>
+                                            </div>
+                                        </div>
+                                        <div class="progress mt-3">
+                                            <div class="progress-bar bg-primary" style="width: 35%"></div>
+                                        </div>
+                                        <small class="text-muted">Overall Progress: 35%</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <h3 class="fw-bold mb-4 text-dark">Training Portal</h3>
+                                <ul class="list-unstyled">
+                                    <li class="mb-3">
+                                        <i class="fas fa-graduation-cap text-primary me-3"></i>
+                                        <strong class="text-dark">Interactive training modules</strong><span class="text-dark"> for all staff levels</span>
+                                    </li>
+                                    <li class="mb-3">
+                                        <i class="fas fa-certificate text-warning me-3"></i>
+                                        <strong class="text-dark">Certification tracking</strong><span class="text-dark"> and compliance monitoring</span>
+                                    </li>
+                                    <li class="mb-3">
+                                        <i class="fas fa-video text-info me-3"></i>
+                                        <strong class="text-dark">Video tutorials</strong><span class="text-dark"> and step-by-step guides</span>
+                                    </li>
+                                    <li class="mb-3">
+                                        <i class="fas fa-chart-line text-success me-3"></i>
+                                        <strong class="text-dark">Progress tracking</strong><span class="text-dark"> for individual and team performance</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="carousel-control-prev" type="button" data-bs-target="#dashboardCarousel" data-bs-slide="prev">
+                    <i class="fas fa-chevron-left"></i>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#dashboardCarousel" data-bs-slide="next">
+                    <i class="fas fa-chevron-right"></i>
+                    <span class="visually-hidden">Next</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats py-5" id="about">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold text-white">Making a Real Difference</h2>
+                <p class="lead text-white-50">Supporting the epilepsy community with proven results</p>
+            </div>
+            
+            <div class="row text-center g-4">
+                <div class="col-lg-3 col-6">
+                    <div class="stat-card">
+                        <div class="stat-number">1 in 26</div>
+                        <div class="stat-label">Children risk undetected seizures without proper monitoring</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="stat-card">
+                        <div class="stat-number">65M+</div>
+                        <div class="stat-label">People worldwide need 24/7 epilepsy support</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="stat-card">
+                        <div class="stat-number">&lt;30s</div>
+                        <div class="stat-label">Average emergency response time with our system</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="stat-card">
+                        <div class="stat-number">99.9%</div>
+                        <div class="stat-label">Uptime on live monitoring systems</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-5">
+                <h3 class="mb-4 text-white">Built for MINDS Community</h3>
+                <p class="lead text-white-50 mb-4">
+                    Specifically designed to support MINDS Schools and Centres in Singapore,<br>
+                    providing safety and peace of mind for PWIDs with epilepsy and their caregivers.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="py-5" id="testimonials" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold text-dark">What Our Community Says</h2>
+                <p class="lead text-muted">Real feedback from caregivers, staff, and families</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="testimonial-card">
+                        <div class="testimonial-stars">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <blockquote class="testimonial-text">
+                            "SAFE-Step has transformed how we monitor our students. Our response time improved by 60% and parents have much more peace of mind."
+                        </blockquote>
+                        <div class="testimonial-author">
+                            <img src="/static/images/testimonial-1.jpg" alt="Sarah Chen" class="author-photo" loading="lazy">
+                            <div>
+                                <strong>Sarah Chen</strong>
+                                <div class="text-muted">Principal, MINDS Towner Gardens School</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="testimonial-card">
+                        <div class="testimonial-stars">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <blockquote class="testimonial-text">
+                            "The training modules helped our entire staff team become more confident in handling emergencies. The system is intuitive and reliable."
+                        </blockquote>
+                        <div class="testimonial-author">
+                            <img src="/static/images/testimonial-2.jpg" alt="Michael Rodriguez" class="author-photo" loading="lazy">
+                            <div>
+                                <strong>Michael Rodriguez</strong>
+                                <div class="text-muted">Senior Caregiver, MINDS Fernvale Gardens School</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="testimonial-card">
+                        <div class="testimonial-stars">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <blockquote class="testimonial-text">
+                            "As a parent, knowing that my daughter is being monitored 24/7 gives me incredible peace of mind. The app keeps me informed in real-time."
+                        </blockquote>
+                        <div class="testimonial-author">
+                            <img src="/static/images/testimonial-3.jpg" alt="Linda Tan" class="author-photo" loading="lazy">
+                            <div>
+                                <strong>Linda Tan</strong>
+                                <div class="text-muted">Parent of PWID Student</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-5" id="contact">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="footer-brand">
+                        <h5 class="fw-bold mb-3">
+                            <i class="fas fa-shield-alt me-2"></i>SAFE-Step
+                        </h5>
+                        <p class="text-white-50 mb-4">
+                            Empowering safety through technology for the epilepsy community.
+                        </p>
+                        <div class="social-links">
+                            <a href="#" class="text-white-50 me-3" aria-label="Facebook">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                            <a href="#" class="text-white-50 me-3" aria-label="Twitter">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                            <a href="#" class="text-white-50 me-3" aria-label="LinkedIn">
+                                <i class="fab fa-linkedin-in"></i>
+                            </a>
+                            <a href="#" class="text-white-50" aria-label="Instagram">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-2">
+                    <h6 class="fw-bold mb-3">Product</h6>
+                    <ul class="list-unstyled footer-links">
+                        <li><a href="#features" class="text-white-50">Features</a></li>
+                        <li><a href="#dashboard" class="text-white-50">Dashboard</a></li>
+                        <li><a href="#how-it-works" class="text-white-50">How It Works</a></li>
+                        <li><a href="#" class="text-white-50">Pricing</a></li>
+                        <li><a href="#" class="text-white-50">Mobile App</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-2">
+                    <h6 class="fw-bold mb-3">Company</h6>
+                    <ul class="list-unstyled footer-links">
+                        <li><a href="#" class="text-white-50">About Us</a></li>
+                        <li><a href="#" class="text-white-50">Our Team</a></li>
+                        <li><a href="#" class="text-white-50">Careers</a></li>
+                        <li><a href="#" class="text-white-50">News</a></li>
+                        <li><a href="#" class="text-white-50">Partners</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-2">
+                    <h6 class="fw-bold mb-3">Support</h6>
+                    <ul class="list-unstyled footer-links">
+                        <li><a href="#" class="text-white-50">Help Center</a></li>
+                        <li><a href="#" class="text-white-50">Documentation</a></li>
+                        <li><a href="#" class="text-white-50">API Reference</a></li>
+                        <li><a href="#" class="text-white-50">Training</a></li>
+                        <li><a href="#" class="text-white-50">Status</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-2">
+                    <h6 class="fw-bold mb-3">Legal</h6>
+                    <ul class="list-unstyled footer-links">
+                        <li><a href="#" class="text-white-50">Privacy Policy</a></li>
+                        <li><a href="#" class="text-white-50">Terms of Service</a></li>
+                        <li><a href="#" class="text-white-50">Security</a></li>
+                        <li><a href="#" class="text-white-50">GDPR</a></li>
+                        <li><a href="#" class="text-white-50">Compliance</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <hr class="my-4 border-secondary">
+            
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <div class="contact-info">
+                        <h6 class="fw-bold mb-3">Get in Touch</h6>
+                        <p class="text-white-50 mb-2">
+                            <i class="fas fa-envelope me-2"></i>
+                            <a href="mailto:hello@safestep.sg" class="text-white-50">hello@safestep.sg</a>
+                        </p>
+                        <p class="text-white-50 mb-2">
+                            <i class="fas fa-phone me-2"></i>
+                            <a href="tel:+6512345678" class="text-white-50">+65 1234 5678</a>
+                        </p>
+                        <p class="text-white-50 mb-0">
+                            <i class="fas fa-map-marker-alt me-2"></i>
+                            Singapore, SG
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6 text-lg-end">
+                    <div class="footer-certifications">
+                        <div class="cert-badges">
+                            <span class="badge bg-success me-2">
+                                <i class="fas fa-shield-alt me-1"></i>HIPAA Compliant
+                            </span>
+                            <span class="badge bg-info me-2">
+                                <i class="fas fa-lock me-1"></i>ISO 27001
+                            </span>
+                            <span class="badge bg-primary">
+                                <i class="fas fa-check-circle me-1"></i>SOC 2
+                            </span>
+                        </div>
+                        <p class="text-white-50 small mt-2 mb-0">
+                            &copy; 2025 SAFE-Step. Built for Dell InnovateFest 2025.<br>
+                            Empowering safety through technology.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Navigation active state
+            const navLinks = document.querySelectorAll('.nav-link[href^="#"]');
+            const sections = document.querySelectorAll('section[id]');
+            
+            function updateActiveNavLink() {
+                const scrollPos = window.scrollY + 100;
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    const sectionHeight = section.offsetHeight;
+                    const sectionId = section.getAttribute('id');
+                    
+                    if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href') === `#${sectionId}`) {
+                                link.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }
+            
+            // Smooth scrolling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        window.scrollTo({
+                            top: target.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+            
+            // Carousel auto-advance
+            const carousel = document.querySelector('#dashboardCarousel');
+            if (carousel) {
+                new bootstrap.Carousel(carousel, {
+                    interval: 8000,
+                    wrap: true
+                });
+            }
+            
+            // Animation on scroll
+            const observer = new IntersectionObserver(function(entries) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, { threshold: 0.5 });
+            
+            // Observe cards for animation
+            document.querySelectorAll('.stat-card, .how-it-works-card, .testimonial-card').forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                card.style.transition = 'all 0.6s ease';
+                observer.observe(card);
+            });
+            
+            // Update active nav on scroll
+            window.addEventListener('scroll', updateActiveNavLink);
+            updateActiveNavLink();
+        });
+    </script>
+</body>
+</html>

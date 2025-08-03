@@ -1,0 +1,672 @@
+{% extends "base.html" %}
+
+{% block title %}Create New Zone - SAFE-Step{% endblock %}
+
+{% block extra_css %}
+<style>
+/* New Zone Specific Styles */
+.zone-header {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 0 0 25px 25px;
+    position: relative;
+    overflow: hidden;
+}
+
+.zone-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='m0 40l40-40h-40v40zm40 0v-40h-40l40 40z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.zone-title {
+    font-size: 2.5rem;
+    font-weight: 900;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    position: relative;
+    z-index: 1;
+}
+
+.form-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.form-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%);
+    transform: scaleX(0);
+    transition: transform 0.4s ease;
+}
+
+.form-card:hover::before {
+    transform: scaleX(1);
+}
+
+.form-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+}
+
+.zone-type-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    border: 2px solid #e2e8f0;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.zone-type-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.zone-type-card.selected {
+    border-color: #11998e;
+    background: rgba(17, 153, 142, 0.05);
+}
+
+.zone-type-safe.selected { border-color: #48bb78; background: rgba(72, 187, 120, 0.05); }
+.zone-type-warning.selected { border-color: #ed8936; background: rgba(237, 137, 54, 0.05); }
+.zone-type-restricted.selected { border-color: #f56565; background: rgba(245, 101, 101, 0.05); }
+
+.zone-type-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin: 0 auto 1rem;
+}
+
+.zone-type-safe .zone-type-icon { background: linear-gradient(135deg, #48bb78 0%, #38ef7d 100%); }
+.zone-type-warning .zone-type-icon { background: linear-gradient(135deg, #ed8936 0%, #fbb040 100%); }
+.zone-type-restricted .zone-type-icon { background: linear-gradient(135deg, #f56565 0%, #fc466b 100%); }
+
+.map-container {
+    height: 400px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    border: 2px dashed #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #718096;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.map-placeholder {
+    text-align: center;
+    z-index: 2;
+    position: relative;
+}
+
+.coordinate-input {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.coordinate-input:focus {
+    border-color: #11998e;
+    box-shadow: 0 0 0 3px rgba(17, 153, 142, 0.1);
+}
+
+.step-indicator {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.step {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #718096;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin: 0 0.5rem;
+    position: relative;
+}
+
+.step.active {
+    background: #11998e;
+    color: white;
+}
+
+.step.completed {
+    background: #48bb78;
+    color: white;
+}
+
+.step::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    width: 40px;
+    height: 2px;
+    background: #e2e8f0;
+    transform: translateY(-50%);
+    z-index: -1;
+}
+
+.step:last-child::after {
+    display: none;
+}
+
+.step.completed::after {
+    background: #48bb78;
+}
+
+.form-section {
+    display: none;
+}
+
+.form-section.active {
+    display: block;
+    animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.btn-navigation {
+    padding: 0.75rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-next {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    border: none;
+}
+
+.btn-next:hover {
+    background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%);
+    transform: translateY(-2px);
+    color: white;
+}
+
+.btn-prev {
+    background: rgba(113, 128, 150, 0.1);
+    color: #718096;
+    border: none;
+}
+
+.btn-prev:hover {
+    background: #718096;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.zone-preview {
+    background: rgba(17, 153, 142, 0.05);
+    border: 1px solid rgba(17, 153, 142, 0.2);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+
+.preview-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.preview-item:last-child {
+    border-bottom: none;
+}
+
+.range-slider {
+    width: 100%;
+    margin: 1rem 0;
+}
+
+.range-value {
+    background: #11998e;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Zone Header -->
+<div class="zone-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center mb-2">
+                    <a href="{{ url_for('safety_zones') }}" class="btn btn-outline-light me-3">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    <div>
+                        <h1 class="zone-title mb-2">
+                            Create New Safety Zone
+                        </h1>
+                        <p class="mb-0" style="font-size: 1.1rem; opacity: 0.9; position: relative; z-index: 1;">
+                            Set up a new GPS boundary for enhanced safety monitoring
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <button class="btn btn-outline-light" onclick="showQuickGuide()">
+                    <i class="fas fa-question-circle me-2"></i>Quick Guide
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- Step Indicator -->
+    <div class="step-indicator">
+        <div class="step active" id="step1">1</div>
+        <div class="step" id="step2">2</div>
+        <div class="step" id="step3">3</div>
+        <div class="step" id="step4">4</div>
+    </div>
+
+    <form id="zoneForm">
+        <!-- Step 1: Zone Type Selection -->
+        <div class="form-section active" id="section1">
+            <div class="form-card">
+                <h3 class="h4 mb-4 text-center">Choose Zone Type</h3>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="zone-type-card zone-type-safe" data-type="safe">
+                            <div class="zone-type-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <h5 class="fw-bold mb-2">Safe Zone</h5>
+                            <p class="text-muted small">Designated safe areas where patients can move freely without alerts</p>
+                            <div class="text-success fw-bold">Recommended</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="zone-type-card zone-type-warning" data-type="warning">
+                            <div class="zone-type-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <h5 class="fw-bold mb-2">Warning Zone</h5>
+                            <p class="text-muted small">Areas requiring extra caution - triggers notifications for caregivers</p>
+                            <div class="text-warning fw-bold">Caution Required</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="zone-type-card zone-type-restricted" data-type="restricted">
+                            <div class="zone-type-icon">
+                                <i class="fas fa-ban"></i>
+                            </div>
+                            <h5 class="fw-bold mb-2">Restricted Zone</h5>
+                            <p class="text-muted small">High-risk areas that trigger immediate emergency alerts</p>
+                            <div class="text-danger fw-bold">High Risk</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Zone Details -->
+        <div class="form-section" id="section2">
+            <div class="form-card">
+                <h3 class="h4 mb-4">Zone Information</h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Zone Name</label>
+                            <input type="text" class="form-control coordinate-input" name="zoneName" placeholder="e.g., Main Building, Garden Area" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Zone Radius</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="range" class="form-range range-slider" name="radius" min="10" max="200" value="50" id="radiusSlider">
+                                <span class="range-value" id="radiusValue">50m</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Description</label>
+                    <textarea class="form-control coordinate-input" name="description" rows="3" placeholder="Describe the purpose and characteristics of this zone..."></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Priority Level</label>
+                            <select class="form-select coordinate-input" name="priority" required>
+                                <option value="">Select Priority</option>
+                                <option value="low">Low Priority</option>
+                                <option value="medium" selected>Medium Priority</option>
+                                <option value="high">High Priority</option>
+                                <option value="critical">Critical Priority</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Active Hours</label>
+                            <select class="form-select coordinate-input" name="activeHours">
+                                <option value="24/7" selected>24/7 Monitoring</option>
+                                <option value="business">Business Hours Only</option>
+                                <option value="custom">Custom Schedule</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Location Setup -->
+        <div class="form-section" id="section3">
+            <div class="form-card">
+                <h3 class="h4 mb-4">Set Zone Location</h3>
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="map-container" id="mapContainer">
+                            <div class="map-placeholder">
+                                <i class="fas fa-map text-muted mb-3" style="font-size: 3rem;"></i>
+                                <p class="mb-2">Interactive Map</p>
+                                <p class="small text-muted">Click on the map to set the zone center</p>
+                                <button type="button" class="btn btn-primary" onclick="getCurrentLocation()">
+                                    <i class="fas fa-crosshairs me-2"></i>Use Current Location
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Latitude</label>
+                            <input type="number" step="0.000001" class="form-control coordinate-input" name="latitude" placeholder="1.3521" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Longitude</label>
+                            <input type="number" step="0.000001" class="form-control coordinate-input" name="longitude" placeholder="103.8198" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Address (Optional)</label>
+                            <textarea class="form-control coordinate-input" name="address" rows="3" placeholder="Street address or landmark description"></textarea>
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary w-100" onclick="searchAddress()">
+                            <i class="fas fa-search me-2"></i>Search Address
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Review & Confirm -->
+        <div class="form-section" id="section4">
+            <div class="form-card">
+                <h3 class="h4 mb-4">Review Zone Settings</h3>
+                <div class="zone-preview">
+                    <h5 class="mb-3">Zone Summary</h5>
+                    <div class="preview-item">
+                        <span class="fw-bold">Zone Name:</span>
+                        <span id="previewName">-</span>
+                    </div>
+                    <div class="preview-item">
+                        <span class="fw-bold">Type:</span>
+                        <span id="previewType">-</span>
+                    </div>
+                    <div class="preview-item">
+                        <span class="fw-bold">Radius:</span>
+                        <span id="previewRadius">-</span>
+                    </div>
+                    <div class="preview-item">
+                        <span class="fw-bold">Priority:</span>
+                        <span id="previewPriority">-</span>
+                    </div>
+                    <div class="preview-item">
+                        <span class="fw-bold">Coordinates:</span>
+                        <span id="previewCoords">-</span>
+                    </div>
+                    <div class="preview-item">
+                        <span class="fw-bold">Active Hours:</span>
+                        <span id="previewHours">-</span>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Note:</strong> Once created, this zone will be immediately active and will start monitoring for the specified conditions.
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="form-card">
+            <div class="d-flex justify-content-between">
+                <button type="button" class="btn btn-prev" id="prevBtn" onclick="previousStep()" style="display: none;">
+                    <i class="fas fa-arrow-left me-2"></i>Previous
+                </button>
+                <div class="ms-auto">
+                    <button type="button" class="btn btn-next" id="nextBtn" onclick="nextStep()">
+                        Next<i class="fas fa-arrow-right ms-2"></i>
+                    </button>
+                    <button type="submit" class="btn btn-next" id="submitBtn" style="display: none;">
+                        <i class="fas fa-check me-2"></i>Create Zone
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// New Zone Creation JavaScript
+let currentStep = 1;
+let selectedZoneType = '';
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Zone type selection
+    document.querySelectorAll('.zone-type-card').forEach(card => {
+        card.addEventListener('click', function() {
+            document.querySelectorAll('.zone-type-card').forEach(c => c.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedZoneType = this.dataset.type;
+        });
+    });
+    
+    // Radius slider
+    const radiusSlider = document.getElementById('radiusSlider');
+    const radiusValue = document.getElementById('radiusValue');
+    
+    radiusSlider.addEventListener('input', function() {
+        radiusValue.textContent = this.value + 'm';
+    });
+    
+    // Form submission
+    document.getElementById('zoneForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        createZone();
+    });
+});
+
+function nextStep() {
+    if (currentStep === 1 && !selectedZoneType) {
+        showNotification('Please select a zone type', 'warning');
+        return;
+    }
+    
+    if (currentStep < 4) {
+        // Hide current section
+        document.getElementById(`section${currentStep}`).classList.remove('active');
+        document.getElementById(`step${currentStep}`).classList.remove('active');
+        document.getElementById(`step${currentStep}`).classList.add('completed');
+        
+        // Show next section
+        currentStep++;
+        document.getElementById(`section${currentStep}`).classList.add('active');
+        document.getElementById(`step${currentStep}`).classList.add('active');
+        
+        // Update buttons
+        document.getElementById('prevBtn').style.display = 'inline-block';
+        
+        if (currentStep === 4) {
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('submitBtn').style.display = 'inline-block';
+            updatePreview();
+        }
+    }
+}
+
+function previousStep() {
+    if (currentStep > 1) {
+        // Hide current section
+        document.getElementById(`section${currentStep}`).classList.remove('active');
+        document.getElementById(`step${currentStep}`).classList.remove('active');
+        
+        // Show previous section
+        currentStep--;
+        document.getElementById(`section${currentStep}`).classList.add('active');
+        document.getElementById(`step${currentStep+1}`).classList.remove('completed');
+        document.getElementById(`step${currentStep}`).classList.add('active');
+        
+        // Update buttons
+        if (currentStep === 1) {
+            document.getElementById('prevBtn').style.display = 'none';
+        }
+        
+        document.getElementById('nextBtn').style.display = 'inline-block';
+        document.getElementById('submitBtn').style.display = 'none';
+    }
+}
+
+function updatePreview() {
+    const form = document.getElementById('zoneForm');
+    const formData = new FormData(form);
+    
+    document.getElementById('previewName').textContent = formData.get('zoneName') || '-';
+    document.getElementById('previewType').textContent = selectedZoneType.charAt(0).toUpperCase() + selectedZoneType.slice(1);
+    document.getElementById('previewRadius').textContent = formData.get('radius') + 'm';
+    document.getElementById('previewPriority').textContent = formData.get('priority') || '-';
+    document.getElementById('previewCoords').textContent = 
+        `${formData.get('latitude') || '-'}, ${formData.get('longitude') || '-'}`;
+    document.getElementById('previewHours').textContent = formData.get('activeHours') || '-';
+}
+
+function getCurrentLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            document.querySelector('input[name="latitude"]').value = position.coords.latitude.toFixed(6);
+            document.querySelector('input[name="longitude"]').value = position.coords.longitude.toFixed(6);
+            showNotification('Current location captured successfully!', 'success');
+        }, function(error) {
+            showNotification('Unable to get current location. Please enter coordinates manually.', 'warning');
+        });
+    } else {
+        showNotification('Geolocation is not supported by this browser.', 'error');
+    }
+}
+
+function searchAddress() {
+    const address = document.querySelector('textarea[name="address"]').value;
+    if (!address.trim()) {
+        showNotification('Please enter an address to search', 'warning');
+        return;
+    }
+    
+    // In a real app, this would use a geocoding service
+    showNotification('Address search functionality would be implemented here', 'info');
+}
+
+function createZone() {
+    const form = document.getElementById('zoneForm');
+    const formData = new FormData(form);
+    
+    // Validate required fields
+    if (!selectedZoneType) {
+        showNotification('Zone type is required', 'error');
+        return;
+    }
+    
+    if (!formData.get('zoneName') || !formData.get('latitude') || !formData.get('longitude')) {
+        showNotification('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    // Simulate zone creation
+    showNotification('Safety zone created successfully!', 'success');
+    
+    setTimeout(() => {
+        window.location.href = '/zones';
+    }, 2000);
+}
+
+function showQuickGuide() {
+    showNotification('Quick guide functionality would show helpful tips for zone creation', 'info');
+}
+
+function showNotification(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

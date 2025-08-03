@@ -1,0 +1,486 @@
+{% extends "base.html" %}
+
+{% block title %}Caregiver Dashboard - Safe-Step{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Welcome Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-1">Welcome back, {{ current_user.first_name }}!</h1>
+                    <p class="text-muted mb-0">Here's what's happening with your patient monitoring today.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-success btn-lg" onclick="startEmergencyMonitoring()">
+                        <i class="fas fa-heartbeat me-2"></i>Start Monitoring
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h2 class="h4 mb-0">{{ recent_sessions|length }}</h2>
+                            <p class="mb-0">Recent Sessions</p>
+                        </div>
+                        <div class="fs-1">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-primary bg-opacity-75">
+                    <a href="{{ url_for('seizure_history') }}" class="text-white text-decoration-none">
+                        View History <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h2 class="h4 mb-0">{{ active_zones }}</h2>
+                            <p class="mb-0">Active Safety Zones</p>
+                        </div>
+                        <div class="fs-1">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-success bg-opacity-75">
+                    <a href="{{ url_for('safety_zones') }}" class="text-white text-decoration-none">
+                        Manage Zones <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h2 class="h4 mb-0">{{ completed_modules }}</h2>
+                            <p class="mb-0">Training Completed</p>
+                        </div>
+                        <div class="fs-1">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-info bg-opacity-75">
+                    <a href="{{ url_for('training_modules') }}" class="text-white text-decoration-none">
+                        Continue Learning <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-warning text-dark h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h2 class="h4 mb-0">94%</h2>
+                            <p class="mb-0">Prediction Accuracy</p>
+                        </div>
+                        <div class="fs-1">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-warning bg-opacity-75">
+                    <a href="{{ url_for('prediction_dashboard') }}" class="text-dark text-decoration-none">
+                        View Predictions <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Row -->
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-lg-8">
+            <!-- Recent Sessions -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>Recent Sessions
+                    </h5>
+                    <a href="{{ url_for('seizure_history') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_sessions %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date & Time</th>
+                                        <th>Duration</th>
+                                        <th>Severity</th>
+                                        <th>Location</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for session in recent_sessions %}
+                                    <tr>
+                                        <td>{{ session.start_time.strftime('%m/%d/%Y %H:%M') }}</td>
+                                        <td>
+                                            {% if session.end_time %}
+                                                {{ ((session.end_time - session.start_time).seconds // 60) }} min
+                                            {% else %}
+                                                <span class="badge bg-danger">Ongoing</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ 'danger' if session.severity == 'severe' else 'warning' if session.severity == 'moderate' else 'info' }}">
+                                                {{ session.severity|title }}
+                                            </span>
+                                        </td>
+                                        <td>{{ session.location or 'Unknown' }}</td>
+                                        <td>
+                                            <a href="{{ url_for('session_detail', session_id=session.id) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-clipboard-list text-muted mb-3" style="font-size: 3rem;"></i>
+                            <h5 class="text-muted">No recent sessions</h5>
+                            <p class="text-muted">Start monitoring to begin tracking seizure episodes.</p>
+                            <button class="btn btn-primary" onclick="startEmergencyMonitoring()">
+                                <i class="fas fa-play me-2"></i>Start Monitoring
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="d-grid">
+                                <button class="btn btn-success btn-lg" onclick="startEmergencyMonitoring()">
+                                    <i class="fas fa-heartbeat d-block mb-2" style="font-size: 1.5rem;"></i>
+                                    Start Monitoring
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-grid">
+                                <a href="{{ url_for('new_zone') }}" class="btn btn-info btn-lg">
+                                    <i class="fas fa-plus d-block mb-2" style="font-size: 1.5rem;"></i>
+                                    Add Safety Zone
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-grid">
+                                <a href="{{ url_for('support_ticket') }}" class="btn btn-warning btn-lg">
+                                    <i class="fas fa-life-ring d-block mb-2" style="font-size: 1.5rem;"></i>
+                                    Get Support
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-4">
+            <!-- AI Predictions Panel -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-brain me-2"></i>AI Predictions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">Next 6 Hours</h6>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" style="width: 15%"></div>
+                            </div>
+                            <small class="text-muted">Low Risk (15%)</small>
+                        </div>
+                        <div class="text-success">
+                            <i class="fas fa-check-circle fs-4"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">Next 24 Hours</h6>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-warning" style="width: 35%"></div>
+                            </div>
+                            <small class="text-muted">Moderate Risk (35%)</small>
+                        </div>
+                        <div class="text-warning">
+                            <i class="fas fa-exclamation-triangle fs-4"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('prediction_dashboard') }}" class="btn btn-outline-primary btn-sm">
+                            View Detailed Analysis
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Status -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cog me-2"></i>System Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Monitoring Device</span>
+                        <span class="badge bg-success">
+                            <i class="fas fa-wifi me-1"></i>Connected
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>GPS Tracking</span>
+                        <span class="badge bg-success">
+                            <i class="fas fa-map-marker-alt me-1"></i>Active
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Emergency Contacts</span>
+                        <span class="badge bg-info">
+                            <i class="fas fa-users me-1"></i>3 Ready
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Battery Level</span>
+                        <span class="badge bg-warning">
+                            <i class="fas fa-battery-half me-1"></i>65%
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Training Progress -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-graduation-cap me-2"></i>Training Progress
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small>Seizure First Aid</small>
+                            <small>100%</small>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small>Emergency Response</small>
+                            <small>75%</small>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-warning" style="width: 75%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small>Medication Management</small>
+                            <small>50%</small>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-info" style="width: 50%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <a href="{{ url_for('training_modules') }}" class="btn btn-outline-success btn-sm">
+                            Continue Training
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Emergency Monitoring Modal -->
+<div class="modal fade" id="monitoringModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-heartbeat me-2"></i>Emergency Monitoring Active
+                </h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-4">
+                    <div class="spinner-border text-success" style="width: 4rem; height: 4rem;"></div>
+                </div>
+                <h4>Monitoring in Progress</h4>
+                <p class="lead">AI system is actively monitoring for seizure patterns...</p>
+                <div class="row text-start">
+                    <div class="col-md-6">
+                        <h6>Session Details:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Started:</strong> <span id="sessionStart">--</span></li>
+                            <li><strong>Duration:</strong> <span id="sessionDuration">00:00</span></li>
+                            <li><strong>Status:</strong> <span class="badge bg-success">Active</span></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Vitals:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Heart Rate:</strong> <span id="heartRate">72 BPM</span></li>
+                            <li><strong>Movement:</strong> <span id="movement">Normal</span></li>
+                            <li><strong>Location:</strong> <span id="location">Home</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" onclick="pauseMonitoring()">
+                    <i class="fas fa-pause me-2"></i>Pause
+                </button>
+                <button type="button" class="btn btn-danger" onclick="stopMonitoring()">
+                    <i class="fas fa-stop me-2"></i>Stop Monitoring
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let monitoringInterval;
+let sessionStartTime;
+
+function startEmergencyMonitoring() {
+    sessionStartTime = new Date();
+    document.getElementById('sessionStart').textContent = sessionStartTime.toLocaleTimeString();
+    
+    const modal = new bootstrap.Modal(document.getElementById('monitoringModal'));
+    modal.show();
+    
+    // Start session timer
+    monitoringInterval = setInterval(updateSessionTimer, 1000);
+    
+    // Simulate creating a session
+    fetch('/api/sessions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            severity: 'monitoring',
+            location: 'Home',
+            notes: 'Emergency monitoring session started'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.currentSessionId = data.session_id;
+        }
+    });
+}
+
+function updateSessionTimer() {
+    if (sessionStartTime) {
+        const now = new Date();
+        const duration = Math.floor((now - sessionStartTime) / 1000);
+        const minutes = Math.floor(duration / 60);
+        const seconds = duration % 60;
+        document.getElementById('sessionDuration').textContent = 
+            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+}
+
+function pauseMonitoring() {
+    clearInterval(monitoringInterval);
+    // Implement pause functionality
+    alert('Monitoring paused. Click "Start Monitoring" to resume.');
+    bootstrap.Modal.getInstance(document.getElementById('monitoringModal')).hide();
+}
+
+function stopMonitoring() {
+    clearInterval(monitoringInterval);
+    
+    if (window.currentSessionId) {
+        fetch(`/api/sessions/${window.currentSessionId}/end`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Monitoring session ended successfully.');
+                location.reload();
+            }
+        });
+    }
+    
+    bootstrap.Modal.getInstance(document.getElementById('monitoringModal')).hide();
+}
+
+// Auto-refresh dashboard every 30 seconds
+setInterval(() => {
+    // Update system status, vitals, etc.
+    updateSystemStatus();
+}, 30000);
+
+function updateSystemStatus() {
+    // Simulate real-time updates
+    const heartRate = 70 + Math.floor(Math.random() * 10);
+    const batteryLevel = 65 + Math.floor(Math.random() * 10);
+    
+    document.getElementById('heartRate').textContent = heartRate + ' BPM';
+    
+    // Update battery display if exists
+    const batteryElements = document.querySelectorAll('.badge:contains("Battery")');
+    batteryElements.forEach(el => {
+        if (el.textContent.includes('Battery')) {
+            el.innerHTML = `<i class="fas fa-battery-half me-1"></i>${batteryLevel}%`;
+        }
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,829 @@
+{% extends "base.html" %}
+
+{% block title %}Support Center - SAFE-Step{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Support Center Specific Styles */
+.support-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 0 0 25px 25px;
+    position: relative;
+    overflow: hidden;
+}
+
+.support-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='m0 40l40-40h-40v40zm40 0v-40h-40l40 40z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.support-title {
+    font-size: 2.5rem;
+    font-weight: 900;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    position: relative;
+    z-index: 1;
+}
+
+.support-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    height: 100%;
+}
+
+.support-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    transform: scaleX(0);
+    transition: transform 0.4s ease;
+}
+
+.support-card:hover::before {
+    transform: scaleX(1);
+}
+
+.support-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+}
+
+.help-category {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
+
+.help-category:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    color: inherit;
+    text-decoration: none;
+}
+
+.help-category::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.help-category:hover::before {
+    transform: scaleX(1);
+}
+
+.category-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.category-technical .category-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.category-account .category-icon { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+.category-training .category-icon { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+.category-emergency .category-icon { background: linear-gradient(135deg, #f56565 0%, #fc466b 100%); }
+
+.ticket-form {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+}
+
+.form-control-custom {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.form-control-custom:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.priority-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.priority-option {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.priority-option:hover, .priority-option.selected {
+    transform: translateY(-2px);
+}
+
+.priority-low.selected { border-color: #48bb78; background: rgba(72, 187, 120, 0.05); }
+.priority-medium.selected { border-color: #ed8936; background: rgba(237, 137, 54, 0.05); }
+.priority-high.selected { border-color: #f56565; background: rgba(245, 101, 101, 0.05); }
+.priority-urgent.selected { border-color: #fc466b; background: rgba(252, 70, 107, 0.05); }
+
+.priority-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+    margin: 0 auto 0.5rem;
+}
+
+.priority-low .priority-icon { background: #48bb78; }
+.priority-medium .priority-icon { background: #ed8936; }
+.priority-high .priority-icon { background: #f56565; }
+.priority-urgent .priority-icon { background: #fc466b; }
+
+.my-tickets {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.ticket-item {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    border: 1px solid rgba(0,0,0,0.1);
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.ticket-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.ticket-status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-open {
+    background: rgba(245, 101, 101, 0.1);
+    color: #f56565;
+}
+
+.status-in-progress {
+    background: rgba(237, 137, 54, 0.1);
+    color: #ed8936;
+}
+
+.status-resolved {
+    background: rgba(72, 187, 120, 0.1);
+    color: #48bb78;
+}
+
+.status-closed {
+    background: rgba(113, 128, 150, 0.1);
+    color: #718096;
+}
+
+.faq-item {
+    background: white;
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.1);
+    margin-bottom: 1rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.faq-question {
+    padding: 1rem;
+    cursor: pointer;
+    background: rgba(102, 126, 234, 0.05);
+    transition: all 0.3s ease;
+}
+
+.faq-question:hover {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.faq-answer {
+    padding: 0 1rem;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.faq-answer.show {
+    padding: 1rem;
+    max-height: 200px;
+}
+
+.contact-option {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.contact-option:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.contact-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    margin: 0 auto 1rem;
+}
+
+.file-upload-area {
+    border: 2px dashed #e2e8f0;
+    border-radius: 10px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.file-upload-area:hover {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.upload-icon {
+    font-size: 3rem;
+    color: #e2e8f0;
+    margin-bottom: 1rem;
+}
+
+.file-upload-area:hover .upload-icon {
+    color: #667eea;
+}
+
+.search-bar {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 15px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.search-bar:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Support Header -->
+<div class="support-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="support-title mb-2">
+                    <i class="fas fa-life-ring me-3"></i>Support Center
+                </h1>
+                <p class="mb-0" style="font-size: 1.1rem; opacity: 0.9; position: relative; z-index: 1;">
+                    Get help, submit tickets, and access resources
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <button class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#emergencyModal">
+                    <i class="fas fa-phone me-2"></i>Emergency Help
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- Quick Help Categories -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="support-card">
+                <h3 class="h5 mb-4">How can we help you today?</h3>
+                <div class="row">
+                    <div class="col-lg-3 col-md-6">
+                        <a href="#technical" class="help-category category-technical position-relative">
+                            <div class="category-icon">
+                                <i class="fas fa-cog"></i>
+                            </div>
+                            <h6 class="fw-bold mb-2">Technical Issues</h6>
+                            <p class="text-muted small mb-0">App crashes, login problems, device connectivity</p>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <a href="#account" class="help-category category-account position-relative">
+                            <div class="category-icon">
+                                <i class="fas fa-user-circle"></i>
+                            </div>
+                            <h6 class="fw-bold mb-2">Account & Access</h6>
+                            <p class="text-muted small mb-0">Password reset, permissions, profile settings</p>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <a href="#training" class="help-category category-training position-relative">
+                            <div class="category-icon">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <h6 class="fw-bold mb-2">Training & Resources</h6>
+                            <p class="text-muted small mb-0">Module questions, certification, best practices</p>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <a href="#emergency" class="help-category category-emergency position-relative">
+                            <div class="category-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <h6 class="fw-bold mb-2">Emergency Support</h6>
+                            <p class="text-muted small mb-0">Critical alerts, immediate assistance needed</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Submit Ticket -->
+        <div class="col-lg-8">
+            <div class="support-card">
+                <h3 class="h5 mb-4">
+                    <i class="fas fa-ticket-alt me-2"></i>Submit Support Ticket
+                </h3>
+                
+                <form id="supportTicketForm" class="ticket-form">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Subject</label>
+                                <input type="text" class="form-control form-control-custom" name="subject" placeholder="Brief description of your issue" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Category</label>
+                                <select class="form-select form-control-custom" name="category" required>
+                                    <option value="">Select a category</option>
+                                    <option value="technical">Technical Issues</option>
+                                    <option value="account">Account & Access</option>
+                                    <option value="training">Training & Resources</option>
+                                    <option value="billing">Billing & Payments</option>
+                                    <option value="feature">Feature Request</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Priority Level</label>
+                        <div class="priority-selector">
+                            <div class="priority-option priority-low" data-priority="low">
+                                <div class="priority-icon">
+                                    <i class="fas fa-circle"></i>
+                                </div>
+                                <div class="fw-bold small">Low</div>
+                                <div class="text-muted small">General inquiry</div>
+                            </div>
+                            <div class="priority-option priority-medium selected" data-priority="medium">
+                                <div class="priority-icon">
+                                    <i class="fas fa-exclamation"></i>
+                                </div>
+                                <div class="fw-bold small">Medium</div>
+                                <div class="text-muted small">Issue affecting work</div>
+                            </div>
+                            <div class="priority-option priority-high" data-priority="high">
+                                <div class="priority-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="fw-bold small">High</div>
+                                <div class="text-muted small">Urgent assistance</div>
+                            </div>
+                            <div class="priority-option priority-urgent" data-priority="urgent">
+                                <div class="priority-icon">
+                                    <i class="fas fa-fire"></i>
+                                </div>
+                                <div class="fw-bold small">Urgent</div>
+                                <div class="text-muted small">Critical/Emergency</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Description</label>
+                        <textarea class="form-control form-control-custom" name="description" rows="5" placeholder="Please describe your issue in detail. Include steps to reproduce if applicable." required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Attach Files (Optional)</label>
+                        <div class="file-upload-area" onclick="document.getElementById('fileInput').click()">
+                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                            <p class="mb-1">Click to upload files or drag and drop</p>
+                            <small class="text-muted">Screenshots, logs, or relevant documents (Max 10MB)</small>
+                            <input type="file" id="fileInput" multiple style="display: none;" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt">
+                        </div>
+                        <div id="fileList" class="mt-2"></div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-paper-plane me-2"></i>Submit Ticket
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- FAQ Section -->
+            <div class="support-card">
+                <h3 class="h5 mb-4">
+                    <i class="fas fa-question-circle me-2"></i>Frequently Asked Questions
+                </h3>
+                
+                <div class="mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text" class="form-control search-bar border-start-0" placeholder="Search FAQs..." id="faqSearch">
+                    </div>
+                </div>
+                
+                <div id="faqList">
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFaq(this)">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">How do I reset my password?</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                        <div class="faq-answer">
+                            <p class="text-muted">Click on "Forgot Password" on the login page, enter your email address, and follow the instructions sent to your email to reset your password.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFaq(this)">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">Why are my seizure alerts not working?</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                        <div class="faq-answer">
+                            <p class="text-muted">Check if notifications are enabled in your device settings, ensure the app has location permissions, and verify that your safety zones are properly configured.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFaq(this)">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">How do I complete a training module?</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                        <div class="faq-answer">
+                            <p class="text-muted">Navigate to the Training section, select a module, complete all sections and quizzes with at least 80% score to receive your certificate.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Contact Options -->
+            <div class="support-card">
+                <h3 class="h5 mb-4">
+                    <i class="fas fa-phone me-2"></i>Contact Support
+                </h3>
+                
+                <div class="contact-option">
+                    <div class="contact-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h6 class="fw-bold mb-2">Live Chat</h6>
+                    <p class="text-muted small mb-2">Available 24/7 for immediate assistance</p>
+                    <button class="btn btn-primary btn-sm" onclick="startLiveChat()">Start Chat</button>
+                </div>
+                
+                <div class="contact-option">
+                    <div class="contact-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <h6 class="fw-bold mb-2">Email Support</h6>
+                    <p class="text-muted small mb-2">Response within 2-4 hours</p>
+                    <a href="mailto:support@safestep.com" class="btn btn-outline-primary btn-sm">Send Email</a>
+                </div>
+                
+                <div class="contact-option">
+                    <div class="contact-icon">
+                        <i class="fas fa-phone"></i>
+                    </div>
+                    <h6 class="fw-bold mb-2">Phone Support</h6>
+                    <p class="text-muted small mb-2">Mon-Fri, 9 AM - 6 PM SGT</p>
+                    <a href="tel:+6562345678" class="btn btn-outline-primary btn-sm">Call Now</a>
+                </div>
+            </div>
+
+            <!-- My Tickets -->
+            <div class="support-card">
+                <h3 class="h5 mb-4">
+                    <i class="fas fa-list me-2"></i>My Recent Tickets
+                </h3>
+                
+                <div class="my-tickets">
+                    <div class="ticket-item">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="mb-1">#12345 - Login Issues</h6>
+                            <span class="ticket-status status-in-progress">In Progress</span>
+                        </div>
+                        <p class="text-muted small mb-1">Cannot access my account after password reset</p>
+                        <small class="text-muted">Created: 2 hours ago</small>
+                    </div>
+                    
+                    <div class="ticket-item">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="mb-1">#12344 - Training Certificate</h6>
+                            <span class="ticket-status status-resolved">Resolved</span>
+                        </div>
+                        <p class="text-muted small mb-1">Need help downloading my completion certificate</p>
+                        <small class="text-muted">Created: Yesterday</small>
+                    </div>
+                    
+                    <div class="ticket-item">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="mb-1">#12343 - GPS Not Working</h6>
+                            <span class="ticket-status status-closed">Closed</span>
+                        </div>
+                        <p class="text-muted small mb-1">Safety zones not tracking properly</p>
+                        <small class="text-muted">Created: 3 days ago</small>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <button class="btn btn-outline-primary btn-sm" onclick="viewAllTickets()">
+                        <i class="fas fa-eye me-1"></i>View All Tickets
+                    </button>
+                </div>
+            </div>
+
+            <!-- System Status -->
+            <div class="support-card">
+                <h3 class="h5 mb-4">
+                    <i class="fas fa-server me-2"></i>System Status
+                </h3>
+                
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Application Server</span>
+                    <span class="badge bg-success">Operational</span>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>GPS Tracking</span>
+                    <span class="badge bg-success">Operational</span>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Notifications</span>
+                    <span class="badge bg-warning">Degraded</span>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Training Platform</span>
+                    <span class="badge bg-success">Operational</span>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <a href="#" class="text-decoration-none small">
+                        <i class="fas fa-external-link-alt me-1"></i>View Status Page
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Emergency Contact Modal -->
+<div class="modal fade" id="emergencyModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Emergency Contact
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <strong>For immediate medical emergencies, call 995 (Singapore Emergency Services)</strong>
+                </div>
+                
+                <h6>Technical Emergency Support:</h6>
+                <div class="d-grid gap-2">
+                    <a href="tel:+6562345678" class="btn btn-danger">
+                        <i class="fas fa-phone me-2"></i>Call Emergency Hotline
+                    </a>
+                    <button class="btn btn-outline-danger" onclick="sendEmergencyMessage()">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Send Emergency Alert
+                    </button>
+                </div>
+                
+                <div class="mt-3">
+                    <small class="text-muted">
+                        Emergency support is available 24/7 for critical system failures affecting patient safety.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Support Center JavaScript
+let selectedPriority = 'medium';
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Priority selection
+    document.querySelectorAll('.priority-option').forEach(option => {
+        option.addEventListener('click', function() {
+            document.querySelectorAll('.priority-option').forEach(o => o.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedPriority = this.dataset.priority;
+        });
+    });
+    
+    // File upload
+    document.getElementById('fileInput').addEventListener('change', function() {
+        displaySelectedFiles(this.files);
+    });
+    
+    // Form submission
+    document.getElementById('supportTicketForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitTicket();
+    });
+    
+    // FAQ search
+    document.getElementById('faqSearch').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const faqItems = document.querySelectorAll('.faq-item');
+        
+        faqItems.forEach(item => {
+            const question = item.querySelector('.faq-question span').textContent.toLowerCase();
+            const answer = item.querySelector('.faq-answer p').textContent.toLowerCase();
+            
+            if (question.includes(searchTerm) || answer.includes(searchTerm)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+});
+
+function displaySelectedFiles(files) {
+    const fileList = document.getElementById('fileList');
+    fileList.innerHTML = '';
+    
+    Array.from(files).forEach(file => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'alert alert-light d-flex justify-content-between align-items-center';
+        fileItem.innerHTML = `
+            <span><i class="fas fa-file me-2"></i>${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+            <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+        `;
+        fileList.appendChild(fileItem);
+    });
+}
+
+function toggleFaq(element) {
+    const answer = element.nextElementSibling;
+    const icon = element.querySelector('i');
+    
+    if (answer.classList.contains('show')) {
+        answer.classList.remove('show');
+        icon.classList.remove('fa-chevron-up');
+        icon.classList.add('fa-chevron-down');
+    } else {
+        // Close all other FAQs
+        document.querySelectorAll('.faq-answer').forEach(a => a.classList.remove('show'));
+        document.querySelectorAll('.faq-question i').forEach(i => {
+            i.classList.remove('fa-chevron-up');
+            i.classList.add('fa-chevron-down');
+        });
+        
+        // Open this FAQ
+        answer.classList.add('show');
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+    }
+}
+
+function submitTicket() {
+    const form = document.getElementById('supportTicketForm');
+    const formData = new FormData(form);
+    formData.append('priority', selectedPriority);
+    
+    // Show success message
+    showNotification('Support ticket submitted successfully! You will receive an email confirmation shortly.', 'success');
+    
+    // Reset form
+    form.reset();
+    document.querySelectorAll('.priority-option').forEach(o => o.classList.remove('selected'));
+    document.querySelector('.priority-option[data-priority="medium"]').classList.add('selected');
+    document.getElementById('fileList').innerHTML = '';
+}
+
+function startLiveChat() {
+    showNotification('Starting live chat session...', 'info');
+    // In a real app, this would open a chat widget
+}
+
+function viewAllTickets() {
+    showNotification('Loading all tickets...', 'info');
+    // In a real app, this would navigate to tickets page
+}
+
+function sendEmergencyMessage() {
+    showNotification('Emergency alert sent to support team!', 'warning');
+}
+
+function showNotification(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

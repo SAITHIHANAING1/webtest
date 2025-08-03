@@ -1,0 +1,653 @@
+{% extends "base.html" %}
+
+{% block title %}Session Details - SAFE-Step{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Session Detail Specific Styles */
+.session-header {
+    background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 0 0 25px 25px;
+    position: relative;
+    overflow: hidden;
+}
+
+.session-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='m0 40l40-40h-40v40zm40 0v-40h-40l40 40z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.session-title {
+    font-size: 2.5rem;
+    font-weight: 900;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    position: relative;
+    z-index: 1;
+}
+
+.detail-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    height: 100%;
+}
+
+.detail-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #fc466b 0%, #3f5efb 100%);
+    transform: scaleX(0);
+    transition: transform 0.4s ease;
+}
+
+.detail-card:hover::before {
+    transform: scaleX(1);
+}
+
+.detail-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.status-active {
+    background: rgba(72, 187, 120, 0.1);
+    color: #48bb78;
+    border: 2px solid rgba(72, 187, 120, 0.2);
+}
+
+.status-completed {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+.status-alert {
+    background: rgba(245, 101, 101, 0.1);
+    color: #f56565;
+    border: 2px solid rgba(245, 101, 101, 0.2);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(245, 101, 101, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(245, 101, 101, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(245, 101, 101, 0); }
+}
+
+.vital-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.vital-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.vital-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    transition: transform 0.3s ease;
+    transform: scaleX(0);
+}
+
+.vital-card:hover::before {
+    transform: scaleX(1);
+}
+
+.vital-heart::before { background: linear-gradient(90deg, #fc466b 0%, #3f5efb 100%); }
+.vital-temp::before { background: linear-gradient(90deg, #fa709a 0%, #fee140 100%); }
+.vital-oxygen::before { background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%); }
+.vital-pressure::before { background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); }
+
+.vital-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin: 0 auto 1rem;
+}
+
+.vital-heart .vital-icon { background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%); }
+.vital-temp .vital-icon { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+.vital-oxygen .vital-icon { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+.vital-pressure .vital-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+
+.vital-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+}
+
+.vital-label {
+    color: #718096;
+    font-weight: 500;
+}
+
+.vital-normal { color: #48bb78; }
+.vital-warning { color: #ed8936; }
+.vital-critical { color: #f56565; }
+
+.timeline-item {
+    position: relative;
+    padding-left: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #e2e8f0;
+}
+
+.timeline-item.event-normal::before { background: #48bb78; }
+.timeline-item.event-warning::before { background: #ed8936; }
+.timeline-item.event-critical::before { background: #f56565; }
+
+.timeline-item::after {
+    content: '';
+    position: absolute;
+    left: 5.5px;
+    top: 1.25rem;
+    width: 1px;
+    height: calc(100% + 0.5rem);
+    background: #e2e8f0;
+}
+
+.timeline-item:last-child::after {
+    display: none;
+}
+
+.timeline-time {
+    font-size: 0.9rem;
+    color: #718096;
+    font-weight: 500;
+}
+
+.timeline-content {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    border-left: 3px solid #e2e8f0;
+}
+
+.event-normal .timeline-content { border-left-color: #48bb78; }
+.event-warning .timeline-content { border-left-color: #ed8936; }
+.event-critical .timeline-content { border-left-color: #f56565; }
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+}
+
+.location-map {
+    height: 200px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #718096;
+    font-size: 1.1rem;
+}
+
+.action-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    border: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.btn-export {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+}
+
+.btn-export:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-share {
+    background: rgba(6, 190, 182, 0.1);
+    color: #06beb6;
+}
+
+.btn-share:hover {
+    background: #06beb6;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-emergency {
+    background: rgba(245, 101, 101, 0.1);
+    color: #f56565;
+}
+
+.btn-emergency:hover {
+    background: #f56565;
+    color: white;
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Session Header -->
+<div class="session-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center mb-2">
+                    <a href="{{ url_for('seizure_history') }}" class="btn btn-outline-light me-3">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    <div>
+                        <h1 class="session-title mb-2">
+                            Session #{{ session.id if session else '1234' }}
+                        </h1>
+                        <p class="mb-0" style="font-size: 1.1rem; opacity: 0.9; position: relative; z-index: 1;">
+                            {{ session.start_time.strftime('%B %d, %Y at %I:%M %p') if session and session.start_time else 'January 15, 2024 at 2:30 PM' }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="d-flex gap-2 justify-content-md-end align-items-center">
+                    {% if session and session.end_time %}
+                        <span class="status-badge status-completed">
+                            <i class="fas fa-check-circle me-2"></i>Completed
+                        </span>
+                    {% else %}
+                        <span class="status-badge status-active">
+                            <i class="fas fa-play-circle me-2"></i>Active
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- Session Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="detail-card text-center">
+                <i class="fas fa-clock text-primary mb-3" style="font-size: 2rem;"></i>
+                <h3 class="h4 text-primary">{{ session.duration if session else '4h 32m' }}</h3>
+                <p class="text-muted">Session Duration</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="detail-card text-center">
+                <i class="fas fa-exclamation-triangle text-warning mb-3" style="font-size: 2rem;"></i>
+                <h3 class="h4 text-warning">{{ session.alert_count if session else '2' }}</h3>
+                <p class="text-muted">Alerts Triggered</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="detail-card text-center">
+                <i class="fas fa-heartbeat text-danger mb-3" style="font-size: 2rem;"></i>
+                <h3 class="h4 text-danger">{{ session.avg_heart_rate if session else '78' }}</h3>
+                <p class="text-muted">Avg Heart Rate</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="detail-card text-center">
+                <i class="fas fa-map-marker-alt text-success mb-3" style="font-size: 2rem;"></i>
+                <h3 class="h4 text-success">{{ session.location_changes if session else '3' }}</h3>
+                <p class="text-muted">Location Changes</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vital Signs Row -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="detail-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="h5 mb-0">
+                        <i class="fas fa-chart-line me-2"></i>Vital Signs Timeline
+                    </h3>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="toggleVital('heart')">Heart Rate</button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="toggleVital('temp')">Temperature</button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="toggleVital('oxygen')">SpO2</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="vitalsChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="row">
+                <div class="col-6 col-lg-12 mb-3">
+                    <div class="vital-card vital-heart">
+                        <div class="vital-icon">
+                            <i class="fas fa-heartbeat"></i>
+                        </div>
+                        <div class="vital-value vital-normal">72</div>
+                        <div class="vital-label">Heart Rate (BPM)</div>
+                    </div>
+                </div>
+                
+                <div class="col-6 col-lg-12 mb-3">
+                    <div class="vital-card vital-temp">
+                        <div class="vital-icon">
+                            <i class="fas fa-thermometer-half"></i>
+                        </div>
+                        <div class="vital-value vital-normal">98.6°F</div>
+                        <div class="vital-label">Temperature</div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-lg-12 mb-3">
+                    <div class="vital-card vital-oxygen">
+                        <div class="vital-icon">
+                            <i class="fas fa-lungs"></i>
+                        </div>
+                        <div class="vital-value vital-normal">98%</div>
+                        <div class="vital-label">Blood Oxygen</div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-lg-12">
+                    <div class="vital-card vital-pressure">
+                        <div class="vital-icon">
+                            <i class="fas fa-tint"></i>
+                        </div>
+                        <div class="vital-value vital-normal">120/80</div>
+                        <div class="vital-label">Blood Pressure</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Events and Location Row -->
+    <div class="row mb-4">
+        <!-- Event Timeline -->
+        <div class="col-lg-6">
+            <div class="detail-card">
+                <h3 class="h5 mb-4">
+                    <i class="fas fa-list-ul me-2"></i>Event Timeline
+                </h3>
+                
+                <div class="timeline-item event-normal">
+                    <div class="timeline-time">2:30 PM</div>
+                    <div class="timeline-content">
+                        <strong>Session Started</strong>
+                        <p class="mb-0 small text-muted">Monitoring session initiated by caregiver</p>
+                    </div>
+                </div>
+
+                <div class="timeline-item event-warning">
+                    <div class="timeline-time">3:15 PM</div>
+                    <div class="timeline-content">
+                        <strong>Heart Rate Elevated</strong>
+                        <p class="mb-0 small text-muted">Heart rate increased to 95 BPM (threshold: 90)</p>
+                    </div>
+                </div>
+
+                <div class="timeline-item event-normal">
+                    <div class="timeline-time">3:45 PM</div>
+                    <div class="timeline-content">
+                        <strong>Location Update</strong>
+                        <p class="mb-0 small text-muted">Moved from Activity Room to Garden Area</p>
+                    </div>
+                </div>
+
+                <div class="timeline-item event-critical">
+                    <div class="timeline-time">4:20 PM</div>
+                    <div class="timeline-content">
+                        <strong>Seizure Alert</strong>
+                        <p class="mb-0 small text-muted">Potential seizure activity detected - immediate response initiated</p>
+                    </div>
+                </div>
+
+                <div class="timeline-item event-normal">
+                    <div class="timeline-time">4:25 PM</div>
+                    <div class="timeline-content">
+                        <strong>Alert Resolved</strong>
+                        <p class="mb-0 small text-muted">Vitals stabilized, false positive confirmed</p>
+                    </div>
+                </div>
+
+                <div class="timeline-item event-normal">
+                    <div class="timeline-time">7:02 PM</div>
+                    <div class="timeline-content">
+                        <strong>Session Ended</strong>
+                        <p class="mb-0 small text-muted">Monitoring session completed successfully</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Location Tracking -->
+        <div class="col-lg-6">
+            <div class="detail-card">
+                <h3 class="h5 mb-4">
+                    <i class="fas fa-map-marked-alt me-2"></i>Location Tracking
+                </h3>
+                
+                <div class="location-map mb-3">
+                    <div class="text-center">
+                        <i class="fas fa-map text-muted mb-2" style="font-size: 2rem;"></i>
+                        <p class="mb-0">Interactive map would be displayed here</p>
+                        <small class="text-muted">Showing movement pattern and safety zones</small>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center p-3 bg-light rounded">
+                            <i class="fas fa-shield-alt text-success mb-2"></i>
+                            <div class="fw-bold">Safe Zones</div>
+                            <div class="text-success">2 Active</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3 bg-light rounded">
+                            <i class="fas fa-exclamation-triangle text-warning mb-2"></i>
+                            <div class="fw-bold">Zone Exits</div>
+                            <div class="text-warning">1 Alert</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions Row -->
+    <div class="row">
+        <div class="col-12">
+            <div class="detail-card">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <h3 class="h5 mb-0">Session Actions</h3>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="action-btn btn-export" onclick="exportSession()">
+                            <i class="fas fa-download me-2"></i>Export Data
+                        </button>
+                        <button class="action-btn btn-share" onclick="shareSession()">
+                            <i class="fas fa-share me-2"></i>Share Report
+                        </button>
+                        {% if not (session and session.end_time) %}
+                        <button class="action-btn btn-emergency" onclick="triggerEmergency()">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Emergency Alert
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Session Detail JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    initializeVitalsChart();
+});
+
+function initializeVitalsChart() {
+    const ctx = document.getElementById('vitalsChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['2:30', '3:00', '3:30', '4:00', '4:30', '5:00', '5:30', '6:00', '6:30', '7:00'],
+            datasets: [{
+                label: 'Heart Rate (BPM)',
+                data: [72, 75, 78, 85, 95, 88, 76, 74, 72, 70],
+                borderColor: '#fc466b',
+                backgroundColor: 'rgba(252, 70, 107, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }, {
+                label: 'Temperature (°F)',
+                data: [98.6, 98.7, 98.8, 99.1, 99.2, 99.0, 98.8, 98.7, 98.6, 98.5],
+                borderColor: '#fa709a',
+                backgroundColor: 'rgba(250, 112, 154, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }, {
+                label: 'SpO2 (%)',
+                data: [98, 98, 97, 96, 95, 96, 97, 98, 98, 99],
+                borderColor: '#11998e',
+                backgroundColor: 'rgba(17, 153, 142, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            }
+        }
+    });
+    
+    window.vitalsChart = chart;
+}
+
+function toggleVital(vitalType) {
+    // Toggle visibility of specific vital sign dataset
+    const chart = window.vitalsChart;
+    const datasets = chart.data.datasets;
+    
+    datasets.forEach((dataset, index) => {
+        if (dataset.label.toLowerCase().includes(vitalType)) {
+            dataset.hidden = !dataset.hidden;
+        }
+    });
+    
+    chart.update();
+}
+
+function exportSession() {
+    showNotification('Session data exported successfully!', 'success');
+}
+
+function shareSession() {
+    showNotification('Session report shared with medical team!', 'info');
+}
+
+function triggerEmergency() {
+    if (confirm('Are you sure you want to trigger an emergency alert?')) {
+        showNotification('Emergency alert sent to all caregivers!', 'warning');
+    }
+}
+
+function showNotification(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

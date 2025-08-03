@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Forgot Password - Safe-Step{% endblock %}
+
+{% block content %}
+<div class="min-vh-100 d-flex align-items-center bg-light">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-lg border-0">
+                    <div class="card-body p-5">
+                        <div class="text-center mb-4">
+                            <div class="mb-3">
+                                <i class="fas fa-key text-primary" style="font-size: 3rem;"></i>
+                            </div>
+                            <h1 class="h3 text-primary mb-3">Forgot Password?</h1>
+                            <p class="text-muted">No worries! Enter your email address and we'll send you a link to reset your password.</p>
+                        </div>
+                        
+                        <form method="POST" class="needs-validation" novalidate>
+                            <div class="mb-4">
+                                <label for="email" class="form-label">Email Address</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-envelope"></i>
+                                    </span>
+                                    <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required>
+                                    <div class="invalid-feedback">
+                                        Please enter a valid email address.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid mb-4">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-paper-plane me-2"></i>Send Reset Link
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div class="text-center">
+                            <p class="text-muted mb-3">Remember your password?</p>
+                            <a href="{{ url_for('login') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Login
+                            </a>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <!-- Help Section -->
+                        <div class="text-center">
+                            <h6 class="text-muted">Need more help?</h6>
+                            <div class="d-flex flex-column gap-2">
+                                <a href="mailto:support@safestep.com" class="text-decoration-none">
+                                    <i class="fas fa-envelope me-2"></i>Email Support
+                                </a>
+                                <a href="tel:+1-800-SAFE-STEP" class="text-decoration-none">
+                                    <i class="fas fa-phone me-2"></i>Call Support
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Instructions Card -->
+                <div class="card mt-4 border-0 bg-light">
+                    <div class="card-body p-4">
+                        <h6 class="card-title">
+                            <i class="fas fa-info-circle me-2 text-info"></i>What happens next?
+                        </h6>
+                        <ol class="mb-0 small text-muted">
+                            <li>We'll send a password reset link to your email</li>
+                            <li>Click the link in the email (check spam folder if needed)</li>
+                            <li>Create a new secure password</li>
+                            <li>Login with your new password</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                } else {
+                    // Show success message
+                    event.preventDefault();
+                    showSuccessMessage();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+function showSuccessMessage() {
+    const email = document.getElementById('email').value;
+    const cardBody = document.querySelector('.card-body');
+    
+    cardBody.innerHTML = `
+        <div class="text-center">
+            <div class="mb-3">
+                <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+            </div>
+            <h3 class="text-success mb-3">Check Your Email!</h3>
+            <p class="text-muted mb-4">
+                We've sent a password reset link to:<br>
+                <strong>${email}</strong>
+            </p>
+            <p class="small text-muted mb-4">
+                Didn't receive the email? Check your spam folder or 
+                <a href="#" onclick="location.reload()">try again</a>.
+            </p>
+            <a href="${window.location.origin}/login" class="btn btn-primary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Login
+            </a>
+        </div>
+    `;
+}
+</script>
+{% endblock %}

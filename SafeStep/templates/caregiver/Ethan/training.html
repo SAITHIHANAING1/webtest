@@ -1,0 +1,696 @@
+{% extends "base.html" %}
+
+{% block title %}Training Library - SAFE-Step{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Training Library Specific Styles */
+.training-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 0 0 25px 25px;
+    position: relative;
+    overflow: hidden;
+}
+
+.training-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='m0 40l40-40h-40v40zm40 0v-40h-40l40 40z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.training-title {
+    font-size: 2.5rem;
+    font-weight: 900;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    position: relative;
+    z-index: 1;
+}
+
+.training-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    height: 100%;
+}
+
+.training-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    transform: scaleX(0);
+    transition: transform 0.4s ease;
+}
+
+.training-card:hover::before {
+    transform: scaleX(1);
+}
+
+.training-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+}
+
+.module-item {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.module-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.module-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    transition: transform 0.3s ease;
+    transform: scaleX(0);
+}
+
+.module-item:hover::before {
+    transform: scaleX(1);
+}
+
+.module-beginner::before { background: linear-gradient(90deg, #48bb78 0%, #38ef7d 100%); }
+.module-intermediate::before { background: linear-gradient(90deg, #ed8936 0%, #fbb040 100%); }
+.module-advanced::before { background: linear-gradient(90deg, #f56565 0%, #fc466b 100%); }
+
+.module-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.module-beginner .module-icon { background: linear-gradient(135deg, #48bb78 0%, #38ef7d 100%); }
+.module-intermediate .module-icon { background: linear-gradient(135deg, #ed8936 0%, #fbb040 100%); }
+.module-advanced .module-icon { background: linear-gradient(135deg, #f56565 0%, #fc466b 100%); }
+
+.difficulty-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.difficulty-beginner {
+    background: rgba(72, 187, 120, 0.1);
+    color: #48bb78;
+}
+
+.difficulty-intermediate {
+    background: rgba(237, 137, 54, 0.1);
+    color: #ed8936;
+}
+
+.difficulty-advanced {
+    background: rgba(245, 101, 101, 0.1);
+    color: #f56565;
+}
+
+.progress-bar-custom {
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    transition: width 0.3s ease;
+}
+
+.completion-status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-completed {
+    background: rgba(72, 187, 120, 0.1);
+    color: #48bb78;
+}
+
+.status-in-progress {
+    background: rgba(237, 137, 54, 0.1);
+    color: #ed8936;
+}
+
+.status-not-started {
+    background: rgba(113, 128, 150, 0.1);
+    color: #718096;
+}
+
+.filter-btn {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.filter-btn.active, .filter-btn:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.search-bar {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 15px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.search-bar:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #667eea;
+}
+
+.stat-label {
+    color: #718096;
+    font-size: 0.9rem;
+}
+
+.achievement-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.achievement-gold {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #8b5a00;
+}
+
+.achievement-silver {
+    background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
+    color: #4a5568;
+}
+
+.achievement-bronze {
+    background: linear-gradient(135deg, #cd7f32 0%, #deb887 100%);
+    color: #553c1e;
+}
+
+.recent-activity {
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: 15px;
+    padding: 1rem;
+    border-left: 4px solid #667eea;
+    margin-bottom: 1rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Training Header -->
+<div class="training-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="training-title mb-2">
+                    <i class="fas fa-graduation-cap me-3"></i>Training Library
+                </h1>
+                <p class="mb-0" style="font-size: 1.1rem; opacity: 0.9; position: relative; z-index: 1;">
+                    Enhance your caregiving skills with our comprehensive training modules
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <button class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#certificateModal">
+                    <i class="fas fa-certificate me-2"></i>My Certificates
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- Progress Overview -->
+    <div class="stats-grid">
+        <div class="stat-item">
+            <div class="stat-number">8</div>
+            <div class="stat-label">Modules Completed</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">3</div>
+            <div class="stat-label">In Progress</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">85%</div>
+            <div class="stat-label">Overall Progress</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">24h</div>
+            <div class="stat-label">Training Hours</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Training Modules -->
+        <div class="col-lg-8">
+            <!-- Search and Filter -->
+            <div class="training-card">
+                <div class="row align-items-center mb-4">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0">
+                                <i class="fas fa-search text-muted"></i>
+                            </span>
+                            <input type="text" class="form-control search-bar border-start-0" placeholder="Search training modules..." id="moduleSearch">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex gap-2 justify-content-md-end justify-content-start">
+                            <button class="filter-btn active" data-filter="all">All</button>
+                            <button class="filter-btn" data-filter="beginner">Beginner</button>
+                            <button class="filter-btn" data-filter="intermediate">Intermediate</button>
+                            <button class="filter-btn" data-filter="advanced">Advanced</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module List -->
+                <div id="modulesList">
+                    <div class="module-item module-beginner" data-difficulty="beginner" onclick="startModule(1)">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <div class="module-icon">
+                                    <i class="fas fa-heart"></i>
+                                </div>
+                            </div>
+                            <div class="col-md-7">
+                                <h6 class="fw-bold mb-2">Seizure First Aid Basics</h6>
+                                <p class="text-muted small mb-2">Learn essential steps for immediate seizure care and emergency response protocols.</p>
+                                <div class="d-flex gap-2 mb-2">
+                                    <span class="difficulty-badge difficulty-beginner">Beginner</span>
+                                    <span class="completion-status status-completed">
+                                        <i class="fas fa-check-circle me-1"></i>Completed
+                                    </span>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>25 minutes
+                                    <span class="mx-2">•</span>
+                                    <i class="fas fa-star me-1"></i>4.9/5 rating
+                                </small>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="progress-bar-custom">
+                                    <div class="progress-fill" style="width: 100%"></div>
+                                </div>
+                                <div class="text-center">
+                                    <small class="text-success fw-bold">100% Complete</small>
+                                </div>
+                                <div class="text-center mt-2">
+                                    <button class="btn btn-outline-success btn-sm">
+                                        <i class="fas fa-certificate me-1"></i>Certificate
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="module-item module-intermediate" data-difficulty="intermediate" onclick="startModule(2)">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <div class="module-icon">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                            </div>
+                            <div class="col-md-7">
+                                <h6 class="fw-bold mb-2">Safety Zone Management</h6>
+                                <p class="text-muted small mb-2">Advanced techniques for setting up and monitoring GPS safety zones effectively.</p>
+                                <div class="d-flex gap-2 mb-2">
+                                    <span class="difficulty-badge difficulty-intermediate">Intermediate</span>
+                                    <span class="completion-status status-in-progress">
+                                        <i class="fas fa-play-circle me-1"></i>In Progress
+                                    </span>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>40 minutes
+                                    <span class="mx-2">•</span>
+                                    <i class="fas fa-star me-1"></i>4.7/5 rating
+                                </small>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="progress-bar-custom">
+                                    <div class="progress-fill" style="width: 60%"></div>
+                                </div>
+                                <div class="text-center">
+                                    <small class="text-warning fw-bold">60% Complete</small>
+                                </div>
+                                <div class="text-center mt-2">
+                                    <button class="btn btn-primary btn-sm">
+                                        <i class="fas fa-play me-1"></i>Continue
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="module-item module-advanced" data-difficulty="advanced" onclick="startModule(3)">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <div class="module-icon">
+                                    <i class="fas fa-brain"></i>
+                                </div>
+                            </div>
+                            <div class="col-md-7">
+                                <h6 class="fw-bold mb-2">Understanding Epilepsy</h6>
+                                <p class="text-muted small mb-2">Comprehensive overview of epilepsy types, triggers, and advanced management strategies.</p>
+                                <div class="d-flex gap-2 mb-2">
+                                    <span class="difficulty-badge difficulty-advanced">Advanced</span>
+                                    <span class="completion-status status-not-started">
+                                        <i class="fas fa-circle me-1"></i>Not Started
+                                    </span>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>60 minutes
+                                    <span class="mx-2">•</span>
+                                    <i class="fas fa-star me-1"></i>4.8/5 rating
+                                </small>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="progress-bar-custom">
+                                    <div class="progress-fill" style="width: 0%"></div>
+                                </div>
+                                <div class="text-center">
+                                    <small class="text-muted fw-bold">0% Complete</small>
+                                </div>
+                                <div class="text-center mt-2">
+                                    <button class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-play me-1"></i>Start
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="module-item module-beginner" data-difficulty="beginner" onclick="startModule(4)">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <div class="module-icon">
+                                    <i class="fas fa-phone"></i>
+                                </div>
+                            </div>
+                            <div class="col-md-7">
+                                <h6 class="fw-bold mb-2">Emergency Response Protocols</h6>
+                                <p class="text-muted small mb-2">Step-by-step emergency procedures and communication protocols for crisis situations.</p>
+                                <div class="d-flex gap-2 mb-2">
+                                    <span class="difficulty-badge difficulty-beginner">Beginner</span>
+                                    <span class="completion-status status-completed">
+                                        <i class="fas fa-check-circle me-1"></i>Completed
+                                    </span>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>30 minutes
+                                    <span class="mx-2">•</span>
+                                    <i class="fas fa-star me-1"></i>4.6/5 rating
+                                </small>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="progress-bar-custom">
+                                    <div class="progress-fill" style="width: 100%"></div>
+                                </div>
+                                <div class="text-center">
+                                    <small class="text-success fw-bold">100% Complete</small>
+                                </div>
+                                <div class="text-center mt-2">
+                                    <button class="btn btn-outline-secondary btn-sm">
+                                        <i class="fas fa-redo me-1"></i>Retake
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Achievements -->
+            <div class="training-card">
+                <h3 class="h5 mb-4">
+                    <i class="fas fa-trophy me-2"></i>Your Achievements
+                </h3>
+                
+                <div class="text-center mb-3">
+                    <div class="achievement-badge achievement-gold">
+                        <i class="fas fa-star me-1"></i>First Aid Expert
+                    </div>
+                </div>
+                
+                <div class="text-center mb-3">
+                    <div class="achievement-badge achievement-silver">
+                        <i class="fas fa-graduation-cap me-1"></i>Quick Learner
+                    </div>
+                </div>
+                
+                <div class="text-center mb-3">
+                    <div class="achievement-badge achievement-bronze">
+                        <i class="fas fa-clock me-1"></i>Consistent Student
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <small class="text-muted">3 achievements earned • 2 more to unlock</small>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="training-card">
+                <h3 class="h5 mb-4">
+                    <i class="fas fa-clock me-2"></i>Recent Activity
+                </h3>
+                
+                <div class="recent-activity">
+                    <div class="fw-medium">Completed Quiz</div>
+                    <div class="text-muted small">Seizure First Aid - Scored 95%</div>
+                    <div class="text-muted small">2 hours ago</div>
+                </div>
+                
+                <div class="recent-activity">
+                    <div class="fw-medium">Started Module</div>
+                    <div class="text-muted small">Safety Zone Management</div>
+                    <div class="text-muted small">Yesterday</div>
+                </div>
+                
+                <div class="recent-activity">
+                    <div class="fw-medium">Earned Certificate</div>
+                    <div class="text-muted small">Emergency Response Protocols</div>
+                    <div class="text-muted small">3 days ago</div>
+                </div>
+            </div>
+
+            <!-- Recommended -->
+            <div class="training-card">
+                <h3 class="h5 mb-4">
+                    <i class="fas fa-lightbulb me-2"></i>Recommended for You
+                </h3>
+                
+                <div class="d-flex align-items-center mb-3">
+                    <div class="module-icon me-3" style="width: 40px; height: 40px; font-size: 1rem;">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">Team Communication</h6>
+                        <small class="text-muted">25 minutes • Beginner</small>
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-center mb-3">
+                    <div class="module-icon me-3" style="width: 40px; height: 40px; font-size: 1rem;">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">Documentation Best Practices</h6>
+                        <small class="text-muted">35 minutes • Intermediate</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Certificate Modal -->
+<div class="modal fade" id="certificateModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-certificate me-2"></i>My Certificates
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-certificate text-warning mb-3" style="font-size: 3rem;"></i>
+                                <h6>Seizure First Aid Basics</h6>
+                                <p class="text-muted small">Completed: Jan 15, 2024</p>
+                                <button class="btn btn-primary btn-sm">Download PDF</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-certificate text-warning mb-3" style="font-size: 3rem;"></i>
+                                <h6>Emergency Response</h6>
+                                <p class="text-muted small">Completed: Jan 12, 2024</p>
+                                <button class="btn btn-primary btn-sm">Download PDF</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Training Library JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // Search functionality
+    document.getElementById('moduleSearch').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const moduleItems = document.querySelectorAll('.module-item');
+        
+        moduleItems.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            if (text.includes(searchTerm)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+    
+    // Filter functionality
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const filter = this.dataset.filter;
+            const moduleItems = document.querySelectorAll('.module-item');
+            
+            moduleItems.forEach(item => {
+                if (filter === 'all') {
+                    item.style.display = 'block';
+                } else {
+                    if (item.dataset.difficulty === filter) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                }
+            });
+        });
+    });
+});
+
+function startModule(moduleId) {
+    showNotification(`Starting training module ${moduleId}`, 'info');
+    // In a real app, this would navigate to the module content
+}
+
+function showNotification(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}
