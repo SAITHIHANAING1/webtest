@@ -21,5 +21,11 @@ bcrypt==4.0.1
 # HTTP Requests (required by supabase)
 requests==2.31.0
 
+# AI and Machine Learning
+google-generativeai==0.3.2
+
+# PDF Generation (for analytics export)
+weasyprint==60.2
+
 # Production Server
 gunicorn==21.2.0

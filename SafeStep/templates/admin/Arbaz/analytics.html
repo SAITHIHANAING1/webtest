@@ -1,750 +1,1144 @@
 {% extends "base.html" %}
 
-{% block title %}Analytics Dashboard - SAFE-Step Admin{% endblock %}
+{% block title %}Analytics & Reports - SafeStep{% endblock %}
 
 {% block extra_css %}
 <style>
-/* Analytics Specific Styles */
-.admin-header {
-    background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
-    color: white;
-    padding: 2rem 0;
-    margin-bottom: 2rem;
-    border-radius: 0 0 25px 25px;
-    position: relative;
-    overflow: hidden;
-}
+    /* Enhanced Analytics Dashboard Styles */
+    .analytics-container {
+        padding: 20px 30px;
+        background-color: #f8f9fa;
+        min-height: 100vh;
+    }
 
-.admin-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='m0 40l40-40h-40v40zm40 0v-40h-40l40 40z'/%3E%3C/g%3E%3C/svg%3E");
-}
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
 
-.admin-title {
-    font-size: 2.5rem;
-    font-weight: 900;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    position: relative;
-    z-index: 1;
-}
+    .page-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #333;
+        margin: 0;
+    }
 
-.analytics-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    border-radius: 20px;
-    padding: 2rem;
-    border: 1px solid rgba(0,0,0,0.05);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 2rem;
-    height: 100%;
-}
+    .header-buttons {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
 
-.analytics-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #fc466b 0%, #3f5efb 100%);
-    transform: scaleX(0);
-    transition: transform 0.4s ease;
-}
+    .btn-primary {
+        background-color: #4285f4;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: background-color 0.2s;
+        text-decoration: none;
+    }
 
-.analytics-card:hover::before {
-    transform: scaleX(1);
-}
+    .btn-primary:hover {
+        background-color: #3367d6;
+        color: white;
+        text-decoration: none;
+    }
 
-.analytics-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-}
+    .btn-success {
+        background-color: #0f9d58;
+        border-color: #0f9d58;
+    }
 
-.metric-card {
-    background: white;
-    border-radius: 15px;
-    padding: 1.5rem;
-    border: 1px solid rgba(0,0,0,0.05);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-    transition: all 0.3s ease;
-    height: 100%;
-    position: relative;
-    overflow: hidden;
-}
+    .btn-success:hover {
+        background-color: #0d8043;
+    }
 
-.metric-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-}
+    .data-source-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-left: 15px;
+    }
 
-.metric-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    transition: transform 0.3s ease;
-    transform: scaleX(0);
-}
+    .filters-section {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
 
-.metric-card:hover::before {
-    transform: scaleX(1);
-}
+    .filters-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
 
-.metric-users::before { background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%); }
-.metric-sessions::before { background: linear-gradient(90deg, #fc466b 0%, #3f5efb 100%); }
-.metric-alerts::before { background: linear-gradient(90deg, #fa709a 0%, #fee140 100%); }
-.metric-response::before { background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); }
+    .filters-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        align-items: end;
+    }
 
-.metric-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-}
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
 
-.metric-icon-users { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
-.metric-icon-sessions { background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%); }
-.metric-icon-alerts { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-.metric-icon-response { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .filter-label {
+        font-size: 13px;
+        color: #666;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
 
-.metric-number {
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: #2d3748;
-    margin-bottom: 0.5rem;
-}
+    .filter-select,
+    .filter-input {
+        padding: 12px 16px;
+        border: 2px solid #e1e5e9;
+        border-radius: 8px;
+        font-size: 14px;
+        background-color: #fff;
+        transition: border-color 0.2s;
+    }
 
-.metric-label {
-    color: #718096;
-    font-weight: 500;
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
-}
+    .filter-select:focus,
+    .filter-input:focus {
+        outline: none;
+        border-color: #4285f4;
+    }
 
-.metric-change {
-    font-size: 0.8rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
+    .analyze-btn {
+        background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 20px;
+        transition: transform 0.2s;
+    }
 
-.metric-change.positive { color: #48bb78; }
-.metric-change.negative { color: #f56565; }
+    .analyze-btn:hover {
+        transform: translateY(-2px);
+    }
 
-.chart-container {
-    position: relative;
-    height: 350px;
-    background: white;
-    border-radius: 15px;
-    padding: 1.5rem;
-}
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
+    }
 
-.time-filter {
-    background: white;
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 0.5rem 1rem;
-    transition: all 0.3s ease;
-    margin-right: 0.5rem;
-    margin-bottom: 0.5rem;
-}
+    .metric-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.2s;
+    }
 
-.time-filter.active, .time-filter:hover {
-    background: #fc466b;
-    color: white;
-    border-color: #fc466b;
-}
+    .metric-card:hover {
+        transform: translateY(-2px);
+    }
 
-.insights-item {
-    padding: 1rem;
-    border-left: 4px solid transparent;
-    border-radius: 0 8px 8px 0;
-    margin-bottom: 1rem;
-    background: rgba(252, 70, 107, 0.02);
-    border-left-color: #fc466b;
-}
+    .metric-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #4285f4, #34a853, #ea4335, #fbbc04);
+    }
 
-.insights-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1rem;
-}
+    .metric-value {
+        font-size: 36px;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
 
-.heatmap {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 3px;
-    margin: 1rem 0;
-}
+    .metric-icon {
+        font-size: 24px;
+        opacity: 0.7;
+    }
 
-.heatmap-cell {
-    aspect-ratio: 1;
-    border-radius: 3px;
-    background: #e2e8f0;
-    transition: background-color 0.3s ease;
-}
+    .metric-label {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 12px;
+        font-weight: 500;
+    }
 
-.heatmap-cell.intensity-1 { background: rgba(252, 70, 107, 0.2); }
-.heatmap-cell.intensity-2 { background: rgba(252, 70, 107, 0.4); }
-.heatmap-cell.intensity-3 { background: rgba(252, 70, 107, 0.6); }
-.heatmap-cell.intensity-4 { background: rgba(252, 70, 107, 0.8); }
-.heatmap-cell.intensity-5 { background: #fc466b; }
+    .metric-change {
+        font-size: 13px;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 12px;
+        display: inline-block;
+    }
 
-.alert-summary {
-    background: linear-gradient(135deg, rgba(252, 70, 107, 0.1) 0%, rgba(63, 94, 251, 0.1) 100%);
-    border-radius: 15px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-}
+    .metric-change.positive {
+        background: #e8f5e8;
+        color: #0f9d58;
+    }
 
-.alert-type {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid rgba(0,0,0,0.1);
-}
+    .metric-change.negative {
+        background: #ffebee;
+        color: #d32f2f;
+    }
 
-.alert-type:last-child {
-    border-bottom: none;
-}
+    .metric-change.neutral {
+        background: #f5f5f5;
+        color: #666;
+    }
 
-.alert-badge {
-    padding: 0.25rem 0.75rem;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
-}
+    .charts-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+        margin-bottom: 30px;
+    }
 
-.alert-critical {
-    background: rgba(245, 101, 101, 0.1);
-    color: #f56565;
-}
+    .chart-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        position: relative;
+    }
 
-.alert-warning {
-    background: rgba(237, 137, 54, 0.1);
-    color: #ed8936;
-}
+    .chart-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
 
-.alert-info {
-    background: rgba(102, 126, 234, 0.1);
-    color: #667eea;
-}
+    .chart-subtitle {
+        font-size: 13px;
+        color: #666;
+        margin-top: 4px;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .prediction-section {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+    }
+
+    .prediction-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .prediction-filters {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        align-items: end;
+    }
+
+    .date-input {
+        padding: 10px 14px;
+        border: 2px solid #e1e5e9;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+
+    .prediction-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+
+    .prediction-table th {
+        background: #f8f9fa;
+        padding: 15px 12px;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 600;
+        color: #666;
+        border-bottom: 2px solid #eee;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .prediction-table td {
+        padding: 15px 12px;
+        border-bottom: 1px solid #eee;
+        font-size: 14px;
+    }
+
+    .prediction-table tr:hover {
+        background: #f8f9fa;
+    }
+
+    .risk-score {
+        font-weight: 700;
+        color: #333;
+    }
+
+    .risk-high {
+        color: #d32f2f;
+    }
+
+    .risk-medium {
+        color: #f57c00;
+    }
+
+    .risk-low {
+        color: #388e3c;
+    }
+
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-completed {
+        background: #e8f5e8;
+        color: #0f9d58;
+    }
+
+    .status-pending {
+        background: #fff3e0;
+        color: #f57c00;
+    }
+
+    .status-running {
+        background: #e3f2fd;
+        color: #1976d2;
+    }
+
+    .table-actions {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .filter-btn,
+    .export-table-btn {
+        background: #f8f9fa;
+        border: 2px solid #e1e5e9;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: background-color 0.2s;
+    }
+
+    .filter-btn:hover,
+    .export-table-btn:hover {
+        background: #e9ecef;
+    }
+
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 40px;
+        color: #666;
+    }
+
+    .loading-spinner.active {
+        display: block;
+    }
+
+    .data-sources {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+
+    .data-sources h3 {
+        margin: 0 0 15px 0;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .data-sources-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 15px;
+        font-size: 13px;
+        opacity: 0.9;
+    }
+
+    .data-source-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 12px;
+        border-radius: 8px;
+        backdrop-filter: blur(10px);
+    }
+
+    .data-source-item strong {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .filter-status {
+        font-size: 12px;
+        color: #4285f4;
+        font-weight: 500;
+        margin-left: auto;
+        padding: 4px 12px;
+        background: rgba(66, 133, 244, 0.1);
+        border-radius: 12px;
+        border: 1px solid rgba(66, 133, 244, 0.2);
+    }
+
+    .filter-status:empty {
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        .charts-section {
+            grid-template-columns: 1fr;
+        }
+
+        .filters-row {
+            grid-template-columns: 1fr;
+        }
+
+        .metrics-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .header-buttons {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Admin Header -->
-<div class="admin-header">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <h1 class="admin-title mb-2">
-                    <i class="fas fa-chart-bar me-3"></i>Analytics Dashboard
-                </h1>
-                <p class="mb-0" style="font-size: 1.1rem; opacity: 0.9; position: relative; z-index: 1;">
-                    Comprehensive insights and system performance metrics
-                </p>
-            </div>
-            <div class="col-md-4 text-md-end">
-                <div class="d-flex gap-2 justify-content-md-end">
-                    <button class="btn btn-light" onclick="exportReport()">
-                        <i class="fas fa-download me-2"></i>Export
-                    </button>
-                    <button class="btn btn-outline-light" onclick="refreshData()">
-                        <i class="fas fa-sync-alt me-2"></i>Refresh
-                    </button>
-                </div>
-            </div>
+<div class="analytics-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Analytics & Reports</h1>
+            <span class="data-source-badge">Based on Real Research Data</span>
+        </div>
+        <div class="header-buttons">
+            <button class="btn-primary btn-success" onclick="runPredictionEngine()">
+                <i class="fas fa-brain"></i>
+                Run AI Analysis
+            </button>
+            <button class="btn-primary" onclick="exportReport()">
+                <i class="fas fa-download"></i>
+                Export to PDF
+            </button>
         </div>
     </div>
-</div>
 
-<div class="container-fluid">
-    <!-- Key Metrics Row -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="metric-card metric-users">
-                <div class="d-flex align-items-start justify-content-between">
-                    <div>
-                        <div class="metric-icon metric-icon-users">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="metric-number">2,486</div>
-                        <div class="metric-label">Active Users</div>
-                        <div class="metric-change positive">
-                            <i class="fas fa-arrow-up"></i>
-                            <span>+12.5% vs last month</span>
-                        </div>
-                    </div>
-                </div>
+    <!-- Real Data Sources -->
+    <div class="data-sources">
+        <h3><i class="fas fa-database"></i> Real Research Dataset Sources</h3>
+        <div class="data-sources-list">
+            <div class="data-source-item">
+                <strong>Nature Scientific Data (2025)</strong>
+                EEG dataset: 84 patients, 2,516 seizure epochs, spatial distribution analysis
             </div>
-        </div>
-        
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="metric-card metric-sessions">
-                <div class="d-flex align-items-start justify-content-between">
-                    <div>
-                        <div class="metric-icon metric-icon-sessions">
-                            <i class="fas fa-heartbeat"></i>
-                        </div>
-                        <div class="metric-number">15,247</div>
-                        <div class="metric-label">Monitoring Sessions</div>
-                        <div class="metric-change positive">
-                            <i class="fas fa-arrow-up"></i>
-                            <span>+8.3% vs last month</span>
-                        </div>
-                    </div>
-                </div>
+            <div class="data-source-item">
+                <strong>Nature Scientific Data (2025)</strong>
+                Multi-site LFP activity: 15 subjects, 717 seizures, temporal lobe epilepsy
             </div>
-        </div>
-        
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="metric-card metric-alerts">
-                <div class="d-flex align-items-start justify-content-between">
-                    <div>
-                        <div class="metric-icon metric-icon-alerts">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </div>
-                        <div class="metric-number">847</div>
-                        <div class="metric-label">Alert Events</div>
-                        <div class="metric-change negative">
-                            <i class="fas fa-arrow-down"></i>
-                            <span>-5.2% vs last month</span>
-                        </div>
-                    </div>
-                </div>
+            <div class="data-source-item">
+                <strong>SzCORE Challenge (2025)</strong>
+                Seizure detection: 65 subjects, 4,360 hours continuous EEG
             </div>
-        </div>
-        
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="metric-card metric-response">
-                <div class="d-flex align-items-start justify-content-between">
-                    <div>
-                        <div class="metric-icon metric-icon-response">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="metric-number">2.3m</div>
-                        <div class="metric-label">Avg Response Time</div>
-                        <div class="metric-change positive">
-                            <i class="fas fa-arrow-down"></i>
-                            <span>-15% vs last month</span>
-                        </div>
-                    </div>
-                </div>
+            <div class="data-source-item">
+                <strong>Mesoscale Epileptic Networks</strong>
+                Intracranial dataset: 5 patients, multimodal recordings
             </div>
         </div>
     </div>
 
-    <!-- Charts Row -->
-    <div class="row mb-4">
-        <!-- Usage Trends -->
-        <div class="col-lg-8 mb-4">
-            <div class="analytics-card">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h3 class="h5 mb-0">
-                        <i class="fas fa-chart-line me-2 text-primary"></i>System Usage Trends
-                    </h3>
-                    <div class="d-flex gap-2">
-                        <button class="time-filter active" data-period="7d">7 Days</button>
-                        <button class="time-filter" data-period="30d">30 Days</button>
-                        <button class="time-filter" data-period="90d">90 Days</button>
-                        <button class="time-filter" data-period="1y">1 Year</button>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <canvas id="usageTrendsChart"></canvas>
-                </div>
-            </div>
+    <!-- Filters Section -->
+    <div class="filters-section">
+        <div class="filters-title">
+            <i class="fas fa-filter"></i>
+            Advanced Analytics Filters
+            <div id="filterStatus" class="filter-status"></div>
         </div>
-
-        <!-- Alert Distribution -->
-        <div class="col-lg-4 mb-4">
-            <div class="analytics-card">
-                <h3 class="h5 mb-4">
-                    <i class="fas fa-exclamation-circle me-2 text-danger"></i>Alert Distribution
-                </h3>
-                <div class="chart-container">
-                    <canvas id="alertDistributionChart"></canvas>
-                </div>
-                <div class="mt-3">
-                    <div class="alert-type">
-                        <span>Seizure Detected</span>
-                        <span class="alert-badge alert-critical">342</span>
-                    </div>
-                    <div class="alert-type">
-                        <span>Zone Breach</span>
-                        <span class="alert-badge alert-warning">156</span>
-                    </div>
-                    <div class="alert-type">
-                        <span>Device Offline</span>
-                        <span class="alert-badge alert-info">89</span>
-                    </div>
-                    <div class="alert-type">
-                        <span>Low Battery</span>
-                        <span class="alert-badge alert-warning">67</span>
-                    </div>
-                </div>
+        <div class="filters-row">
+            <div class="filter-group">
+                <label class="filter-label">Date Range</label>
+                <select id="dateRange" class="filter-select">
+                    <option value="7">Last 7 days</option>
+                    <option value="30" selected>Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                    <option value="365">Last year</option>
+                </select>
             </div>
-        </div>
-    </div>
-
-    <!-- Detailed Analytics Row -->
-    <div class="row mb-4">
-        <!-- Geographic Heat Map -->
-        <div class="col-lg-6 mb-4">
-            <div class="analytics-card">
-                <h3 class="h5 mb-4">
-                    <i class="fas fa-map me-2 text-success"></i>Activity Heat Map
-                </h3>
-                <div class="d-flex justify-content-between mb-3">
-                    <span class="small text-muted">Less Active</span>
-                    <span class="small text-muted">More Active</span>
-                </div>
-                <div class="heatmap" id="activityHeatmap">
-                    <!-- Heatmap cells will be generated by JavaScript -->
-                </div>
-                <div class="text-center mt-3">
-                    <small class="text-muted">Last 7 days activity pattern</small>
-                </div>
+            <div class="filter-group">
+                <label class="filter-label">Patient Filter</label>
+                <select id="pwidFilter" class="filter-select">
+                    <option value="">All Patients</option>
+                    <option value="high-risk">High Risk Only</option>
+                    <option value="recent-incidents">Recent Incidents</option>
+                </select>
             </div>
-        </div>
-
-        <!-- System Performance -->
-        <div class="col-lg-6 mb-4">
-            <div class="analytics-card">
-                <h3 class="h5 mb-4">
-                    <i class="fas fa-server me-2 text-info"></i>System Performance
-                </h3>
-                <div class="chart-container">
-                    <canvas id="performanceChart"></canvas>
-                </div>
+            <div class="filter-group">
+                <label class="filter-label">Location</label>
+                <select id="locationFilter" class="filter-select">
+                    <option value="">All Locations</option>
+                    <option value="home">Home</option>
+                    <option value="hospital">Hospital</option>
+                    <option value="public">Public</option>
+                    <option value="work">Work</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Incident Type</label>
+                <select id="incidentType" class="filter-select">
+                    <option value="">All Incidents</option>
+                    <option value="seizure">Seizures Only</option>
+                    <option value="fall">Falls</option>
+                    <option value="medication">Medication Issues</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <button class="analyze-btn" onclick="applyFilters()">
+                    <i class="fas fa-chart-line"></i>
+                    Analyze Data
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Insights and Reports Row -->
-    <div class="row">
-        <!-- AI Insights -->
-        <div class="col-lg-8 mb-4">
-            <div class="analytics-card">
-                <h3 class="h5 mb-4">
-                    <i class="fas fa-lightbulb me-2 text-warning"></i>AI-Powered Insights
-                </h3>
-                
-                <div class="insights-item">
-                    <div class="d-flex align-items-start gap-3">
-                        <div class="insights-icon">
-                            <i class="fas fa-trend-up"></i>
-                        </div>
-                        <div>
-                            <h6 class="fw-bold mb-1">Seizure Activity Increased</h6>
-                            <p class="text-muted mb-1">There's been a 15% increase in seizure events between 2-4 PM across all users. Consider reviewing medication schedules.</p>
-                            <small class="text-muted">Confidence: 89% • Impact: High • Action Required</small>
-                        </div>
-                    </div>
-                </div>
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loadingSpinner">
+        <i class="fas fa-spinner fa-spin fa-2x"></i>
+        <p>Analyzing data...</p>
+    </div>
 
-                <div class="insights-item">
-                    <div class="d-flex align-items-start gap-3">
-                        <div class="insights-icon">
-                            <i class="fas fa-map-marked-alt"></i>
-                        </div>
-                        <div>
-                            <h6 class="fw-bold mb-1">Safety Zone Optimization</h6>
-                            <p class="text-muted mb-1">Several users frequently exit their safety zones at the same locations. Consider expanding zone boundaries at these hotspots.</p>
-                            <small class="text-muted">Confidence: 76% • Impact: Medium • Suggested Action</small>
-                        </div>
-                    </div>
-                </div>
+    <!-- KPI Metrics -->
+    <div class="metrics-grid" id="metricsGrid">
+        <div class="metric-card">
+            <div class="metric-value">
+                <span class="metric-icon">🏥</span>
+                <span id="totalIncidents">-</span>
+            </div>
+            <div class="metric-label">Total Incidents</div>
+            <div class="metric-change positive" id="incidentsChange">Loading...</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">
+                <span class="metric-icon">⚡</span>
+                <span id="seizureCount">-</span>
+            </div>
+            <div class="metric-label">Seizure Events</div>
+            <div class="metric-change neutral" id="seizureChange">Loading...</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">
+                <span class="metric-icon">⏱️</span>
+                <span id="avgResponseTime">-</span>
+            </div>
+            <div class="metric-label">Avg. Response Time</div>
+            <div class="metric-change positive" id="responseTimeChange">Loading...</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">
+                <span class="metric-icon">⚠️</span>
+                <span id="highRiskCases">-</span>
+            </div>
+            <div class="metric-label">High-Risk Cases</div>
+            <div class="metric-change negative" id="riskCasesChange">Loading...</div>
+        </div>
+    </div>
 
-                <div class="insights-item">
-                    <div class="d-flex align-items-start gap-3">
-                        <div class="insights-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div>
-                            <h6 class="fw-bold mb-1">Caregiver Response Time</h6>
-                            <p class="text-muted mb-1">Average response time has improved by 23% this month. The new training modules appear to be effective.</p>
-                            <small class="text-muted">Confidence: 94% • Impact: High • Positive Trend</small>
-                        </div>
-                    </div>
+    <!-- Charts Section -->
+    <div class="charts-section">
+        <div class="chart-card">
+            <div class="chart-title">
+                <div>
+                    <div>Seizure Risk Trends</div>
+                    <div class="chart-subtitle">AI-powered risk analysis over time</div>
                 </div>
+                <i class="fas fa-brain"></i>
+            </div>
+            <div class="chart-container" id="riskTrendChart">
+                <canvas id="riskCanvas" width="400" height="250"></canvas>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title">
+                <div>
+                    <div>Incidents by Location</div>
+                    <div class="chart-subtitle">Distribution analysis</div>
+                </div>
+                <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <div class="chart-container" id="locationChart">
+                <canvas id="locationCanvas" width="400" height="250"></canvas>
+            </div>
+        </div>
+    </div>
 
-                <div class="insights-item">
-                    <div class="d-flex align-items-start gap-3">
-                        <div class="insights-icon">
-                            <i class="fas fa-battery-quarter"></i>
-                        </div>
-                        <div>
-                            <h6 class="fw-bold mb-1">Device Battery Patterns</h6>
-                            <p class="text-muted mb-1">Device batteries tend to drain faster during high-activity periods. Consider power-saving mode recommendations.</p>
-                            <small class="text-muted">Confidence: 82% • Impact: Low • Monitor</small>
-                        </div>
-                    </div>
-                </div>
+    <!-- AI Prediction Results -->
+    <div class="prediction-section">
+        <div class="prediction-title">
+            <i class="fas fa-robot"></i>
+            AI Prediction Engine Results
+        </div>
+
+        <div class="prediction-filters">
+            <div class="filter-group">
+                <label class="filter-label">Analysis Date</label>
+                <input type="date" id="analysisDate" class="date-input" value="">
+            </div>
+            <div class="table-actions">
+                <button class="filter-btn" onclick="refreshPredictions()">
+                    <i class="fas fa-sync"></i>
+                    Refresh
+                </button>
+                <button class="export-table-btn" onclick="exportPredictions()">
+                    <i class="fas fa-file-excel"></i>
+                    Export
+                </button>
             </div>
         </div>
 
-        <!-- Quick Stats -->
-        <div class="col-lg-4 mb-4">
-            <div class="analytics-card">
-                <h3 class="h5 mb-4">
-                    <i class="fas fa-tachometer-alt me-2"></i>Quick Statistics
-                </h3>
-                
-                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                    <span class="fw-medium">System Uptime</span>
-                    <span class="text-success fw-bold">99.8%</span>
-                </div>
-                
-                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                    <span class="fw-medium">Avg Session Duration</span>
-                    <span class="text-info fw-bold">4.2 hours</span>
-                </div>
-                
-                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                    <span class="fw-medium">False Positive Rate</span>
-                    <span class="text-warning fw-bold">2.1%</span>
-                </div>
-                
-                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                    <span class="fw-medium">User Satisfaction</span>
-                    <span class="text-success fw-bold">4.7/5</span>
-                </div>
-                
-                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                    <span class="fw-medium">Training Completion</span>
-                    <span class="text-info fw-bold">87%</span>
-                </div>
-                
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="fw-medium">API Response Time</span>
-                    <span class="text-success fw-bold">145ms</span>
-                </div>
-            </div>
-
-            <!-- Alert Summary -->
-            <div class="analytics-card">
-                <h3 class="h5 mb-4">
-                    <i class="fas fa-bell me-2"></i>Recent Alerts
-                </h3>
-                
-                <div class="alert-summary">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="fw-medium text-danger">Critical Alerts</span>
-                        <span class="badge bg-danger">3</span>
-                    </div>
-                    <small class="text-muted">2 seizure events, 1 system failure</small>
-                </div>
-                
-                <div class="alert-summary">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="fw-medium text-warning">Warning Alerts</span>
-                        <span class="badge bg-warning">12</span>
-                    </div>
-                    <small class="text-muted">8 zone breaches, 4 low battery</small>
-                </div>
-                
-                <div class="alert-summary">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="fw-medium text-info">Info Alerts</span>
-                        <span class="badge bg-info">28</span>
-                    </div>
-                    <small class="text-muted">System updates, user registrations</small>
-                </div>
-            </div>
-        </div>
+        <table class="prediction-table" id="predictionTable">
+            <thead>
+                <tr>
+                    <th>Patient ID</th>
+                    <th>Risk Level</th>
+                    <th>Risk Score</th>
+                    <th>Recent Seizures</th>
+                    <th>Last Update</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="predictionTableBody">
+                <!-- Will be populated by JavaScript -->
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Analytics Dashboard JavaScript
-document.addEventListener('DOMContentLoaded', function() {
-    initializeCharts();
-    generateHeatmap();
-    
-    // Time filter functionality
-    document.querySelectorAll('.time-filter').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.time-filter').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            updateCharts(this.dataset.period);
-        });
-    });
-});
-
-function initializeCharts() {
-    // Usage Trends Chart
-    const usageCtx = document.getElementById('usageTrendsChart').getContext('2d');
-    new Chart(usageCtx, {
-        type: 'line',
-        data: {
-            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-            datasets: [{
-                label: 'Active Users',
-                data: [2100, 2300, 2400, 2200, 2600, 2400, 2100],
-                borderColor: '#fc466b',
-                backgroundColor: 'rgba(252, 70, 107, 0.1)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4
-            }, {
-                label: 'Monitoring Sessions',
-                data: [1800, 2100, 2200, 1900, 2300, 2100, 1800],
-                borderColor: '#3f5efb',
-                backgroundColor: 'rgba(63, 94, 251, 0.1)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'top'
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
+    document.addEventListener('DOMContentLoaded', function () {
+        initializeAnalytics();
+        loadMetrics();
+        createRiskTrendChart();
+        createLocationChart();
+        loadPredictionResults();
+        setDefaultDate();
     });
 
-    // Alert Distribution Chart
-    const alertCtx = document.getElementById('alertDistributionChart').getContext('2d');
-    new Chart(alertCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Seizure Detected', 'Zone Breach', 'Device Offline', 'Low Battery'],
-            datasets: [{
-                data: [342, 156, 89, 67],
-                backgroundColor: ['#f56565', '#ed8936', '#667eea', '#fbb040'],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            }
-        }
-    });
-
-    // Performance Chart
-    const perfCtx = document.getElementById('performanceChart').getContext('2d');
-    new Chart(perfCtx, {
-        type: 'bar',
-        data: {
-            labels: ['CPU Usage', 'Memory', 'Network', 'Storage', 'Response Time'],
-            datasets: [{
-                label: 'Performance %',
-                data: [65, 78, 45, 82, 92],
-                backgroundColor: [
-                    'rgba(252, 70, 107, 0.8)',
-                    'rgba(63, 94, 251, 0.8)',
-                    'rgba(72, 187, 120, 0.8)',
-                    'rgba(237, 137, 54, 0.8)',
-                    'rgba(102, 126, 234, 0.8)'
-                ],
-                borderWidth: 0,
-                borderRadius: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100
-                }
-            }
-        }
-    });
-}
-
-function generateHeatmap() {
-    const heatmapContainer = document.getElementById('activityHeatmap');
-    const days = 49; // 7x7 grid for week pattern
-    
-    for (let i = 0; i < days; i++) {
-        const cell = document.createElement('div');
-        cell.className = 'heatmap-cell';
-        
-        // Random intensity for demo
-        const intensity = Math.floor(Math.random() * 6);
-        if (intensity > 0) {
-            cell.classList.add(`intensity-${intensity}`);
-        }
-        
-        heatmapContainer.appendChild(cell);
+    function setDefaultDate() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('analysisDate').value = today;
     }
-}
 
-function updateCharts(period) {
-    showNotification(`Charts updated for ${period} period`, 'info');
-}
+    function initializeAnalytics() {
+        // Set up event listeners
+        document.getElementById('dateRange').addEventListener('change', applyFilters);
+        document.getElementById('pwidFilter').addEventListener('change', applyFilters);
+        document.getElementById('locationFilter').addEventListener('change', applyFilters);
+        document.getElementById('incidentType').addEventListener('change', applyFilters);
+    }
 
-function exportReport() {
-    showNotification('Analytics report exported successfully!', 'success');
-}
+    async function loadMetrics() {
+        try {
+            const filters = getCurrentFilters();
+            const queryParams = new URLSearchParams(filters).toString();
+            const response = await fetch(`/api/analytics/metrics?${queryParams}`);
+            const data = await response.json();
 
-function refreshData() {
-    showNotification('Data refreshed successfully!', 'success');
-}
+            if (data.success) {
+                document.getElementById('totalIncidents').textContent = data.total_incidents || 0;
+                document.getElementById('seizureCount').textContent = data.seizure_count || 0;
+                document.getElementById('avgResponseTime').textContent = data.avg_response_time || '0m';
+                document.getElementById('highRiskCases').textContent = data.high_risk_cases || 0;
 
-function showNotification(message, type) {
-    const toast = document.createElement('div');
-    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    toast.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        if (toast.parentNode) {
-            toast.remove();
+                // Update change indicators
+                updateChangeIndicator('incidentsChange', data.incidents_change || '0%');
+                updateChangeIndicator('seizureChange', data.seizure_change || '0%');
+                updateChangeIndicator('responseTimeChange', data.response_time_change || '0%');
+                updateChangeIndicator('riskCasesChange', data.risk_cases_change || '0%');
+            }
+        } catch (error) {
+            console.error('Error loading metrics:', error);
         }
-    }, 5000);
-}
+    }
+
+    function getCurrentFilters() {
+        return {
+            dateRange: document.getElementById('dateRange').value,
+            pwidFilter: document.getElementById('pwidFilter').value,
+            locationFilter: document.getElementById('locationFilter').value,
+            incidentType: document.getElementById('incidentType').value
+        };
+    }
+
+    function updateChangeIndicator(elementId, changeText) {
+        const element = document.getElementById(elementId);
+        element.textContent = changeText;
+
+        if (changeText.includes('+') || changeText.includes('increase')) {
+            element.className = 'metric-change positive';
+        } else if (changeText.includes('-') || changeText.includes('decrease')) {
+            element.className = 'metric-change negative';
+        } else {
+            element.className = 'metric-change neutral';
+        }
+    }
+
+    let riskChart = null;
+    let locationChart = null;
+
+    async function createRiskTrendChart() {
+        const ctx = document.getElementById('riskCanvas').getContext('2d');
+
+        try {
+            const filters = getCurrentFilters();
+            const queryParams = new URLSearchParams(filters).toString();
+            const response = await fetch(`/api/analytics/seizure-trends?${queryParams}`);
+            const data = await response.json();
+
+            if (data.success) {
+                // Destroy existing chart if it exists
+                if (riskChart) {
+                    riskChart.destroy();
+                }
+
+                riskChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.labels || [],
+                        datasets: [{
+                            label: 'Risk Score',
+                            data: data.risk_scores || [],
+                            borderColor: '#4285f4',
+                            backgroundColor: 'rgba(66, 133, 244, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3,
+                            pointBackgroundColor: '#4285f4',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 3,
+                            pointRadius: 6,
+                            pointHoverRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                grid: {
+                                    color: '#f0f0f0'
+                                },
+                                ticks: {
+                                    color: '#666',
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    color: '#666',
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error creating risk trend chart:', error);
+        }
+    }
+
+    async function createLocationChart() {
+        try {
+            const filters = getCurrentFilters();
+            const queryParams = new URLSearchParams(filters).toString();
+            const response = await fetch(`/api/analytics/location-distribution?${queryParams}`);
+            const data = await response.json();
+
+            if (data.success) {
+                const ctx = document.getElementById('locationCanvas').getContext('2d');
+
+                // Destroy existing chart if it exists
+                if (locationChart) {
+                    locationChart.destroy();
+                }
+
+                locationChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.locations || [],
+                        datasets: [{
+                            data: data.counts || [],
+                            backgroundColor: [
+                                '#4285f4',
+                                '#34a853',
+                                '#ea4335',
+                                '#fbbc04',
+                                '#9aa0a6',
+                                '#ff6d01'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true,
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error creating location chart:', error);
+        }
+    }
+
+    async function loadPredictionResults() {
+        try {
+            const response = await fetch('/api/analytics/prediction-results');
+            const data = await response.json();
+
+            if (data.success) {
+                updatePredictionTable(data.predictions || []);
+            }
+        } catch (error) {
+            console.error('Error loading prediction results:', error);
+        }
+    }
+
+    function updatePredictionTable(predictions) {
+        const tbody = document.getElementById('predictionTableBody');
+
+        if (predictions.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 40px; color: #666;">
+                        <i class="fas fa-robot fa-3x" style="margin-bottom: 15px; opacity: 0.3;"></i><br>
+                        No prediction results available. Run AI analysis to generate predictions.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = predictions.map(pred => `
+            <tr>
+                <td>${pred.patient_id}</td>
+                <td><span class="risk-score risk-${pred.risk_level.toLowerCase()}">${pred.risk_level}</span></td>
+                <td>${pred.risk_score}</td>
+                <td>${pred.recent_seizures}</td>
+                <td>${formatDate(pred.last_update)}</td>
+                <td><span class="status-badge status-${pred.status.toLowerCase()}">${pred.status}</span></td>
+                <td>
+                    <button class="filter-btn" onclick="viewPatientDetails('${pred.patient_id}')">
+                        <i class="fas fa-eye"></i>
+                        View
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function runPredictionEngine() {
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running Analysis...';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/api/analytics/run-prediction', {
+                method: 'POST'
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                showNotification('AI analysis completed successfully!', 'success');
+                loadPredictionResults();
+                loadMetrics();
+            } else {
+                showNotification('AI analysis failed: ' + (data.error || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            console.error('Error running prediction engine:', error);
+            showNotification('Error running AI analysis', 'error');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    async function applyFilters() {
+        showLoading();
+
+        // Show visual feedback
+        showFilteringFeedback();
+
+        try {
+            const filters = getCurrentFilters();
+
+            // Update all components with filters
+            await Promise.all([
+                loadMetrics(),
+                createRiskTrendChart(),
+                createLocationChart(),
+                loadPredictionResults()
+            ]);
+
+            updateFilterStatus(filters);
+            showNotification(`Filters applied successfully! Showing data for: ${getFilterDescription(filters)}`, 'success');
+            console.log('Filters applied:', filters);
+        } catch (error) {
+            console.error('Error applying filters:', error);
+            showNotification('Error applying filters', 'error');
+        } finally {
+            hideLoading();
+            hideFilteringFeedback();
+        }
+    }
+
+    function getFilterDescription(filters) {
+        const descriptions = [];
+
+        if (filters.dateRange) {
+            descriptions.push(`${filters.dateRange} days`);
+        }
+        if (filters.pwidFilter) {
+            descriptions.push(filters.pwidFilter === 'high-risk' ? 'high-risk patients' : 'recent incidents');
+        }
+        if (filters.locationFilter) {
+            descriptions.push(`${filters.locationFilter} location`);
+        }
+        if (filters.incidentType) {
+            descriptions.push(`${filters.incidentType} incidents`);
+        }
+
+        return descriptions.length > 0 ? descriptions.join(', ') : 'all data';
+    }
+
+    function showFilteringFeedback() {
+        // Add pulsing effect to charts while filtering
+        document.querySelectorAll('.chart-card').forEach(card => {
+            card.style.opacity = '0.7';
+            card.style.transition = 'opacity 0.3s ease';
+        });
+
+        // Add pulsing effect to metrics
+        document.querySelectorAll('.metric-card').forEach(card => {
+            card.style.opacity = '0.7';
+            card.style.transition = 'opacity 0.3s ease';
+        });
+    }
+
+    function hideFilteringFeedback() {
+        // Remove pulsing effect
+        document.querySelectorAll('.chart-card, .metric-card').forEach(card => {
+            card.style.opacity = '1';
+        });
+    }
+
+    function updateFilterStatus(filters) {
+        const statusElement = document.getElementById('filterStatus');
+        const activeFilters = [];
+
+        if (filters.dateRange && filters.dateRange !== '30') {
+            activeFilters.push(`${filters.dateRange} days`);
+        }
+        if (filters.pwidFilter) {
+            activeFilters.push(filters.pwidFilter === 'high-risk' ? 'High Risk' : 'Recent Incidents');
+        }
+        if (filters.locationFilter) {
+            activeFilters.push(filters.locationFilter.charAt(0).toUpperCase() + filters.locationFilter.slice(1));
+        }
+        if (filters.incidentType) {
+            activeFilters.push(filters.incidentType.charAt(0).toUpperCase() + filters.incidentType.slice(1));
+        }
+
+        if (activeFilters.length > 0) {
+            statusElement.textContent = `Active: ${activeFilters.join(', ')}`;
+        } else {
+            statusElement.textContent = '';
+        }
+    }
+
+    function showLoading() {
+        document.getElementById('loadingSpinner').classList.add('active');
+    }
+
+    function hideLoading() {
+        document.getElementById('loadingSpinner').classList.remove('active');
+    }
+
+    async function exportReport() {
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+        btn.disabled = true;
+
+        try {
+            const filters = {
+                dateRange: document.getElementById('dateRange').value,
+                pwidFilter: document.getElementById('pwidFilter').value,
+                locationFilter: document.getElementById('locationFilter').value,
+                incidentType: document.getElementById('incidentType').value
+            };
+
+            const response = await fetch('/api/analytics/export-pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(filters)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showNotification('Report exported successfully!', 'success');
+                // In a real implementation, you would download the file
+                console.log('Download URL:', data.download_url);
+            } else {
+                showNotification('Export failed: ' + (data.error || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            console.error('Error exporting report:', error);
+            showNotification('Error exporting report', 'error');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    function refreshPredictions() {
+        loadPredictionResults();
+    }
+
+    function exportPredictions() {
+        showNotification('Prediction export feature coming soon!', 'info');
+    }
+
+    function viewPatientDetails(patientId) {
+        showNotification(`Viewing details for patient ${patientId}`, 'info');
+        // In a real implementation, this would open a patient detail view
+    }
+
+    function formatDate(dateString) {
+        if (!dateString) return 'Never';
+        const date = new Date(dateString);
+        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; max-width: 500px;';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+        `;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, 5000);
+    }
 </script>
 {% endblock %}
