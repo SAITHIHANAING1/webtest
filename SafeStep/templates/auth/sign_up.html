@@ -3,11 +3,11 @@
 {% block title %}Sign Up - SAFE-Step{% endblock %}
 
 {% block content %}
-<div class="login-bg min-vh-100 d-flex align-items-center">
+<div class="login-bg min-vh-100 d-flex align-items-center" style="position:relative;">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-8 col-lg-6">
-                <div class="login-card card shadow-lg border-0">
+                <div class="login-card card shadow-lg" style="margin: 2.5rem 0;">
                     <div class="card-body p-5">
                         <div class="text-center mb-4">
                             <div class="login-logo mb-3">
@@ -17,6 +17,16 @@
                             <p class="login-subtitle">Join the SAFE-Step community</p>
                         </div>
                         
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                          {% if messages %}
+                            {% for category, message in messages %}
+                              <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                              </div>
+                            {% endfor %}
+                          {% endif %}
+                        {% endwith %}
                         <form method="POST" class="needs-validation" novalidate id="registerForm">
                             <div class="row">
                                 <div class="col-md-6 mb-3">
@@ -116,7 +126,7 @@
                             
                             <div class="mb-3 form-check">
                                 <input type="checkbox" class="form-check-input" id="terms" required>
-                                <label class="form-check-label" for="terms">
+                                <label class="form-check-label text-dark" for="terms">
                                     I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms of Service</a> 
                                     and <a href="#" data-bs-toggle="modal" data-bs-target="#privacyModal">Privacy Policy</a>
                                 </label>
@@ -124,10 +134,10 @@
                                     You must agree to the terms and conditions.
                                 </div>
                             </div>
-                            
+
                             <div class="mb-3 form-check">
                                 <input type="checkbox" class="form-check-input" id="newsletter">
-                                <label class="form-check-label" for="newsletter">
+                                <label class="form-check-label text-dark" for="newsletter">
                                     Send me updates about new features and training materials
                                 </label>
                             </div>
@@ -212,6 +222,14 @@
 {% endblock %}
 
 {% block extra_js %}
+{% block extra_css %}
+<style>
+/* Make background fixed for sign up page and add margin to form */
+.login-bg {
+    background-attachment: fixed !important;
+}
+</style>
+{% endblock %}
 <script>
 function togglePassword(inputId) {
     const passwordInput = document.getElementById(inputId);

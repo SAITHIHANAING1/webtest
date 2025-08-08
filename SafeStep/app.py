@@ -284,16 +284,21 @@ def signup():
         first_name = request.form['first_name']
         last_name = request.form['last_name']
         user_type = request.form.get('userType', 'caregiver')
-        
+        terms_agreed = request.form.get('terms')
+
         # Validation
+        if not terms_agreed:
+            flash('You must agree to the Terms of Service and Privacy Policy.', 'error')
+            return render_template('auth/sign_up.html')
+
         if password != confirm_password:
             flash('Passwords do not match', 'error')
             return render_template('auth/sign_up.html')
-            
+
         if len(password) < 6:
             flash('Password must be at least 6 characters long', 'error')
             return render_template('auth/sign_up.html')
-        
+
         # Check if user already exists in SQLAlchemy database
         if User.query.filter_by(username=username).first():
             flash('Username already exists', 'error')
@@ -301,14 +306,14 @@ def signup():
         elif User.query.filter_by(email=email).first():
             flash('Email already registered', 'error')
             return render_template('auth/sign_up.html')
-        
+
         try:
             # If Supabase is available, create user in Supabase Auth
             supabase_user_id = None
             if supabase_available:
                 from supabase_integration import get_supabase_client
                 supabase = get_supabase_client()
-                
+
                 if supabase:
                     try:
                         # Create user in Supabase Auth
@@ -324,18 +329,18 @@ def signup():
                                 }
                             }
                         })
-                        
+
                         if auth_response.user:
                             supabase_user_id = auth_response.user.id
                             print(f"✅ Supabase user created with ID: {supabase_user_id}")
                         else:
                             print("⚠️ Supabase user creation returned no user")
-                            
+
                     except Exception as e:
                         print(f"❌ Supabase user creation failed: {e}")
                         flash(f'Error creating account: {str(e)}', 'error')
                         return render_template('auth/sign_up.html')
-            
+
             # Create user in local SQLAlchemy database
             user = User(
                 username=username,
@@ -345,23 +350,23 @@ def signup():
                 last_name=last_name,
                 role=user_type
             )
-            
+
             # If we have a Supabase user ID, store it
             if supabase_user_id:
                 user.supabase_user_id = supabase_user_id
-            
+
             db.session.add(user)
             db.session.commit()
-            
+
             flash('Account created successfully! You can now sign in.', 'success')
             return redirect(url_for('login'))
-            
+
         except Exception as e:
             db.session.rollback()
             print(f"❌ Database error during signup: {e}")
             flash('Error creating account. Please try again.', 'error')
             return render_template('auth/sign_up.html')
-    
+
     return render_template('auth/sign_up.html')
 
 @app.route('/forgot-password', methods=['GET', 'POST'])

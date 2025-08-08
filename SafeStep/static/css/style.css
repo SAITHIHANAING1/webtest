@@ -223,6 +223,8 @@ body {
 }
 
 .stat-card .card-body {
+    background: #18191a !important;
+    color: white;
     padding: 2rem;
 }
 

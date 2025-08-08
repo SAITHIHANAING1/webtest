@@ -1,3 +1,136 @@
+<style>
+/* Global dashboard dark mode: all boxes black, all text white, except landing, sign in, sign up */
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .card,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .modal-content,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .dropdown-menu,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .table,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .progress,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .input-group-text {
+    background: #18191a !important;
+    color: #fff !important;
+    border-color: #232946 !important;
+}
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .card-header,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .card-footer,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .modal-header,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .modal-footer {
+    background: #232946 !important;
+    color: #fff !important;
+    border: none !important;
+}
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .form-label,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .form-control,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .form-control:focus,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .form-select,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .form-select:focus {
+    color: #fff !important;
+    background: #232946 !important;
+    border-color: #444 !important;
+}
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .btn-primary {
+    background: #667eea !important;
+    border: none !important;
+    color: #fff !important;
+}
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .btn-secondary {
+    background: #444 !important;
+    border: none !important;
+    color: #fff !important;
+}
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-dark,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-muted,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-primary,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-success,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-info,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-warning,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-danger {
+    color: #fff !important;
+}
+body:not(.landing-page):not(.login-page):not(.sign-up-page) h1,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) h2,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) h3,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) h4,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) h5,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) h6,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) p,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) span,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) label,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) small,
+body:not(.landing-page):not(.login-page):not(.sign-up-page) a {
+    color: #fff !important;
+}
+</style>
+</div>
+<style>
+/* Dark mode nav and modal for all pages except landing */
+body:not(.landing-page) .navbar.dark-nav,
+body:not(.landing-page) .navbar.navbar-dark {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #fff !important;
+}
+body:not(.landing-page) .navbar.dark-nav .navbar-brand,
+body:not(.landing-page) .navbar.dark-nav .nav-link,
+body:not(.landing-page) .navbar.dark-nav .dropdown-item,
+body:not(.landing-page) .navbar.dark-nav .navbar-toggler,
+body:not(.landing-page) .navbar.dark-nav .navbar-toggler-icon,
+body:not(.landing-page) .navbar.navbar-dark .navbar-brand,
+body:not(.landing-page) .navbar.navbar-dark .nav-link,
+body:not(.landing-page) .navbar.navbar-dark .dropdown-item,
+body:not(.landing-page) .navbar.navbar-dark .navbar-toggler,
+body:not(.landing-page) .navbar.navbar-dark .navbar-toggler-icon {
+    color: #fff !important;
+}
+body:not(.landing-page) .navbar.dark-nav .dropdown-menu,
+body:not(.landing-page) .navbar.navbar-dark .dropdown-menu {
+    background: #232946;
+    color: #fff;
+}
+body:not(.landing-page) .navbar.dark-nav .dropdown-item,
+body:not(.landing-page) .navbar.navbar-dark .dropdown-item {
+    color: #fff !important;
+}
+body:not(.landing-page) .navbar.dark-nav .dropdown-item:hover,
+body:not(.landing-page) .navbar.dark-nav .dropdown-item:focus,
+body:not(.landing-page) .navbar.navbar-dark .dropdown-item:hover,
+body:not(.landing-page) .navbar.navbar-dark .dropdown-item:focus {
+    background: #3a3f58;
+    color: #fff !important;
+}
+body:not(.landing-page) .navbar.dark-nav .nav-link.active,
+body:not(.landing-page) .navbar.dark-nav .nav-link:focus,
+body:not(.landing-page) .navbar.dark-nav .nav-link:hover,
+body:not(.landing-page) .navbar.navbar-dark .nav-link.active,
+body:not(.landing-page) .navbar.navbar-dark .nav-link:focus,
+body:not(.landing-page) .navbar.navbar-dark .nav-link:hover {
+    color: #ffd700 !important;
+}
+
+body:not(.landing-page) .modal-content {
+    background: #232946;
+    color: #fff;
+}
+body:not(.landing-page) .modal-header,
+body:not(.landing-page) .modal-footer {
+    background: #232946;
+    color: #fff;
+    border: none;
+}
+body:not(.landing-page) .modal .form-label,
+body:not(.landing-page) .modal .form-control,
+body:not(.landing-page) .modal .form-control:focus {
+    color: #fff;
+    background: #232946;
+    border-color: #444;
+}
+body:not(.landing-page) .modal .btn-primary {
+    background: #667eea;
+    border: none;
+}
+body:not(.landing-page) .modal .btn-secondary {
+    background: #444;
+    border: none;
+}
+</style>
 <nav class="navbar navbar-expand-lg fixed-top navbar-dark">
     <div class="container">
         <a class="navbar-brand" href="{{ url_for('caregiver_dashboard' if current_user.role == 'caregiver' else 'admin_dashboard') }}" aria-label="SAFE-Step Home">
