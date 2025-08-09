@@ -1,1 +1,230 @@
-wwewe
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Module</title>
+    <!-- We use the same styling setup for a consistent look and feel. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+    <!-- Main container -->
+    <div class="min-h-screen p-4 sm:p-6 lg:p-8 flex items-center justify-center">
+        <div class="max-w-2xl w-full bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
+
+            <!-- Page Header -->
+            <div class="mb-8 text-center">
+                <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Create a New Module</h1>
+                <p class="text-gray-500 dark:text-gray-400 mt-1">Fill out the details below to create your training
+                    module.</p>
+            </div>
+
+            <!-- Creation Form -->
+            <form action="#" method="POST">
+                <div class="space-y-6">
+                    <!-- Module Title Field -->
+                    <div>
+                        <label for="module-title"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Module Title</label>
+                        <div class="mt-1">
+                            <input type="text" name="module-title" id="module-title"
+                                class="block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                placeholder="e.g., Introduction to Epilepsy Care">
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="module-title-image"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Module Title Image <span
+                                class="text-gray-400">(optional)</span></label>
+                        <input type="file" name="module-title-image" id="module-title-image" accept="image/*"
+                            class="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    </div>
+
+                    <!-- Module Description Field -->
+                    <div>
+                        <label for="module-description"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Module
+                            Description</label>
+                        <div class="mt-1">
+                            <textarea id="module-description" name="module-description" rows="4"
+                                class="block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                placeholder="Provide a brief summary of what this module covers."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Module Level Selector -->
+                    <div>
+                        <label for="module-level"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Module Level</label>
+                        <select id="module-level" name="module-level"
+                            class="block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="Beginner" selected>Beginner</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Advanced">Advanced</option>
+                        </select>
+                    </div>
+
+                    <div class="flex justify-end mb-4">
+                        <button type="button" onclick="addPage()"
+                            class="px-5 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75 transition-colors duration-200">
+                            + Create Page (optional)
+                        </button>
+                    </div>
+
+                    <div id="pages-container" class="space-y-6 mb-8"></div>
+
+                    <div class="flex justify-end mb-4">
+                        <button type="button" onclick="addQuiz()"
+                            class="px-5 py-3 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75 transition-colors duration-200">
+                            + Add Quiz Question (optional)
+                        </button>
+                    </div>
+                    <div id="quizzes-container" class="space-y-6 mb-8"></div>
+
+                    <script>
+                        let quizCount = 0;
+                        function addQuiz() {
+                            quizCount++;
+                            const container = document.getElementById('quizzes-container');
+                            const quizDiv = document.createElement('div');
+                            quizDiv.className = "bg-gray-50 dark:bg-gray-700 p-6 rounded-lg shadow space-y-4 relative";
+                            quizDiv.innerHTML = `
+        <button type="button" onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-red-500 hover:text-red-700" title="Remove Quiz">&times;</button>
+        <h3 class="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-100">Quiz ${quizCount}</h3>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Question Type</label>
+            <select name="quizzes[${quizCount}][type]" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" onchange="renderQuizFields(this, ${quizCount})">
+                <option value="single">Single Select (MCQ)</option>
+                <option value="multi">Multi Select</option>
+                <option value="open">Open Ended</option>
+            </select>
+        </div>
+        <div id="quiz-fields-${quizCount}">
+            <!-- Quiz fields will be rendered here -->
+        </div>
+    `;
+                            container.appendChild(quizDiv);
+                            renderQuizFields(quizDiv.querySelector(`[name="quizzes[${quizCount}][type]"]`), quizCount);
+                        }
+
+                        function renderQuizFields(selectElem, quizNum) {
+                            const container = selectElem.parentElement.parentElement.querySelector(`#quiz-fields-${quizNum}`);
+                            const type = selectElem.value;
+                            if (type === "single") {
+                                container.innerHTML = `
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Question</label>
+                <input type="text" name="quizzes[${quizNum}][question]" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Enter your question">
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Options</label>
+                ${[1, 2, 3, 4].map(i => `
+                    <div class="flex items-center space-x-2">
+                        <input type="radio" name="quizzes[${quizNum}][answer]" value="${i}" class="text-blue-600 focus:ring-blue-500">
+                        <input type="text" name="quizzes[${quizNum}][options][${i}]" class="block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Option ${i}">
+                    </div>
+                `).join('')}
+            </div>
+        `;
+                            } else if (type === "multi") {
+                                container.innerHTML = `
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Question</label>
+                <input type="text" name="quizzes[${quizNum}][question]" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Enter your question">
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Options</label>
+                ${[1, 2, 3, 4].map(i => `
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" name="quizzes[${quizNum}][answers][]" value="${i}" class="text-blue-600 focus:ring-blue-500">
+                        <input type="text" name="quizzes[${quizNum}][options][${i}]" class="block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Option ${i}">
+                    </div>
+                `).join('')}
+            </div>
+        `;
+                            } else if (type === "open") {
+                                container.innerHTML = `
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Question</label>
+                <input type="text" name="quizzes[${quizNum}][question]" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Enter your question">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Answer</label>
+                <textarea name="quizzes[${quizNum}][answer]" rows="2" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Sample answer or leave blank"></textarea>
+            </div>
+        `;
+                            }
+                        }
+                    </script>
+
+
+
+                    <!-- Pages Container: appears directly below the Create Page button -->
+                    <div id="pages-container" class="space-y-6 mb-8"></div>
+
+                    <!-- Action Buttons: always last -->
+                    <div class="flex justify-end space-x-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <a href="index.html"
+                            class="px-5 py-3 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-100 font-semibold rounded-lg shadow-sm hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75 transition-colors duration-200">
+                            Back
+                        </a>
+                        <button type="submit" name="action" value="draft"
+                            class="px-5 py-3 bg-yellow-500 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-75 transition-colors duration-200">
+                            Draft Module
+                        </button>
+                        <button type="submit"
+                            class="px-5 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 transition-colors duration-200">
+                            Save Module
+                        </button>
+                    </div>
+
+                    <script>
+                        let pageCount = 0;
+                        function addPage() {
+                            pageCount++;
+                            const container = document.getElementById('pages-container');
+                            const pageDiv = document.createElement('div');
+                            pageDiv.className = "bg-gray-50 dark:bg-gray-700 p-6 rounded-lg shadow space-y-4 relative";
+                            pageDiv.innerHTML = `
+            <button type="button" onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-red-500 hover:text-red-700" title="Remove Page">&times;</button>
+            <h3 class="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-100">Page ${pageCount}</h3>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Page Title</label>
+                <input type="text" name="pages[${pageCount}][title]" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Page Title">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Content</label>
+                <textarea name="pages[${pageCount}][content]" rows="3" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Page content..."></textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">YouTube Video Link <span class="text-gray-400">(optional)</span></label>
+                <input type="url" name="pages[${pageCount}][youtube]" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="https://youtube.com/...">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Upload File <span class="text-gray-400">(PDF, optional)</span></label>
+                <input type="file" name="pages[${pageCount}][file]" accept=".pdf" class="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+            </div>
+        `;
+                            container.appendChild(pageDiv);
+                        }
+                    </script>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+
+</html>
