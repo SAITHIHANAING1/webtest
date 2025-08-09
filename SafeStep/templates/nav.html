@@ -1,219 +1,249 @@
 <style>
-/* Global dashboard dark mode: all boxes black, all text white, except landing, sign in, sign up */
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .card,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .modal-content,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .dropdown-menu,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .table,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .progress,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .input-group-text {
-    background: #18191a !important;
-    color: #fff !important;
-    border-color: #232946 !important;
-}
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .card-header,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .card-footer,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .modal-header,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .modal-footer {
-    background: #232946 !important;
-    color: #fff !important;
-    border: none !important;
-}
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .form-label,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .form-control,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .form-control:focus,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .form-select,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .form-select:focus {
-    color: #fff !important;
-    background: #232946 !important;
-    border-color: #444 !important;
-}
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .btn-primary {
-    background: #667eea !important;
-    border: none !important;
-    color: #fff !important;
-}
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .btn-secondary {
-    background: #444 !important;
-    border: none !important;
-    color: #fff !important;
-}
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-dark,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-muted,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-primary,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-success,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-info,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-warning,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-danger {
-    color: #fff !important;
-}
-body:not(.landing-page):not(.login-page):not(.sign-up-page) h1,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) h2,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) h3,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) h4,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) h5,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) h6,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) p,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) span,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) label,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) small,
-body:not(.landing-page):not(.login-page):not(.sign-up-page) a {
-    color: #fff !important;
-}
+    /* Global dashboard dark mode: all boxes black, all text white, except landing, sign in, sign up */
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .card,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .modal-content,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .dropdown-menu,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .table,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .progress,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .input-group-text {
+        background: #18191a !important;
+        color: #fff !important;
+        border-color: #232946 !important;
+    }
+
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .card-header,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .card-footer,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .modal-header,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .modal-footer {
+        background: #232946 !important;
+        color: #fff !important;
+        border: none !important;
+    }
+
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .form-label,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .form-control,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .form-control:focus,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .form-select,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .form-select:focus {
+        color: #fff !important;
+        background: #232946 !important;
+        border-color: #444 !important;
+    }
+
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .btn-primary {
+        background: #667eea !important;
+        border: none !important;
+        color: #fff !important;
+    }
+
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .btn-secondary {
+        background: #444 !important;
+        border: none !important;
+        color: #fff !important;
+    }
+
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-dark,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-muted,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-primary,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-success,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-info,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-warning,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-danger {
+        color: #fff !important;
+    }
+
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) h1,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) h2,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) h3,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) h4,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) h5,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) h6,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) p,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) span,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) label,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) small,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) a {
+        color: #fff !important;
+    }
 </style>
 </div>
 <style>
-/* Dark mode nav and modal for all pages except landing */
-body:not(.landing-page) .navbar.dark-nav,
-body:not(.landing-page) .navbar.navbar-dark {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    color: #fff !important;
-}
-body:not(.landing-page) .navbar.dark-nav .navbar-brand,
-body:not(.landing-page) .navbar.dark-nav .nav-link,
-body:not(.landing-page) .navbar.dark-nav .dropdown-item,
-body:not(.landing-page) .navbar.dark-nav .navbar-toggler,
-body:not(.landing-page) .navbar.dark-nav .navbar-toggler-icon,
-body:not(.landing-page) .navbar.navbar-dark .navbar-brand,
-body:not(.landing-page) .navbar.navbar-dark .nav-link,
-body:not(.landing-page) .navbar.navbar-dark .dropdown-item,
-body:not(.landing-page) .navbar.navbar-dark .navbar-toggler,
-body:not(.landing-page) .navbar.navbar-dark .navbar-toggler-icon {
-    color: #fff !important;
-}
-body:not(.landing-page) .navbar.dark-nav .dropdown-menu,
-body:not(.landing-page) .navbar.navbar-dark .dropdown-menu {
-    background: #232946;
-    color: #fff;
-}
-body:not(.landing-page) .navbar.dark-nav .dropdown-item,
-body:not(.landing-page) .navbar.navbar-dark .dropdown-item {
-    color: #fff !important;
-}
-body:not(.landing-page) .navbar.dark-nav .dropdown-item:hover,
-body:not(.landing-page) .navbar.dark-nav .dropdown-item:focus,
-body:not(.landing-page) .navbar.navbar-dark .dropdown-item:hover,
-body:not(.landing-page) .navbar.navbar-dark .dropdown-item:focus {
-    background: #3a3f58;
-    color: #fff !important;
-}
-body:not(.landing-page) .navbar.dark-nav .nav-link.active,
-body:not(.landing-page) .navbar.dark-nav .nav-link:focus,
-body:not(.landing-page) .navbar.dark-nav .nav-link:hover,
-body:not(.landing-page) .navbar.navbar-dark .nav-link.active,
-body:not(.landing-page) .navbar.navbar-dark .nav-link:focus,
-body:not(.landing-page) .navbar.navbar-dark .nav-link:hover {
-    color: #ffd700 !important;
-}
+    /* Dark mode nav and modal for all pages except landing */
+    body:not(.landing-page) .navbar.dark-nav,
+    body:not(.landing-page) .navbar.navbar-dark {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: #fff !important;
+    }
 
-body:not(.landing-page) .modal-content {
-    background: #232946;
-    color: #fff;
-}
-body:not(.landing-page) .modal-header,
-body:not(.landing-page) .modal-footer {
-    background: #232946;
-    color: #fff;
-    border: none;
-}
-body:not(.landing-page) .modal .form-label,
-body:not(.landing-page) .modal .form-control,
-body:not(.landing-page) .modal .form-control:focus {
-    color: #fff;
-    background: #232946;
-    border-color: #444;
-}
-body:not(.landing-page) .modal .btn-primary {
-    background: #667eea;
-    border: none;
-}
-body:not(.landing-page) .modal .btn-secondary {
-    background: #444;
-    border: none;
-}
+    body:not(.landing-page) .navbar.dark-nav .navbar-brand,
+    body:not(.landing-page) .navbar.dark-nav .nav-link,
+    body:not(.landing-page) .navbar.dark-nav .dropdown-item,
+    body:not(.landing-page) .navbar.dark-nav .navbar-toggler,
+    body:not(.landing-page) .navbar.dark-nav .navbar-toggler-icon,
+    body:not(.landing-page) .navbar.navbar-dark .navbar-brand,
+    body:not(.landing-page) .navbar.navbar-dark .nav-link,
+    body:not(.landing-page) .navbar.navbar-dark .dropdown-item,
+    body:not(.landing-page) .navbar.navbar-dark .navbar-toggler,
+    body:not(.landing-page) .navbar.navbar-dark .navbar-toggler-icon {
+        color: #fff !important;
+    }
+
+    body:not(.landing-page) .navbar.dark-nav .dropdown-menu,
+    body:not(.landing-page) .navbar.navbar-dark .dropdown-menu {
+        background: #232946;
+        color: #fff;
+    }
+
+    body:not(.landing-page) .navbar.dark-nav .dropdown-item,
+    body:not(.landing-page) .navbar.navbar-dark .dropdown-item {
+        color: #fff !important;
+    }
+
+    body:not(.landing-page) .navbar.dark-nav .dropdown-item:hover,
+    body:not(.landing-page) .navbar.dark-nav .dropdown-item:focus,
+    body:not(.landing-page) .navbar.navbar-dark .dropdown-item:hover,
+    body:not(.landing-page) .navbar.navbar-dark .dropdown-item:focus {
+        background: #3a3f58;
+        color: #fff !important;
+    }
+
+    body:not(.landing-page) .navbar.dark-nav .nav-link.active,
+    body:not(.landing-page) .navbar.dark-nav .nav-link:focus,
+    body:not(.landing-page) .navbar.dark-nav .nav-link:hover,
+    body:not(.landing-page) .navbar.navbar-dark .nav-link.active,
+    body:not(.landing-page) .navbar.navbar-dark .nav-link:focus,
+    body:not(.landing-page) .navbar.navbar-dark .nav-link:hover {
+        color: #ffd700 !important;
+    }
+
+    body:not(.landing-page) .modal-content {
+        background: #232946;
+        color: #fff;
+    }
+
+    body:not(.landing-page) .modal-header,
+    body:not(.landing-page) .modal-footer {
+        background: #232946;
+        color: #fff;
+        border: none;
+    }
+
+    body:not(.landing-page) .modal .form-label,
+    body:not(.landing-page) .modal .form-control,
+    body:not(.landing-page) .modal .form-control:focus {
+        color: #fff;
+        background: #232946;
+        border-color: #444;
+    }
+
+    body:not(.landing-page) .modal .btn-primary {
+        background: #667eea;
+        border: none;
+    }
+
+    body:not(.landing-page) .modal .btn-secondary {
+        background: #444;
+        border: none;
+    }
 </style>
 <nav class="navbar navbar-expand-lg fixed-top navbar-dark">
     <div class="container">
-        <a class="navbar-brand" href="{{ url_for('caregiver_dashboard' if current_user.role == 'caregiver' else 'admin_dashboard') }}" aria-label="SAFE-Step Home">
+        <a class="navbar-brand"
+            href="{{ url_for('caregiver_dashboard' if current_user.role == 'caregiver' else 'admin_dashboard') }}"
+            aria-label="SAFE-Step Home">
             <i class="fas fa-shield-alt me-2"></i>
             <span class="fw-bold">SAFE-Step</span>
             <small class="d-none d-md-inline ms-2">| Epilepsy Safety</small>
         </a>
-        
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        
+
         <div class="collapse navbar-collapse" id="navbarNav">
             {% if current_user.role == 'caregiver' %}
-                <!-- Caregiver Navigation -->
-                <div class="navbar-nav me-auto">
-                    <a class="nav-link d-flex align-items-center" href="{{ url_for('caregiver_dashboard') }}">
-                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+            <!-- Caregiver Navigation -->
+            <div class="navbar-nav me-auto">
+                <a class="nav-link d-flex align-items-center" href="{{ url_for('caregiver_dashboard') }}">
+                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                </a>
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="monitoringDropdown"
+                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-heartbeat me-2"></i>Monitoring
                     </a>
-                    <div class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="monitoringDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-heartbeat me-2"></i>Monitoring
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item d-flex align-items-center" href="{{ url_for('seizure_monitoring') }}">
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item d-flex align-items-center"
+                                href="{{ url_for('seizure_monitoring') }}">
                                 <i class="fas fa-play me-2"></i>Start Monitoring
                             </a></li>
-                            <li><a class="dropdown-item d-flex align-items-center" href="{{ url_for('seizure_history') }}">
+                        <li><a class="dropdown-item d-flex align-items-center" href="{{ url_for('seizure_history') }}">
                                 <i class="fas fa-history me-2"></i>History
                             </a></li>
-                            <li><a class="dropdown-item d-flex align-items-center" href="{{ url_for('prediction_dashboard') }}">
+                        <li><a class="dropdown-item d-flex align-items-center"
+                                href="{{ url_for('prediction_dashboard') }}">
                                 <i class="fas fa-chart-line me-2"></i>Predictions
                             </a></li>
-                        </ul>
-                    </div>
-                    <a class="nav-link d-flex align-items-center" href="{{ url_for('safety_zones') }}">
-                        <i class="fas fa-map-marker-alt me-2"></i>Safety Zones
-                    </a>
-                    <a class="nav-link d-flex align-items-center" href="{{ url_for('training_modules') }}">
-                        <i class="fas fa-graduation-cap me-2"></i>Training
-                    </a>
-                    <a class="nav-link d-flex align-items-center" href="{{ url_for('support_ticket') }}">
-                        <i class="fas fa-life-ring me-2"></i>Support
-                    </a>
+                    </ul>
                 </div>
+                <a class="nav-link d-flex align-items-center" href="{{ url_for('safety_zones') }}">
+                    <i class="fas fa-map-marker-alt me-2"></i>Safety Zones
+                </a>
+                <a class="nav-link d-flex align-items-center" href="{{ url_for('training_modules') }}">
+                    <i class="fas fa-graduation-cap me-2"></i>Training
+                </a>
+                <a class="nav-link d-flex align-items-center" href="{{ url_for('support_ticket') }}">
+                    <i class="fas fa-life-ring me-2"></i>Support
+                </a>
+            </div>
             {% else %}
-                <!-- Admin Navigation -->
-                <div class="navbar-nav me-auto">
-                    <a class="nav-link d-flex align-items-center" href="{{ url_for('admin_dashboard') }}">
-                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                    </a>
-                    <a class="nav-link d-flex align-items-center" href="{{ url_for('user_management') }}">
-                        <i class="fas fa-users me-2"></i>Users
-                    </a>
-                    <a class="nav-link d-flex align-items-center" href="{{ url_for('training_management') }}">
-                        <i class="fas fa-book me-2"></i>Training
-                    </a>
-                    <a class="nav-link d-flex align-items-center" href="{{ url_for('ticket_management') }}">
-                        <i class="fas fa-ticket-alt me-2"></i>Tickets
-                    </a>
-                    <a class="nav-link d-flex align-items-center" href="{{ url_for('analytics') }}">
-                        <i class="fas fa-chart-bar me-2"></i>Analytics
-                    </a>
-                </div>
+            <!-- Admin Navigation -->
+            <div class="navbar-nav me-auto">
+                <a class="nav-link d-flex align-items-center" href="{{ url_for('admin_dashboard') }}">
+                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                </a>
+                <a class="nav-link d-flex align-items-center" href="{{ url_for('user_management') }}">
+                    <i class="fas fa-users me-2"></i>Users
+                </a>
+                <a class="nav-link d-flex align-items-center" href="{{ url_for('training_management') }}">
+                    <i class="fas fa-book me-2"></i>Training
+                </a>
+                <a class="nav-link d-flex align-items-center" href="{{ url_for('ticket_management') }}">
+                    <i class="fas fa-ticket-alt me-2"></i>Tickets
+                </a>
+                <a class="nav-link d-flex align-items-center" href="{{ url_for('analytics') }}">
+                    <i class="fas fa-chart-bar me-2"></i>Analytics
+                </a>
+            </div>
             {% endif %}
-            
+
             <!-- User Menu -->
             <div class="navbar-nav">
                 <div class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown"
+                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fas fa-user me-2"></i>{{ current_user.first_name }}
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><h6 class="dropdown-header">{{ current_user.first_name }} {{ current_user.last_name }}</h6></li>
-                        <li><span class="dropdown-item-text small text-muted">{{ current_user.role.title() }}</span></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item d-flex align-items-center" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">
-                            <i class="fas fa-user-edit me-2"></i>Profile Settings
-                        </a></li>
-                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <h6 class="dropdown-header">{{ current_user.first_name }} {{ current_user.last_name }}</h6>
+                        </li>
+                        <li><span class="dropdown-item-text small text-muted">{{ current_user.role.title() }}</span>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item d-flex align-items-center" href="#" data-bs-toggle="modal"
+                                data-bs-target="#profileModal">
+                                <i class="fas fa-user-edit me-2"></i>Profile Settings
+                            </a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
                         <li><a class="dropdown-item d-flex align-items-center" href="{{ url_for('logout') }}">
-                            <i class="fas fa-sign-out-alt me-2"></i>Logout
-                        </a></li>
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a></li>
                     </ul>
                 </div>
             </div>

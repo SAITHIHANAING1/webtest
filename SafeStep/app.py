@@ -642,15 +642,33 @@ def chatbot_admin():
 def get_analytics_metrics():
     """Get key performance indicators for analytics dashboard with filter support"""
     try:
-        from sqlalchemy import func, and_
-        
         # Get filter parameters
         date_range = request.args.get('dateRange', '30')
         pwid_filter = request.args.get('pwidFilter', '')
         location_filter = request.args.get('locationFilter', '')
         incident_type_filter = request.args.get('incidentType', '')
         
-        # Try to use new models, fallback to old ones
+        # Try Supabase first, fallback to SQLite
+        try:
+            from supabase_integration import get_analytics_metrics_supabase
+            
+            # Try to get data from Supabase
+            supabase_data = get_analytics_metrics_supabase(
+                date_range=int(date_range),
+                pwid_filter=pwid_filter,
+                location_filter=location_filter,
+                incident_type_filter=incident_type_filter
+            )
+            
+            if supabase_data:
+                return jsonify(supabase_data)
+                
+        except Exception as e:
+            print(f"Supabase analytics failed, falling back to SQLite: {e}")
+        
+        # Fallback to SQLite
+        from sqlalchemy import func, and_
+        
         try:
             from models import IncidentRecord, PwidProfile
             
@@ -860,16 +878,41 @@ def get_alert_distribution():
 def export_analytics_pdf():
     """Export analytics data as PDF report"""
     try:
-        from models import IncidentRecord, PwidProfile, DatasetReference
-        from datetime import datetime
-        import json
-        
         # Get filter parameters
         filters = request.get_json() or {}
         date_range = filters.get('dateRange', '30')
         pwid_filter = filters.get('pwidFilter', '')
         location_filter = filters.get('locationFilter', '')
         incident_type_filter = filters.get('incidentType', '')
+        
+        # Try Supabase first, fallback to SQLite
+        try:
+            from supabase_integration import export_analytics_data_supabase
+            
+            # Try to export data from Supabase
+            supabase_export = export_analytics_data_supabase(filters)
+            
+            if supabase_export:
+                # Generate timestamp for filename
+                timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+                
+                return jsonify({
+                    'success': True,
+                    'message': f'Analytics report exported successfully for {date_range} days',
+                    'download_url': f'/static/reports/analytics_report_{timestamp}.pdf',
+                    'report_id': f'analytics_report_{timestamp}',
+                    'filters_applied': filters,
+                    'data_source': 'Supabase',
+                    'filename': supabase_export.get('filename', f'analytics_export_{timestamp}.json')
+                })
+                
+        except Exception as e:
+            print(f"Supabase export failed, falling back to SQLite: {e}")
+        
+        # Fallback to SQLite
+        from models import IncidentRecord, PwidProfile, DatasetReference
+        from datetime import datetime
+        import json
         
         # Get current data based on filters
         days = int(date_range)
@@ -920,6 +963,7 @@ Report ID: analytics_report_{timestamp}
             'download_url': f'/static/reports/analytics_report_{timestamp}.pdf',
             'report_id': f'analytics_report_{timestamp}',
             'filters_applied': filters,
+            'data_source': 'SQLite',
             'summary': {
                 'total_incidents': total_incidents,
                 'seizure_count': seizure_count,
@@ -937,6 +981,23 @@ Report ID: analytics_report_{timestamp}
 def get_seizure_trends():
     """Get real seizure trends data for charts"""
     try:
+        # Get filter parameters
+        date_range = request.args.get('dateRange', '30')
+        
+        # Try Supabase first, fallback to SQLite
+        try:
+            from supabase_integration import get_seizure_trends_supabase
+            
+            # Try to get data from Supabase
+            supabase_data = get_seizure_trends_supabase(date_range=int(date_range))
+            
+            if supabase_data:
+                return jsonify(supabase_data)
+                
+        except Exception as e:
+            print(f"Supabase seizure trends failed, falling back to SQLite: {e}")
+        
+        # Fallback to SQLite
         from sqlalchemy import func, extract
         
         # Get date range from request
@@ -1012,6 +1073,23 @@ def get_seizure_trends():
 def get_location_distribution():
     """Get real incidents by location data"""
     try:
+        # Get filter parameters
+        date_range = request.args.get('dateRange', '30')
+        
+        # Try Supabase first, fallback to SQLite
+        try:
+            from supabase_integration import get_location_distribution_supabase
+            
+            # Try to get data from Supabase
+            supabase_data = get_location_distribution_supabase(date_range=int(date_range))
+            
+            if supabase_data:
+                return jsonify(supabase_data)
+                
+        except Exception as e:
+            print(f"Supabase location distribution failed, falling back to SQLite: {e}")
+        
+        # Fallback to SQLite
         from sqlalchemy import func
         
         # Query incidents by location in the last 30 days
@@ -1258,7 +1336,20 @@ def get_enhanced_location_distribution():
 def get_prediction_results():
     """Get AI prediction engine results"""
     try:
-        # Try to use new models, fallback to mock data
+        # Try Supabase first, fallback to SQLite
+        try:
+            from supabase_integration import get_prediction_results_supabase
+            
+            # Try to get data from Supabase
+            supabase_data = get_prediction_results_supabase()
+            
+            if supabase_data:
+                return jsonify(supabase_data)
+                
+        except Exception as e:
+            print(f"Supabase prediction results failed, falling back to SQLite: {e}")
+        
+        # Fallback to SQLite
         try:
             from models import PwidProfile, PredictionJob
             
@@ -1319,7 +1410,56 @@ def get_prediction_results():
 def run_prediction_analysis():
     """Run the AI prediction engine"""
     try:
-        # Generate realistic prediction results
+        # Try Supabase first with ML model
+        try:
+            from prediction_model import prediction_engine
+            from supabase_integration import get_supabase_client
+            
+            supabase_client = get_supabase_client()
+            
+            # Train the model first
+            training_result = prediction_engine.train_from_supabase(supabase_client)
+            
+            if 'error' in training_result:
+                return jsonify({
+                    'success': False,
+                    'error': training_result['error']
+                }), 500
+            
+            # Update all risk scores
+            update_result = prediction_engine.update_all_risk_scores(supabase_client)
+            
+            if 'error' in update_result:
+                return jsonify({
+                    'success': False,
+                    'error': update_result['error']
+                }), 500
+            
+            return jsonify({
+                'success': True,
+                'message': 'AI prediction analysis completed successfully',
+                'results': {
+                    'patients_analyzed': update_result['updated_count'],
+                    'training_metrics': training_result['metrics'],
+                    'analysis_time': datetime.utcnow().isoformat(),
+                    'algorithm_version': 'ML-v3.0',
+                    'confidence_score': round(training_result['metrics']['accuracy'], 2)
+                }
+            })
+                
+        except Exception as e:
+            print(f"ML prediction analysis failed, falling back to basic analysis: {e}")
+            
+            # Fallback to basic Supabase analysis
+            try:
+                from supabase_integration import run_prediction_analysis_supabase
+                supabase_result = run_prediction_analysis_supabase()
+                if supabase_result:
+                    return jsonify(supabase_result)
+            except Exception as e2:
+                print(f"Supabase prediction analysis failed: {e2}")
+        
+        # Final fallback to SQLite
         try:
             import random
             from datetime import datetime, timedelta
@@ -1359,6 +1499,76 @@ def run_prediction_analysis():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/analytics/predict-patient/<patient_id>', methods=['GET'])
+@login_required
+@admin_required
+def predict_patient_risk(patient_id):
+    """Predict risk for a specific patient"""
+    try:
+        # Try ML prediction first
+        try:
+            from prediction_model import prediction_engine
+            from supabase_integration import get_supabase_client
+            
+            supabase_client = get_supabase_client()
+            prediction_result = prediction_engine.predict_patient_risk(patient_id, supabase_client)
+            
+            if 'error' in prediction_result:
+                return jsonify({
+                    'success': False,
+                    'error': prediction_result['error']
+                }), 500
+            
+            return jsonify({
+                'success': True,
+                'patient_id': patient_id,
+                'prediction': prediction_result['prediction']
+            })
+            
+        except Exception as e:
+            print(f"ML prediction failed for patient {patient_id}: {e}")
+            
+            # Fallback to basic prediction
+            try:
+                from supabase_integration import get_prediction_results_supabase
+                supabase_data = get_prediction_results_supabase()
+                
+                # Find the specific patient
+                patient_data = None
+                for patient in supabase_data.get('patients', []):
+                    if patient.get('patient_id') == patient_id:
+                        patient_data = patient
+                        break
+                
+                if patient_data:
+                    return jsonify({
+                        'success': True,
+                        'patient_id': patient_id,
+                        'prediction': {
+                            'risk_level': patient_data.get('risk_status', 'Low'),
+                            'risk_score': patient_data.get('risk_score', 0),
+                            'confidence': 85.0,
+                            'risk_factors': ['Historical data analysis'],
+                            'recommendations': ['Monitor closely', 'Review medication']
+                        }
+                    })
+                else:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Patient not found'
+                    }), 404
+                    
+            except Exception as e2:
+                print(f"Fallback prediction failed: {e2}")
+        
+        # Final fallback
+        return jsonify({
+            'success': False,
+            'error': 'Prediction service unavailable'
+        }), 500
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 # API Routes for AJAX calls
