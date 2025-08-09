@@ -682,13 +682,17 @@
             </div>
         </div>
         <div class="header-buttons">
-            <button class="btn-primary btn-success" onclick="runPredictionEngine()">
+            <button class="btn-primary btn-success" onclick="runMLAnalysis()">
                 <i class="fas fa-brain"></i>
-                Run ML Analysis
+                🤖 Run AI Analysis
             </button>
             <button class="btn-primary" onclick="exportReport()">
-                <i class="fas fa-download"></i>
+                <i class="fas fa-file-pdf"></i>
                 Export to PDF
+            </button>
+            <button class="btn btn-success" onclick="exportToCSV()">
+                <i class="fas fa-file-csv"></i>
+                Export to CSV
             </button>
             <button class="btn-primary" onclick="showSystemInfo()"
                 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
@@ -884,6 +888,14 @@
                     <i class="fas fa-file-excel"></i>
                     Export
                 </button>
+                <button class="btn btn-primary" onclick="addNewPatient()">
+                    <i class="fas fa-plus"></i>
+                    Add Patient
+                </button>
+                <button class="btn btn-success" onclick="addNewIncident()">
+                    <i class="fas fa-plus"></i>
+                    Add Incident
+                </button>
             </div>
         </div>
 
@@ -904,6 +916,297 @@
             </tbody>
         </table>
     </div>
+</div>
+
+<!-- Add Patient Modal -->
+<div class="modal fade" id="addPatientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2"></i>Add New Patient
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addPatientForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Patient ID</label>
+                                <input type="text" class="form-control" name="patient_id" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Age</label>
+                                <input type="number" class="form-control" name="age" min="1" max="120" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Gender</label>
+                                <select class="form-select" name="gender" required>
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Epilepsy Type</label>
+                                <select class="form-select" name="epilepsy_type" required>
+                                    <option value="">Select Type</option>
+                                    <option value="Focal">Focal</option>
+                                    <option value="Generalized">Generalized</option>
+                                    <option value="Unknown">Unknown</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Recent Seizures (Last 30 days)</label>
+                                <input type="number" class="form-control" name="recent_seizures" min="0" value="0">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Risk Level</label>
+                                <select class="form-select" name="risk_level" required>
+                                    <option value="">Select Risk Level</option>
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                    <option value="Critical">Critical</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" name="notes" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Add Patient
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Incident Modal -->
+<div class="modal fade" id="addIncidentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Add New Incident
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addIncidentForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Patient ID</label>
+                                <input type="text" class="form-control" name="patient_id" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Incident Type</label>
+                                <select class="form-select" name="incident_type" required>
+                                    <option value="">Select Type</option>
+                                    <option value="seizure">Seizure</option>
+                                    <option value="fall">Fall</option>
+                                    <option value="zone_breach">Zone Breach</option>
+                                    <option value="device_offline">Device Offline</option>
+                                    <option value="low_battery">Low Battery</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Location</label>
+                                <select class="form-select" name="location" required>
+                                    <option value="">Select Location</option>
+                                    <option value="Home">Home</option>
+                                    <option value="Hospital">Hospital</option>
+                                    <option value="Public">Public</option>
+                                    <option value="Work">Work</option>
+                                    <option value="Transport">Transport</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Severity</label>
+                                <select class="form-select" name="severity" required>
+                                    <option value="">Select Severity</option>
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                    <option value="Critical">Critical</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Incident Date</label>
+                                <input type="datetime-local" class="form-control" name="incident_date" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Response Time (minutes)</label>
+                                <input type="number" class="form-control" name="response_time" min="0" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Add Incident
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Patient Modal -->
+<div class="modal fade" id="editPatientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Edit Patient
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editPatientForm">
+                <input type="hidden" name="patient_id" id="editPatientId">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Patient ID</label>
+                                <input type="text" class="form-control" name="patient_id_display"
+                                    id="editPatientIdDisplay" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Age</label>
+                                <input type="number" class="form-control" name="age" id="editPatientAge" min="1"
+                                    max="120" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Gender</label>
+                                <select class="form-select" name="gender" id="editPatientGender" required>
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Epilepsy Type</label>
+                                <select class="form-select" name="epilepsy_type" id="editPatientEpilepsyType" required>
+                                    <option value="">Select Type</option>
+                                    <option value="Focal">Focal</option>
+                                    <option value="Generalized">Generalized</option>
+                                    <option value="Unknown">Unknown</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Recent Seizures (Last 30 days)</label>
+                                <input type="number" class="form-control" name="recent_seizures"
+                                    id="editPatientSeizures" min="0">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Risk Level</label>
+                                <select class="form-select" name="risk_level" id="editPatientRiskLevel" required>
+                                    <option value="">Select Risk Level</option>
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                    <option value="Critical">Critical</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" name="notes" id="editPatientNotes" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Update Patient
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2 text-danger"></i>Confirm Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong id="deletePatientName"></strong>?</p>
+                <p class="text-muted">This action cannot be undone and will remove all associated data.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                    <i class="fas fa-trash me-2"></i>Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 </div>
 {% endblock %}
 
@@ -1956,6 +2259,12 @@
                         <button class="btn btn-sm btn-outline-info" onclick="viewPatientDetails('${pred.patient_id}')" title="View Details">
                             <i class="fas fa-eye"></i>
                         </button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="editPatient('${pred.patient_id}')" title="Edit Patient">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deletePatient('${pred.patient_id}')" title="Delete Patient">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </td>
             </tr>
@@ -2170,10 +2479,11 @@
         const btn = event.target;
         const originalText = btn.innerHTML;
 
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
         btn.disabled = true;
 
         try {
+            showNotification('📊 Generating comprehensive PDF report...', 'info');
             const filters = getCurrentFilters();
 
             const response = await fetch('/api/analytics/export-pdf', {
@@ -2190,22 +2500,102 @@
                 // Create a download link for the report
                 const downloadLink = document.createElement('a');
                 downloadLink.href = data.download_url;
-                downloadLink.download = `analytics_report_${new Date().toISOString().slice(0, 10)}.pdf`;
+                downloadLink.download = data.filename || `analytics_report_${new Date().toISOString().slice(0, 10)}.pdf`;
                 document.body.appendChild(downloadLink);
                 downloadLink.click();
                 document.body.removeChild(downloadLink);
 
-                showNotification('Report exported successfully! Check your downloads.', 'success');
+                showNotification('✅ PDF Report Generated Successfully!', 'success');
+                showExportSuccessModal('PDF Report', data.filename, data.download_url);
             } else {
-                showNotification('Export failed: ' + (data.error || 'Unknown error'), 'error');
+                showNotification('❌ Export failed: ' + (data.error || 'Unknown error'), 'error');
             }
         } catch (error) {
             console.error('Error exporting report:', error);
-            showNotification('Error exporting report', 'error');
+            showNotification('❌ Error exporting report', 'error');
         } finally {
             btn.innerHTML = originalText;
             btn.disabled = false;
         }
+    }
+
+    async function exportToCSV() {
+        try {
+            showNotification('📊 Generating CSV export...', 'info');
+
+            const filters = getCurrentFilters();
+
+            const response = await fetch('/api/analytics/export-csv', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(filters)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showNotification('✅ CSV Export Generated Successfully!', 'success');
+
+                // Create and download CSV file
+                const blob = new Blob([data.data], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = data.filename || 'analytics_export.csv';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+
+                showExportSuccessModal('CSV Export', data.filename, null);
+            } else {
+                showNotification('❌ CSV export failed: ' + (data.error || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            console.error('Error exporting CSV:', error);
+            showNotification('❌ Error exporting CSV', 'error');
+        }
+    }
+
+    function showExportSuccessModal(type, filename, downloadUrl) {
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.id = 'exportSuccessModal';
+        modal.innerHTML = `
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">✅ Export Successful</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center mb-3">
+                            <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
+                        </div>
+                        <h6>${type} Generated Successfully!</h6>
+                        <p><strong>Filename:</strong> ${filename}</p>
+                        <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+                        ${downloadUrl ? `<p><strong>Download URL:</strong> <a href="${downloadUrl}" target="_blank">${downloadUrl}</a></p>` : ''}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        ${downloadUrl ? `<a href="${downloadUrl}" class="btn btn-primary" download="${filename}">
+                            <i class="fas fa-download"></i> Download Again
+                        </a>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        const modalInstance = new bootstrap.Modal(modal);
+        modalInstance.show();
+
+        modal.addEventListener('hidden.bs.modal', () => {
+            modal.remove();
+        });
     }
 
     async function refreshPredictions() {
@@ -2323,9 +2713,32 @@
         }
     }
 
-    function exportPatientReport(patientId) {
-        showNotification(`Exporting report for patient ${patientId}...`, 'info');
-        // Implementation for patient-specific report export
+    async function exportPatientReport(patientId) {
+        try {
+            showNotification(`📊 Generating patient report for ${patientId}...`, 'info');
+
+            const response = await fetch(`/api/analytics/export-patient-report/${patientId}`);
+            const data = await response.json();
+
+            if (data.success) {
+                showNotification('✅ Patient report generated successfully!', 'success');
+
+                // Create a download link for the report
+                const downloadLink = document.createElement('a');
+                downloadLink.href = data.download_url;
+                downloadLink.download = data.filename || `patient_report_${patientId}.pdf`;
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+
+                showExportSuccessModal('Patient Report', data.filename, data.download_url);
+            } else {
+                showNotification('❌ Patient report generation failed: ' + (data.error || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            console.error('Error exporting patient report:', error);
+            showNotification('❌ Error generating patient report', 'error');
+        }
     }
 
     function showSystemInfo() {
@@ -2353,12 +2766,226 @@
     }
 
     function exportPredictions() {
-        showNotification('Prediction data exported to Excel!', 'success');
+        exportToCSV();
+    }
+
+    async function runMLAnalysis() {
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running AI Analysis...';
+        btn.disabled = true;
+
+        try {
+            showNotification('🤖 Starting AI-powered risk analysis...', 'info');
+
+            const response = await fetch('/api/analytics/run-prediction', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showNotification(data.message, 'success');
+
+                // Show detailed results modal
+                showMLAnalysisResultsModal(data.details);
+
+                // Refresh prediction data if needed
+                if (data.refresh_required) {
+                    setTimeout(() => {
+                        loadPredictionResults();
+                    }, 1000);
+                }
+            } else {
+                showNotification('❌ Analysis failed: ' + (data.error || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            console.error('Error running ML analysis:', error);
+            showNotification('❌ Error running AI analysis', 'error');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    function showMLAnalysisResultsModal(details) {
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.id = 'mlAnalysisModal';
+        modal.innerHTML = `
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">🤖 AI Analysis Results</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">📊 Analysis Summary</h6>
+                                        <div class="mb-3">
+                                            <strong>Patients Analyzed:</strong> ${details.patients_analyzed || 0}
+                                        </div>
+                                        <div class="mb-3">
+                                            <strong>High-Risk Identified:</strong> ${details.high_risk_identified || 0}
+                                        </div>
+                                        <div class="mb-3">
+                                            <strong>Algorithm Version:</strong> ${details.algorithm_version || 'ML-v3.0'}
+                                        </div>
+                                        <div class="mb-3">
+                                            <strong>Confidence Score:</strong> ${details.confidence_score || 85}%
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">🎯 Model Performance</h6>
+                                        ${details.model_performance ? `
+                                            <div class="mb-3">
+                                                <strong>Accuracy:</strong> ${details.model_performance.accuracy}%
+                                            </div>
+                                            <div class="mb-3">
+                                                <strong>Precision:</strong> ${details.model_performance.precision}%
+                                            </div>
+                                            <div class="mb-3">
+                                                <strong>Recall:</strong> ${details.model_performance.recall}%
+                                            </div>
+                                        ` : `
+                                            <div class="mb-3">
+                                                <strong>Analysis Type:</strong> ${details.analysis_type || 'Statistical Analysis'}
+                                            </div>
+                                            <div class="mb-3">
+                                                <strong>Data Points Processed:</strong> ${details.data_points_processed || 0}
+                                            </div>
+                                        `}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">📋 Next Steps</h6>
+                                        <ul class="list-unstyled">
+                                            <li><i class="fas fa-check-circle text-success"></i> Review high-risk patient profiles</li>
+                                            <li><i class="fas fa-check-circle text-success"></i> Update safety protocols based on findings</li>
+                                            <li><i class="fas fa-check-circle text-success"></i> Schedule follow-up assessments</li>
+                                            <li><i class="fas fa-check-circle text-success"></i> Monitor prediction accuracy over time</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="loadPredictionResults()">
+                            <i class="fas fa-sync"></i> Refresh Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        const modalInstance = new bootstrap.Modal(modal);
+        modalInstance.show();
+
+        modal.addEventListener('hidden.bs.modal', () => {
+            modal.remove();
+        });
     }
 
     function viewPatientDetails(patientId) {
         showNotification(`Opening detailed view for patient ${patientId}...`, 'info');
         // In a real implementation, this would open a patient detail modal or page
+    }
+
+    // CRUD Operations - CREATE
+    function addNewPatient() {
+        new bootstrap.Modal(document.getElementById('addPatientModal')).show();
+    }
+
+    function addNewIncident() {
+        // Set default date to current date/time
+        const now = new Date();
+        const dateTimeLocal = now.toISOString().slice(0, 16);
+        document.querySelector('#addIncidentForm input[name="incident_date"]').value = dateTimeLocal;
+
+        new bootstrap.Modal(document.getElementById('addIncidentModal')).show();
+    }
+
+    // CRUD Operations - UPDATE
+    function editPatient(patientId) {
+        // Load patient data for editing
+        loadPatientData(patientId);
+        new bootstrap.Modal(document.getElementById('editPatientModal')).show();
+    }
+
+    async function loadPatientData(patientId) {
+        try {
+            const response = await fetch(`/api/analytics/patient/${patientId}`);
+            const data = await response.json();
+
+            if (data.success) {
+                const patient = data.patient;
+
+                // Populate edit form
+                document.getElementById('editPatientId').value = patient.patient_id;
+                document.getElementById('editPatientIdDisplay').value = patient.patient_id;
+                document.getElementById('editPatientAge').value = patient.age || '';
+                document.getElementById('editPatientGender').value = patient.gender || '';
+                document.getElementById('editPatientEpilepsyType').value = patient.epilepsy_type || '';
+                document.getElementById('editPatientSeizures').value = patient.recent_seizures || 0;
+                document.getElementById('editPatientRiskLevel').value = patient.risk_level || '';
+                document.getElementById('editPatientNotes').value = patient.notes || '';
+            } else {
+                showNotification('Error loading patient data: ' + (data.error || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            console.error('Error loading patient data:', error);
+            showNotification('Error loading patient data', 'error');
+        }
+    }
+
+    // CRUD Operations - DELETE
+    function deletePatient(patientId) {
+        document.getElementById('deletePatientName').textContent = patientId;
+        new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
+    }
+
+    async function confirmDelete() {
+        const patientId = document.getElementById('editPatientId').value ||
+            document.getElementById('deletePatientName').textContent;
+
+        try {
+            const response = await fetch(`/api/analytics/patient/${patientId}`, {
+                method: 'DELETE'
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showNotification(`Patient ${patientId} deleted successfully`, 'success');
+                bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+                // Refresh the prediction table
+                await loadPredictionResults();
+            } else {
+                showNotification('Error deleting patient: ' + (data.error || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting patient:', error);
+            showNotification('Error deleting patient', 'error');
+        }
     }
 
     function formatDate(dateString) {
@@ -2382,6 +3009,109 @@
             });
         }, 30000);
     }
+
+    // Form submission handlers for CRUD operations
+    document.addEventListener('DOMContentLoaded', function () {
+        // Add Patient Form Handler
+        document.getElementById('addPatientForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const patientData = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch('/api/analytics/patient', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(patientData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification('Patient added successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('addPatientModal')).hide();
+                    this.reset();
+                    // Refresh the prediction table
+                    await loadPredictionResults();
+                } else {
+                    showNotification('Error adding patient: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Error adding patient:', error);
+                showNotification('Error adding patient', 'error');
+            }
+        });
+
+        // Add Incident Form Handler
+        document.getElementById('addIncidentForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const incidentData = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch('/api/analytics/incident', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(incidentData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification('Incident added successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('addIncidentModal')).hide();
+                    this.reset();
+                    // Refresh analytics data
+                    await loadMetrics();
+                    await loadPredictionResults();
+                } else {
+                    showNotification('Error adding incident: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Error adding incident:', error);
+                showNotification('Error adding incident', 'error');
+            }
+        });
+
+        // Edit Patient Form Handler
+        document.getElementById('editPatientForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const patientData = Object.fromEntries(formData.entries());
+            const patientId = patientData.patient_id;
+
+            try {
+                const response = await fetch(`/api/analytics/patient/${patientId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(patientData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification('Patient updated successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('editPatientModal')).hide();
+                    // Refresh the prediction table
+                    await loadPredictionResults();
+                } else {
+                    showNotification('Error updating patient: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Error updating patient:', error);
+                showNotification('Error updating patient', 'error');
+            }
+        });
+    });
 
     function showNotification(message, type = 'info') {
         const notification = document.createElement('div');
