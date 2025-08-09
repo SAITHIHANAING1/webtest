@@ -837,6 +837,16 @@ def logout():
     flash('You have been logged out successfully', 'info')
     return redirect(url_for('landing'))
 
+
+@app.route('/create_module')
+def create_module():
+    if current_user.is_authenticated:
+        if current_user.role == 'admin':
+            return redirect(url_for('admin_dashboard'))
+        else:
+            return redirect(url_for('caregiver_dashboard'))
+    return render_template('landing.html')
+
 # Caregiver Routes
 @app.route('/caregiver/dashboard')
 @login_required
