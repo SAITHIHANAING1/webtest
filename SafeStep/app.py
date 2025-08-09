@@ -1,5 +1,3 @@
-
-
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -862,14 +860,75 @@ def caregiver_dashboard():
                          active_zones=active_zones,
                          completed_modules=completed_modules)
 
-@app.route('/caregiver/monitoring')
+@app.route('/caregiver/monitoring', methods=['GET', 'POST'])
 @login_required
 def seizure_monitoring():
+    if request.method == 'POST':
+        # Get seizure event data from the form (AJAX or form submission)
+        data = request.get_json() if request.is_json else request.form
+        severity = data.get('severity')
+        location = data.get('location')
+        triggers = data.get('triggers')
+        notes = data.get('notes')
+        user_id = current_user.id
+        start_time = datetime.utcnow()
+
+        # If Supabase is available, insert into Supabase table
+        if supabase_available:
+            supabase = get_supabase_client()
+            try:
+                response = supabase.table('seizure_session').insert({
+                    'user_id': user_id,
+                    'start_time': start_time.isoformat(),
+                    'severity': severity,
+                    'location': location,
+                    'triggers': triggers,
+                    'notes': notes,
+                    'created_at': start_time.isoformat()
+                }).execute()
+                if response and response.status_code in (200, 201):
+                    return jsonify({'success': True, 'message': 'Seizure event saved to Supabase.'}), 201
+                else:
+                    return jsonify({'success': False, 'message': 'Failed to save to Supabase.'}), 500
+            except Exception as e:
+                return jsonify({'success': False, 'message': f'Supabase error: {str(e)}'}), 500
+        else:
+            # Fallback: Save to local database
+            session = SeizureSession(
+                user_id=user_id,
+                start_time=start_time,
+                severity=severity,
+                location=location,
+                triggers=triggers,
+                notes=notes
+            )
+            db.session.add(session)
+            db.session.commit()
+            return jsonify({'success': True, 'message': 'Seizure event saved locally.'}), 201
+
     return render_template('caregiver/Issac/monitoring.html')
 
-@app.route('/caregiver/history')
+@app.route('/caregiver/history', methods=['GET', 'POST'])
 @login_required
 def seizure_history():
+    if request.method == 'POST':
+        # Handle AJAX delete request
+        if request.is_json:
+            data = request.get_json()
+            session_id = data.get('session_id')
+            if session_id is not None:
+                session_to_delete = SeizureSession.query.filter_by(id=session_id, user_id=current_user.id).first()
+                if session_to_delete:
+                    db.session.delete(session_to_delete)
+                    db.session.commit()
+                    return jsonify({'success': True, 'message': 'Session deleted'})
+                else:
+                    return jsonify({'success': False, 'message': 'Session not found'}), 404
+            else:
+                return jsonify({'success': False, 'message': 'No session_id provided'}), 400
+        else:
+            return jsonify({'success': False, 'message': 'Invalid request'}), 400
+    # GET: show history page
     sessions = SeizureSession.query.filter_by(user_id=current_user.id).order_by(SeizureSession.created_at.desc()).all()
     return render_template('caregiver/Issac/history.html', sessions=sessions)
 
@@ -2427,7 +2486,6 @@ def end_session(session_id):
     session.end_time = datetime.utcnow()
     db.session.commit()
     return jsonify({'success': True})
-
 
 
 if __name__ == '__main__':
