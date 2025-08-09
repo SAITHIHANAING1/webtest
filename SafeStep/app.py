@@ -115,6 +115,8 @@ class SafetyZone(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
+    zone_type = db.Column(db.String(20), default='safe')  # 'safe' or 'danger'
+    status = db.Column(db.String(20), default='approved')  # 'approved', 'pending', 'rejected'
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
     radius = db.Column(db.Float)  # in meters
