@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import os
 from functools import wraps
 import secrets
+import json
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -24,6 +25,9 @@ try:
 except ImportError:
     print("ℹ️ Supabase integration not available")
     supabase_available = False
+
+# Import models
+print("✅ UserQuestionnaire model defined in app.py")
 
 app = Flask(__name__)
 
@@ -70,6 +74,11 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+# Register before_request handler for questionnaire completion check
+@app.before_request
+def before_request():
+    check_questionnaire_completion()
 
 # Database Models
 class User(UserMixin, db.Model):
@@ -154,6 +163,311 @@ class PredictionJob(db.Model):
     confidence_score = db.Column(db.Float)
     predicted_time = db.Column(db.DateTime)
     actual_outcome = db.Column(db.Boolean)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class UserQuestionnaire(db.Model):
+    """
+    Store user questionnaire responses after sign-up
+    Used for analytics, risk assessment, and personalized recommendations
+    """
+    __tablename__ = 'user_questionnaires'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Personal Health Information
+    age = db.Column(db.Integer)
+    gender = db.Column(db.String(10))  # M/F/Other
+    height_cm = db.Column(db.Float)
+    weight_kg = db.Column(db.Float)
+    
+    # Medical History
+    has_epilepsy = db.Column(db.Boolean, default=False)
+    epilepsy_diagnosis_age = db.Column(db.Integer)
+    epilepsy_type = db.Column(db.String(50))  # focal, generalized, combined, unknown
+    seizure_frequency = db.Column(db.String(50))  # daily, weekly, monthly, rare, none
+    last_seizure_date = db.Column(db.Date)
+    
+    # Medication Information
+    current_medications = db.Column(db.Text)  # JSON array of medications
+    medication_compliance = db.Column(db.String(20))  # excellent, good, fair, poor
+    medication_side_effects = db.Column(db.Text)  # JSON array of side effects
+    
+    # Seizure Characteristics
+    seizure_types = db.Column(db.Text)  # JSON array: ["tonic-clonic", "absence", "focal"]
+    seizure_duration_avg = db.Column(db.Integer)  # average duration in seconds
+    seizure_triggers = db.Column(db.Text)  # JSON array: ["stress", "lack_sleep", "alcohol"]
+    aura_experience = db.Column(db.Boolean, default=False)
+    aura_duration = db.Column(db.Integer)  # seconds
+    
+    # Lifestyle Factors
+    sleep_hours_avg = db.Column(db.Float)
+    stress_level = db.Column(db.String(20))  # low, moderate, high
+    exercise_frequency = db.Column(db.String(20))  # never, rarely, weekly, daily
+    alcohol_consumption = db.Column(db.String(20))  # none, occasional, moderate, heavy
+    smoking_status = db.Column(db.String(20))  # never, former, current
+    
+    # Safety and Support
+    lives_alone = db.Column(db.Boolean, default=False)
+    emergency_contact = db.Column(db.String(100))
+    emergency_contact_phone = db.Column(db.String(20))
+    has_medical_alert = db.Column(db.Boolean, default=False)
+    wears_helmet = db.Column(db.Boolean, default=False)
+    
+    # Environment and Activities
+    primary_location = db.Column(db.String(50))  # home, work, school, other
+    driving_status = db.Column(db.String(20))  # drives, doesn_drive, restricted
+    swimming_ability = db.Column(db.String(20))  # none, basic, good, excellent
+    cooking_ability = db.Column(db.String(20))  # none, basic, good, excellent
+    
+    # Technology and Monitoring
+    smartphone_usage = db.Column(db.String(20))  # none, basic, advanced
+    wearable_device = db.Column(db.Boolean, default=False)
+    monitoring_preference = db.Column(db.String(50))  # continuous, periodic, manual, none
+    
+    # Caregiver Information (if applicable)
+    caregiver_relationship = db.Column(db.String(50))  # parent, spouse, child, other
+    caregiver_experience_years = db.Column(db.Integer)
+    caregiver_training = db.Column(db.Boolean, default=False)
+    
+    # Risk Assessment (calculated)
+    risk_score = db.Column(db.Float, default=0.0)  # 0.0-100.0
+    risk_factors = db.Column(db.Text)  # JSON array of identified risk factors
+    recommendations = db.Column(db.Text)  # JSON array of personalized recommendations
+    
+    # Timestamps
+    completed_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='questionnaire')
+    
+    def to_dict(self):
+        """Convert to dictionary for API responses"""
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'age': self.age,
+            'gender': self.gender,
+            'has_epilepsy': self.has_epilepsy,
+            'epilepsy_type': self.epilepsy_type,
+            'seizure_frequency': self.seizure_frequency,
+            'risk_score': self.risk_score,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None
+        }
+    
+    def calculate_risk_score(self):
+        """Calculate risk score based on questionnaire responses"""
+        score = 0.0
+        
+        # Age factor (higher risk for very young and elderly)
+        if self.age:
+            if self.age < 18 or self.age > 65:
+                score += 15.0
+            elif self.age < 25 or self.age > 55:
+                score += 10.0
+        
+        # Epilepsy factors
+        if self.has_epilepsy:
+            score += 25.0
+            
+            # Seizure frequency
+            if self.seizure_frequency == 'daily':
+                score += 30.0
+            elif self.seizure_frequency == 'weekly':
+                score += 20.0
+            elif self.seizure_frequency == 'monthly':
+                score += 10.0
+            
+            # Medication compliance
+            if self.medication_compliance == 'poor':
+                score += 20.0
+            elif self.medication_compliance == 'fair':
+                score += 10.0
+        
+        # Lifestyle factors
+        if self.sleep_hours_avg and self.sleep_hours_avg < 6:
+            score += 15.0
+        
+        if self.stress_level == 'high':
+            score += 15.0
+        elif self.stress_level == 'moderate':
+            score += 8.0
+        
+        if self.alcohol_consumption in ['moderate', 'heavy']:
+            score += 10.0
+        
+        # Safety factors
+        if self.lives_alone:
+            score += 20.0
+        
+        if not self.emergency_contact:
+            score += 15.0
+        
+        # Cap the score at 100
+        self.risk_score = min(score, 100.0)
+        return self.risk_score
+    
+    def generate_recommendations(self):
+        """Generate personalized recommendations based on responses"""
+        recommendations = []
+        
+        if self.has_epilepsy:
+            if self.medication_compliance == 'poor':
+                recommendations.append("Consider setting medication reminders or working with your healthcare provider to improve medication adherence")
+            
+            if self.seizure_frequency in ['daily', 'weekly']:
+                recommendations.append("Frequent seizures may require medical attention. Please consult with your neurologist")
+            
+            if not self.emergency_contact:
+                recommendations.append("Set up emergency contacts in your profile for immediate assistance during seizures")
+        
+        if self.sleep_hours_avg and self.sleep_hours_avg < 6:
+            recommendations.append("Aim for 7-9 hours of sleep per night as sleep deprivation can trigger seizures")
+        
+        if self.stress_level == 'high':
+            recommendations.append("Consider stress management techniques like meditation, exercise, or counseling")
+        
+        if self.lives_alone:
+            recommendations.append("Consider installing safety devices and having regular check-ins with family or friends")
+        
+        if not self.has_medical_alert:
+            recommendations.append("Consider wearing a medical alert bracelet or necklace")
+        
+        self.recommendations = json.dumps(recommendations)
+        return recommendations
+
+class IncidentRecord(db.Model):
+    """
+    Enhanced model for storing real epilepsy incident data
+    Based on research datasets from Nature Scientific Data 2025
+    """
+    __tablename__ = 'incidents'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Patient Information
+    patient_id = db.Column(db.String(20), nullable=False, index=True)  # e.g., sub-01, sub-02
+    age = db.Column(db.Integer)
+    gender = db.Column(db.String(10))  # M/F
+    
+    # Incident Details
+    incident_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    incident_type = db.Column(db.String(50), nullable=False)  # seizure, fall, medication_issue, etc.
+    severity = db.Column(db.String(20))  # mild, moderate, severe, critical
+    duration_seconds = db.Column(db.Integer)  # Duration of incident
+    
+    # Seizure-Specific Information (if applicable)
+    seizure_type = db.Column(db.String(50))  # focal, generalized, absence, tonic-clonic, etc.
+    consciousness_state = db.Column(db.String(20))  # awake, asleep, impaired
+    seizure_onset_pattern = db.Column(db.String(50))  # LVFA, rhythmic_spikes, theta_alpha, beta_gamma
+    affected_regions = db.Column(db.Text)  # JSON: ["frontal", "temporal", "occipital", etc.]
+    
+    # Location and Context
+    location = db.Column(db.String(100), nullable=False)
+    environment = db.Column(db.String(50))  # home, hospital, public, work
+    triggers = db.Column(db.Text)  # JSON array of potential triggers
+    
+    # EEG/Monitoring Data (if available)
+    eeg_recorded = db.Column(db.Boolean, default=False)
+    sampling_rate = db.Column(db.Integer)  # Hz, typically 256, 500, 1000, or 30000
+    electrode_count = db.Column(db.Integer)  # Number of electrodes used
+    hfo_detected = db.Column(db.Boolean, default=False)  # High-frequency oscillations
+    
+    # Response and Outcome
+    response_time_minutes = db.Column(db.Float)  # Time to response/intervention
+    intervention_type = db.Column(db.String(100))  # medication, emergency_services, etc.
+    outcome = db.Column(db.String(50))  # resolved, hospitalized, ongoing
+    
+    # Metadata
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    
+    def to_dict(self):
+        """Convert to dictionary for API responses"""
+        return {
+            'id': self.id,
+            'patient_id': self.patient_id,
+            'age': self.age,
+            'gender': self.gender,
+            'incident_date': self.incident_date.isoformat() if self.incident_date else None,
+            'incident_type': self.incident_type,
+            'severity': self.severity,
+            'duration_seconds': self.duration_seconds,
+            'seizure_type': self.seizure_type,
+            'consciousness_state': self.consciousness_state,
+            'location': self.location,
+            'environment': self.environment,
+            'response_time_minutes': self.response_time_minutes,
+            'outcome': self.outcome,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+class PwidProfile(db.Model):
+    """
+    Person with Intellectual Disability Profile
+    Enhanced with real epilepsy research data patterns
+    """
+    __tablename__ = 'pwids'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.String(20), unique=True, nullable=False)
+    
+    # Personal Information
+    name = db.Column(db.String(100))
+    age = db.Column(db.Integer)
+    gender = db.Column(db.String(10))
+    
+    # Medical Information
+    epilepsy_type = db.Column(db.String(50))  # focal, generalized, combined
+    seizure_frequency = db.Column(db.String(50))  # daily, weekly, monthly, rare
+    medication_regimen = db.Column(db.Text)  # JSON of medications
+    
+    # Risk Assessment (Updated by Prediction Engine)
+    risk_status = db.Column(db.String(20), default='Low')  # Low, Medium, High, Critical
+    risk_score = db.Column(db.Float, default=0.0)  # 0.0-100.0
+    last_risk_update = db.Column(db.DateTime)
+    
+    # Recent Activity Patterns
+    recent_seizure_count = db.Column(db.Integer, default=0)  # Last 7 days
+    average_response_time = db.Column(db.Float)  # Minutes
+    last_incident_date = db.Column(db.DateTime)
+    
+    # Clinical Data
+    electrode_implant = db.Column(db.Boolean, default=False)
+    monitoring_type = db.Column(db.String(50))  # scalp_eeg, ieeg, utah_array, etc.
+    hfo_burden = db.Column(db.Float)  # High-frequency oscillation burden
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    incidents = db.relationship('IncidentRecord', 
+                               primaryjoin='PwidProfile.patient_id == IncidentRecord.patient_id',
+                               foreign_keys='IncidentRecord.patient_id',
+                               backref='patient_profile')
+
+class DatasetReference(db.Model):
+    """
+    Track real datasets used as reference for our synthetic data
+    """
+    __tablename__ = 'dataset_references'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    source = db.Column(db.String(200), nullable=False)
+    publication_year = db.Column(db.Integer)
+    doi = db.Column(db.String(100))
+    description = db.Column(db.Text)
+    patient_count = db.Column(db.Integer)
+    seizure_count = db.Column(db.Integer)
+    recording_hours = db.Column(db.Float)
+    
+    # Usage tracking
+    used_for_generation = db.Column(db.Boolean, default=False)
+    generation_date = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 @login_manager.user_loader
@@ -281,6 +595,8 @@ def login():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
+        print("🔍 Signup attempt received")
+        print(f"🔍 Form data: {request.form}")
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
@@ -342,8 +658,9 @@ def signup():
 
                     except Exception as e:
                         print(f"❌ Supabase user creation failed: {e}")
-                        flash(f'Error creating account: {str(e)}', 'error')
-                        return render_template('auth/sign_up.html')
+                        # Continue with local database creation even if Supabase fails
+                        print("⚠️ Continuing with local database only")
+                        supabase_user_id = None
 
             # Create user in local SQLAlchemy database
             user = User(
@@ -362,8 +679,16 @@ def signup():
             db.session.add(user)
             db.session.commit()
 
-            flash('Account created successfully! You can now sign in.', 'success')
-            return redirect(url_for('login'))
+            # Automatically log in the user
+            login_user(user, remember=True)
+            
+            # Store session info
+            session['user_id'] = user.id
+            session['user_role'] = user.role
+            session['user_name'] = f"{user.first_name} {user.last_name}"
+            
+            flash('Account created successfully! Please complete your health assessment.', 'success')
+            return redirect(url_for('questionnaire'))
 
         except Exception as e:
             db.session.rollback()
@@ -372,6 +697,109 @@ def signup():
             return render_template('auth/sign_up.html')
 
     return render_template('auth/sign_up.html')
+
+def check_questionnaire_completion():
+    """Check if user has completed questionnaire and redirect if needed"""
+    if current_user.is_authenticated:
+        # Skip questionnaire check for admin users
+        if current_user.role == 'admin':
+            return
+        
+        # Check if user has completed questionnaire
+        existing_questionnaire = UserQuestionnaire.query.filter_by(user_id=current_user.id).first()
+        if not existing_questionnaire:
+            # Redirect to questionnaire if not completed
+            if request.endpoint not in ['questionnaire', 'logout', 'static', 'signup', 'login']:
+                print(f"🔍 Redirecting user {current_user.id} to questionnaire from {request.endpoint}")
+                return redirect(url_for('questionnaire'))
+
+@app.route('/questionnaire', methods=['GET', 'POST'])
+@login_required
+def questionnaire():
+    """Handle questionnaire after user sign-up"""
+    # Check if user has already completed questionnaire
+    existing_questionnaire = UserQuestionnaire.query.filter_by(user_id=current_user.id).first()
+    if existing_questionnaire:
+        flash('You have already completed the questionnaire.', 'info')
+        return redirect(url_for('caregiver_dashboard' if current_user.role == 'caregiver' else 'admin_dashboard'))
+    
+    if request.method == 'POST':
+        try:
+            print(f"🔍 Processing questionnaire for user {current_user.id}")
+            print(f"🔍 Form data: {dict(request.form)}")
+            print(f"🔍 Form data keys: {list(request.form.keys())}")
+            
+            # Parse form data with better error handling - only fields that exist in the form
+            questionnaire_data = {
+                'user_id': current_user.id,
+                'age': int(request.form.get('age')) if request.form.get('age') and request.form.get('age').strip() else None,
+                'gender': request.form.get('gender'),
+                'height_cm': float(request.form.get('height_cm')) if request.form.get('height_cm') and request.form.get('height_cm').strip() else None,
+                'weight_kg': float(request.form.get('weight_kg')) if request.form.get('weight_kg') and request.form.get('weight_kg').strip() else None,
+                'has_epilepsy': request.form.get('has_epilepsy') == 'true',
+                'epilepsy_diagnosis_age': int(request.form.get('epilepsy_diagnosis_age')) if request.form.get('epilepsy_diagnosis_age') and request.form.get('epilepsy_diagnosis_age').strip() else None,
+                'epilepsy_type': request.form.get('epilepsy_type'),
+                'seizure_frequency': request.form.get('seizure_frequency'),
+                'last_seizure_date': datetime.strptime(request.form.get('last_seizure_date'), '%Y-%m-%d').date() if request.form.get('last_seizure_date') and request.form.get('last_seizure_date').strip() else None,
+                'current_medications': request.form.get('current_medications'),
+                'medication_compliance': request.form.get('medication_compliance'),
+                'medication_side_effects': request.form.get('medication_side_effects'),
+                'sleep_hours_avg': float(request.form.get('sleep_hours_avg')) if request.form.get('sleep_hours_avg') and request.form.get('sleep_hours_avg').strip() else None,
+                'stress_level': request.form.get('stress_level'),
+                'exercise_frequency': request.form.get('exercise_frequency'),
+                'alcohol_consumption': request.form.get('alcohol_consumption'),
+                'lives_alone': request.form.get('lives_alone') == 'true',
+                'emergency_contact': request.form.get('emergency_contact'),
+                'emergency_contact_phone': request.form.get('emergency_contact_phone'),
+                'has_medical_alert': request.form.get('has_medical_alert') == 'true',
+                'wears_helmet': request.form.get('wears_helmet') == 'true',
+                'smartphone_usage': request.form.get('smartphone_usage'),
+                'wearable_device': request.form.get('wearable_device') == 'true',
+                'monitoring_preference': request.form.get('monitoring_preference')
+            }
+            
+            # Create questionnaire record
+            questionnaire = UserQuestionnaire(**questionnaire_data)
+            
+            # Calculate risk score and generate recommendations
+            questionnaire.calculate_risk_score()
+            questionnaire.generate_recommendations()
+            
+            print(f"🔍 Saving questionnaire to database...")
+            # Save to database
+            db.session.add(questionnaire)
+            db.session.commit()
+            print(f"✅ Questionnaire saved successfully with ID: {questionnaire.id}")
+            
+            # If Supabase is available, sync data
+            if supabase_available:
+                try:
+                    from supabase_integration import get_supabase_client
+                    supabase = get_supabase_client()
+                    if supabase:
+                        # Insert questionnaire data to Supabase
+                        supabase.table('user_questionnaires').insert(questionnaire.to_dict()).execute()
+                        print("✅ Questionnaire data synced to Supabase")
+                except Exception as e:
+                    print(f"⚠️ Supabase sync error: {e}")
+            
+            flash('Thank you for completing the questionnaire! Your responses will help us provide better support.', 'success')
+            
+            # Redirect based on user role
+            if current_user.role == 'admin':
+                return redirect(url_for('admin_dashboard'))
+            else:
+                return redirect(url_for('caregiver_dashboard'))
+                
+        except Exception as e:
+            db.session.rollback()
+            print(f"❌ Error saving questionnaire: {e}")
+            import traceback
+            print(f"❌ Full traceback: {traceback.format_exc()}")
+            flash('Error saving your responses. Please try again.', 'error')
+            return render_template('questionnaire.html')
+    
+    return render_template('questionnaire.html')
 
 @app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
@@ -626,11 +1054,12 @@ def training_management():
 def analytics():
     return render_template('admin/Arbaz/analytics.html')
 
-@app.route('/admin/reports')
+@app.route('/admin/zones')
 @login_required
 @admin_required
-def reports():
-    return render_template('admin/Arbaz/reports.html')
+def admin_zones():
+    """Admin zones management page"""
+    return render_template('admin/Arbaz/zones.html')
 
 @app.route('/analytics')
 @login_required
@@ -646,6 +1075,72 @@ def chatbot_admin():
     return render_template('admin/Arbaz/chatbot_admin.html')
 
 # Analytics API Endpoints
+@app.route('/api/analytics/questionnaire-stats')
+@login_required
+@admin_required
+def get_questionnaire_stats():
+    """Get questionnaire statistics for analytics"""
+    try:
+        # Get questionnaire completion stats
+        total_users = User.query.filter_by(role='caregiver').count()
+        completed_questionnaires = UserQuestionnaire.query.count()
+        completion_rate = (completed_questionnaires / total_users * 100) if total_users > 0 else 0
+        
+        # Get risk distribution
+        risk_distribution = db.session.query(
+            UserQuestionnaire.risk_score,
+            db.func.count(UserQuestionnaire.id)
+        ).group_by(
+            db.case(
+                (UserQuestionnaire.risk_score < 25, 'Low'),
+                (UserQuestionnaire.risk_score < 50, 'Medium'),
+                (UserQuestionnaire.risk_score < 75, 'High'),
+                else_='Critical'
+            )
+        ).all()
+        
+        # Get epilepsy statistics
+        epilepsy_stats = db.session.query(
+            UserQuestionnaire.has_epilepsy,
+            db.func.count(UserQuestionnaire.id)
+        ).group_by(UserQuestionnaire.has_epilepsy).all()
+        
+        # Get age distribution
+        age_groups = db.session.query(
+            db.case(
+                (UserQuestionnaire.age < 18, 'Under 18'),
+                (UserQuestionnaire.age < 30, '18-29'),
+                (UserQuestionnaire.age < 50, '30-49'),
+                (UserQuestionnaire.age < 65, '50-64'),
+                else_='65+'
+            ),
+            db.func.count(UserQuestionnaire.id)
+        ).group_by(
+            db.case(
+                (UserQuestionnaire.age < 18, 'Under 18'),
+                (UserQuestionnaire.age < 30, '18-29'),
+                (UserQuestionnaire.age < 50, '30-49'),
+                (UserQuestionnaire.age < 65, '50-64'),
+                else_='65+'
+            )
+        ).all()
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'completion_rate': round(completion_rate, 1),
+                'total_users': total_users,
+                'completed_questionnaires': completed_questionnaires,
+                'risk_distribution': dict(risk_distribution),
+                'epilepsy_stats': dict(epilepsy_stats),
+                'age_groups': dict(age_groups)
+            }
+        })
+        
+    except Exception as e:
+        print(f"❌ Error getting questionnaire stats: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/analytics/metrics')
 @login_required
 @admin_required
@@ -1581,6 +2076,227 @@ def predict_patient_risk(patient_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+# Admin Zones API Routes
+@app.route('/api/admin/zones')
+@login_required
+@admin_required
+def get_admin_zones():
+    """Get all zones with user information for admin management"""
+    try:
+        # Get filter parameters
+        user_id = request.args.get('user_id')
+        status = request.args.get('status')
+        
+        # Build query
+        query = db.session.query(SafetyZone, User).join(User, SafetyZone.user_id == User.id)
+        
+        if user_id:
+            query = query.filter(SafetyZone.user_id == user_id)
+        if status:
+            if status == 'active':
+                query = query.filter(SafetyZone.is_active == True)
+            elif status == 'inactive':
+                query = query.filter(SafetyZone.is_active == False)
+        
+        zones_data = query.all()
+        
+        zones = []
+        for zone, user in zones_data:
+            zones.append({
+                'id': zone.id,
+                'name': zone.name,
+                'description': zone.description,
+                'latitude': zone.latitude,
+                'longitude': zone.longitude,
+                'radius': zone.radius,
+                'is_active': zone.is_active,
+                'created_at': zone.created_at.isoformat(),
+                'user_name': f"{user.first_name} {user.last_name}"
+            })
+        
+        # Calculate metrics
+        total_zones = SafetyZone.query.count()
+        active_zones = SafetyZone.query.filter_by(is_active=True).count()
+        active_users = User.query.filter_by(role='caregiver', is_active=True).count()
+        avg_radius = db.session.query(db.func.avg(SafetyZone.radius)).scalar() or 0
+        
+        # Calculate distribution (simplified - you can enhance this)
+        distribution = {
+            'home': SafetyZone.query.filter(SafetyZone.name.ilike('%home%')).count(),
+            'work': SafetyZone.query.filter(SafetyZone.name.ilike('%work%')).count(),
+            'school': SafetyZone.query.filter(SafetyZone.name.ilike('%school%')).count(),
+            'other': total_zones - SafetyZone.query.filter(
+                SafetyZone.name.ilike('%home%') | 
+                SafetyZone.name.ilike('%work%') | 
+                SafetyZone.name.ilike('%school%')
+            ).count()
+        }
+        
+        return jsonify({
+            'success': True,
+            'zones': zones,
+            'metrics': {
+                'total_zones': total_zones,
+                'active_zones': active_zones,
+                'active_users': active_users,
+                'avg_radius': round(avg_radius, 1)
+            },
+            'distribution': distribution
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/admin/zones/<int:zone_id>', methods=['GET'])
+@login_required
+@admin_required
+def get_admin_zone(zone_id):
+    """Get specific zone details for editing"""
+    try:
+        zone = SafetyZone.query.get_or_404(zone_id)
+        return jsonify({
+            'success': True,
+            'zone': {
+                'id': zone.id,
+                'name': zone.name,
+                'description': zone.description,
+                'latitude': zone.latitude,
+                'longitude': zone.longitude,
+                'radius': zone.radius,
+                'is_active': zone.is_active
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/admin/zones', methods=['POST'])
+@login_required
+@admin_required
+def create_admin_zone():
+    """Create a new zone for a user"""
+    try:
+        data = request.form
+        
+        zone = SafetyZone(
+            user_id=data['user_id'],
+            name=data['name'],
+            description=data.get('description', ''),
+            latitude=float(data['latitude']),
+            longitude=float(data['longitude']),
+            radius=float(data['radius']),
+            is_active=True
+        )
+        
+        db.session.add(zone)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'zone_id': zone.id})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/admin/zones/<int:zone_id>', methods=['PUT'])
+@login_required
+@admin_required
+def update_admin_zone(zone_id):
+    """Update an existing zone"""
+    try:
+        zone = SafetyZone.query.get_or_404(zone_id)
+        data = request.form
+        
+        zone.name = data['name']
+        zone.description = data.get('description', '')
+        zone.latitude = float(data['latitude'])
+        zone.longitude = float(data['longitude'])
+        zone.radius = float(data['radius'])
+        zone.is_active = data.get('is_active', 'true').lower() == 'true'
+        
+        db.session.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/admin/zones/<int:zone_id>', methods=['DELETE'])
+@login_required
+@admin_required
+def delete_admin_zone(zone_id):
+    """Delete a zone"""
+    try:
+        zone = SafetyZone.query.get_or_404(zone_id)
+        db.session.delete(zone)
+        db.session.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/admin/zones/export')
+@login_required
+@admin_required
+def export_zones_data():
+    """Export zones data as CSV"""
+    try:
+        zones_data = db.session.query(SafetyZone, User).join(User, SafetyZone.user_id == User.id).all()
+        
+        import csv
+        import io
+        
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write header
+        writer.writerow(['Zone Name', 'User', 'Latitude', 'Longitude', 'Radius', 'Status', 'Created'])
+        
+        # Write data
+        for zone, user in zones_data:
+            writer.writerow([
+                zone.name,
+                f"{user.first_name} {user.last_name}",
+                zone.latitude,
+                zone.longitude,
+                zone.radius,
+                'Active' if zone.is_active else 'Inactive',
+                zone.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            ])
+        
+        output.seek(0)
+        
+        from flask import Response
+        return Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={'Content-Disposition': 'attachment; filename=zones_data.csv'}
+        )
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/admin/users')
+@login_required
+@admin_required
+def get_admin_users():
+    """Get all users for admin management"""
+    try:
+        users = User.query.filter_by(role='caregiver').all()
+        users_data = []
+        
+        for user in users:
+            users_data.append({
+                'id': user.id,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'email': user.email,
+                'is_active': user.is_active
+            })
+        
+        return jsonify({'success': True, 'users': users_data})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # API Routes for AJAX calls
 @app.route('/api/sessions', methods=['POST'])
 @login_required
@@ -1610,12 +2326,7 @@ if __name__ == '__main__':
         # Create all database tables
         db.create_all()
         
-        # Initialize models for epilepsy data
-        try:
-            from models import IncidentRecord, PwidProfile, PredictionJob, DatasetReference
-            print("✅ Enhanced database models initialized")
-        except ImportError as e:
-            print(f"⚠️ Warning: Enhanced models not available: {e}")
+        print("✅ All models defined in app.py")
         
         # Create default admin user if doesn't exist
         admin = User.query.filter_by(username='admin').first()

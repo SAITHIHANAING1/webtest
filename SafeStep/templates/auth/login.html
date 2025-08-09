@@ -2,6 +2,8 @@
 
 {% block title %}Login - SAFE-Step{% endblock %}
 
+{% block body_class %}admin-page{% endblock %}
+
 {% block content %}
 <div class="login-bg min-vh-100 d-flex align-items-center">
     <div class="container">
@@ -16,7 +18,7 @@
                             <h2 class="h5 login-title">Access SAFE-Step</h2>
                             <p class="login-subtitle">Sign in to your account</p>
                         </div>
-                        
+
                         <form method="POST" class="needs-validation" novalidate id="loginForm">
                             <div class="mb-3">
                                 <label for="userType" class="form-label text-dark">User Type</label>
@@ -29,19 +31,21 @@
                                     Please select your user type.
                                 </div>
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label for="username" class="form-label text-dark">MINDS ID</label>
-                                <input type="text" class="form-control" id="username" name="username" placeholder="Enter your MINDS ID" required>
+                                <input type="text" class="form-control" id="username" name="username"
+                                    placeholder="Enter your MINDS ID" required>
                                 <div class="invalid-feedback">
                                     Please enter your MINDS ID.
                                 </div>
                             </div>
-                            
+
                             <div class="mb-4">
                                 <label for="password" class="form-label text-dark">Password</label>
                                 <div class="input-group">
-                                    <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+                                    <input type="password" class="form-control" id="password" name="password"
+                                        placeholder="Enter your password" required>
                                     <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
                                         <i class="fas fa-eye" id="toggleIcon"></i>
                                     </button>
@@ -50,41 +54,42 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <button type="submit" class="btn btn-primary w-100 mb-3">
                                 <i class="fas fa-sign-in-alt me-2"></i>Sign In
                             </button>
                         </form>
-                        
+
                         <div class="text-center">
                             <small class="text-muted">
                                 For MINDS staff and authorized caregivers only<br>
-                                <a href="{{ url_for('forgot_password') }}" class="text-decoration-none">Need help accessing your account?</a>
+                                <a href="{{ url_for('forgot_password') }}" class="text-decoration-none">Need help
+                                    accessing your account?</a>
                             </small>
                         </div>
-                        
+
                         <hr class="my-4">
-                        
+
                         <div class="text-center">
                             <p class="text-muted mb-2">Don't have an account?</p>
                             <a href="{{ url_for('signup') }}" class="btn btn-outline-primary">
                                 <i class="fas fa-user-plus me-2"></i>Create Account
                             </a>
                         </div>
-                        
+
                         <!-- Demo Accounts -->
                         <div class="mt-4 p-3 bg-light rounded">
                             <small class="text-muted d-block mb-2">Demo Accounts:</small>
                             <div class="row">
                                 <div class="col-6">
                                     <small><strong>Admin:</strong><br>
-                                    MINDS ID: admin<br>
-                                    Password: admin123</small>
+                                        MINDS ID: admin<br>
+                                        Password: admin123</small>
                                 </div>
                                 <div class="col-6">
                                     <small><strong>Caregiver:</strong><br>
-                                    MINDS ID: demo<br>
-                                    Password: demo123</small>
+                                        MINDS ID: demo<br>
+                                        Password: demo123</small>
                                 </div>
                             </div>
                         </div>
@@ -98,237 +103,240 @@
 
 {% block extra_js %}
 <script>
-function togglePassword() {
-    const passwordInput = document.getElementById('password');
-    const toggleIcon = document.getElementById('toggleIcon');
-    
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        toggleIcon.classList.remove('fa-eye');
-        toggleIcon.classList.add('fa-eye-slash');
-    } else {
-        passwordInput.type = 'password';
-        toggleIcon.classList.remove('fa-eye-slash');
-        toggleIcon.classList.add('fa-eye');
-    }
-}
+    function togglePassword() {
+        const passwordInput = document.getElementById('password');
+        const toggleIcon = document.getElementById('toggleIcon');
 
-// Form validation will be handled by main.js
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.classList.remove('fa-eye');
+            toggleIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.classList.remove('fa-eye-slash');
+            toggleIcon.classList.add('fa-eye');
+        }
+    }
+
+    // Form validation will be handled by main.js
 </script>
 
 {% block extra_css %}
 <style>
-/* Login Page Background */
-.login-bg {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-    position: relative;
-    overflow: hidden;
-}
+    /* Login Page Background */
+    .login-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        position: relative;
+        overflow: hidden;
+    }
 
-.login-bg::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='m0 40l40-40h-40v40zm40 0v-40h-40l40 40z'/%3E%3C/g%3E%3C/svg%3E");
-}
+    .login-bg::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='m0 40l40-40h-40v40zm40 0v-40h-40l40 40z'/%3E%3C/g%3E%3C/svg%3E");
+    }
 
-/* Login Card */
-.login-card {
-    backdrop-filter: blur(20px);
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 25px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    position: relative;
-    z-index: 1;
-}
-
-.login-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-    border-radius: 25px 25px 0 0;
-}
-
-.login-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 25px 50px rgba(102, 126, 234, 0.2);
-}
-
-/* Login Logo */
-.login-logo {
-    font-size: 2rem;
-    font-weight: 900;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-shadow: none;
-}
-
-.login-title {
-    color: #2d3748;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-
-.login-subtitle {
-    color: #718096;
-    font-size: 0.95rem;
-}
-
-/* Enhanced Form Controls */
-.form-control, .form-select {
-    border: 2px solid #e2e8f0;
-    border-radius: 15px;
-    padding: 0.75rem 1rem;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-    background: rgba(255, 255, 255, 0.8);
-}
-
-.form-control:focus, .form-select:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    background: white;
-}
-
-.form-label {
-    font-weight: 600;
-    color: #2d3748;
-    margin-bottom: 0.5rem;
-}
-
-/* Input Group Styling */
-.input-group .btn-outline-secondary {
-    border: 2px solid #e2e8f0;
-    border-left: none;
-    border-radius: 0 15px 15px 0;
-    background: rgba(255, 255, 255, 0.8);
-    color: #667eea;
-    transition: all 0.3s ease;
-}
-
-.input-group .btn-outline-secondary:hover {
-    background: #667eea;
-    color: white;
-    border-color: #667eea;
-}
-
-.input-group .form-control {
-    border-radius: 15px 0 0 15px;
-}
-
-/* Enhanced Buttons */
-.btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    border-radius: 15px;
-    padding: 0.875rem 2rem;
-    font-weight: 600;
-    font-size: 1rem;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-primary::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: left 0.5s;
-}
-
-.btn-primary:hover::before {
-    left: 100%;
-}
-
-.btn-primary:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
-}
-
-.btn-outline-primary {
-    border: 2px solid #667eea;
-    color: #667eea;
-    border-radius: 15px;
-    padding: 0.75rem 2rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    background: transparent;
-}
-
-.btn-outline-primary:hover {
-    background: #667eea;
-    border-color: #667eea;
-    color: white;
-    transform: translateY(-2px);
-}
-
-/* Demo Account Section */
-.bg-light {
-    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%) !important;
-    border-radius: 15px;
-    border: 1px solid #e2e8f0;
-}
-
-/* Validation Feedback */
-.invalid-feedback {
-    color: #e53e3e;
-    font-size: 0.875rem;
-    font-weight: 500;
-}
-
-.form-control.is-invalid, .form-select.is-invalid {
-    border-color: #e53e3e;
-    box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
-}
-
-/* Link Styling */
-a {
-    color: #667eea;
-    text-decoration: none;
-    transition: color 0.3s ease;
-}
-
-a:hover {
-    color: #764ba2;
-    text-decoration: underline;
-}
-
-/* Small Text Enhancement */
-small {
-    line-height: 1.4;
-}
-
-/* Responsive Adjustments */
-@media (max-width: 768px) {
+    /* Login Card */
     .login-card {
-        margin: 1rem;
-        border-radius: 20px;
+        backdrop-filter: blur(20px);
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 25px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        z-index: 1;
     }
-    
+
+    .login-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        border-radius: 25px 25px 0 0;
+    }
+
+    .login-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 25px 50px rgba(102, 126, 234, 0.2);
+    }
+
+    /* Login Logo */
     .login-logo {
-        font-size: 1.75rem;
+        font-size: 2rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: none;
     }
-    
-    .card-body {
-        padding: 2rem !important;
+
+    .login-title {
+        color: #2d3748;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
     }
-}
+
+    .login-subtitle {
+        color: #718096;
+        font-size: 0.95rem;
+    }
+
+    /* Enhanced Form Controls */
+    .form-control,
+    .form-select {
+        border: 2px solid #e2e8f0;
+        border-radius: 15px;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.8);
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        background: white;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Input Group Styling */
+    .input-group .btn-outline-secondary {
+        border: 2px solid #e2e8f0;
+        border-left: none;
+        border-radius: 0 15px 15px 0;
+        background: rgba(255, 255, 255, 0.8);
+        color: #667eea;
+        transition: all 0.3s ease;
+    }
+
+    .input-group .btn-outline-secondary:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+
+    .input-group .form-control {
+        border-radius: 15px 0 0 15px;
+    }
+
+    /* Enhanced Buttons */
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 15px;
+        padding: 0.875rem 2rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-primary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .btn-primary:hover::before {
+        left: 100%;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-outline-primary {
+        border: 2px solid #667eea;
+        color: #667eea;
+        border-radius: 15px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        background: transparent;
+    }
+
+    .btn-outline-primary:hover {
+        background: #667eea;
+        border-color: #667eea;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    /* Demo Account Section */
+    .bg-light {
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%) !important;
+        border-radius: 15px;
+        border: 1px solid #e2e8f0;
+    }
+
+    /* Validation Feedback */
+    .invalid-feedback {
+        color: #e53e3e;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .form-control.is-invalid,
+    .form-select.is-invalid {
+        border-color: #e53e3e;
+        box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+    }
+
+    /* Link Styling */
+    a {
+        color: #667eea;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    a:hover {
+        color: #764ba2;
+        text-decoration: underline;
+    }
+
+    /* Small Text Enhancement */
+    small {
+        line-height: 1.4;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .login-card {
+            margin: 1rem;
+            border-radius: 20px;
+        }
+
+        .login-logo {
+            font-size: 1.75rem;
+        }
+
+        .card-body {
+            padding: 2rem !important;
+        }
+    }
 </style>
 {% endblock %}
 {% endblock %}

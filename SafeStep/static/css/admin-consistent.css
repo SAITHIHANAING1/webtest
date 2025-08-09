@@ -31,6 +31,92 @@
     align-items: center;
 }
 
+/* Action Cards */
+.action-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    height: 100%;
+}
+
+.action-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+    color: inherit;
+}
+
+.action-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.action-icon-users {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.action-icon-training {
+    background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%);
+}
+
+.action-icon-tickets {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.action-icon-analytics {
+    background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+}
+
+.action-icon-zones {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.action-icon-monitoring {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Chart Container */
+.chart-container {
+    position: relative;
+    height: 300px;
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* Activity Items */
+.activity-item {
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    transition: background 0.2s ease;
+}
+
+.activity-item:hover {
+    background: #f7fafc;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-time {
+    font-size: 0.8rem;
+    color: #718096;
+}
+
 /* Buttons */
 .btn-primary {
     background-color: #4285f4;
@@ -247,6 +333,24 @@
     background: #ffebee;
     color: #d32f2f !important;
     border-color: #d32f2f;
+}
+
+.status-active {
+    background: #e8f5e8;
+    color: #0f9d58 !important;
+    border-color: #0f9d58;
+}
+
+.status-inactive {
+    background: #ffebee;
+    color: #d32f2f !important;
+    border-color: #d32f2f;
+}
+
+.status-warning {
+    background: #fff3e0;
+    color: #f57c00 !important;
+    border-color: #f57c00;
 }
 
 /* Forms */

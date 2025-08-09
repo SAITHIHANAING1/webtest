@@ -616,6 +616,48 @@
                         <textarea class="form-control" name="content" rows="5"
                             placeholder="Enter module content here..."></textarea>
                     </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Module Image (optional)</label>
+                        <input type="file" class="form-control" name="module_image" accept="image/*">
+                        <div class="form-text">Upload an image for the module (max 5MB)</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Video URL (optional)</label>
+                        <input type="url" class="form-control" name="video_url" placeholder="https://example.com/video.mp4">
+                        <div class="form-text">Link to video content for this module</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Quiz Questions (optional)</label>
+                        <div id="quizQuestionsContainer">
+                            <div class="quiz-question mb-3">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <input type="text" class="form-control" name="quiz_questions[0][question]" placeholder="Question 1">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <select class="form-select" name="quiz_questions[0][type]">
+                                            <option value="multiple_choice">Multiple Choice</option>
+                                            <option value="true_false">True/False</option>
+                                            <option value="short_answer">Short Answer</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <input type="text" class="form-control" name="quiz_questions[0][options]" placeholder="Options (comma separated for multiple choice)">
+                                    <div class="form-text">For multiple choice: option1, option2, option3, option4</div>
+                                </div>
+                                <div class="mt-2">
+                                    <input type="text" class="form-control" name="quiz_questions[0][correct_answer]" placeholder="Correct answer">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="addQuizQuestion()">
+                            <i class="fas fa-plus me-1"></i>Add Question
+                        </button>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -680,6 +722,55 @@
         if (confirm('Are you sure you want to archive this module?')) {
             showNotification('Module archived successfully!', 'success');
         }
+    }
+
+    function addQuizQuestion() {
+        const container = document.getElementById('quizQuestionsContainer');
+        const questionCount = container.children.length;
+        
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'quiz-question mb-3';
+        questionDiv.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Question ${questionCount + 1}</h6>
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeQuizQuestion(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            <div class="row">
+                <div class="col-md-8">
+                    <input type="text" class="form-control" name="quiz_questions[${questionCount}][question]" placeholder="Question ${questionCount + 1}">
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select" name="quiz_questions[${questionCount}][type]">
+                        <option value="multiple_choice">Multiple Choice</option>
+                        <option value="true_false">True/False</option>
+                        <option value="short_answer">Short Answer</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-2">
+                <input type="text" class="form-control" name="quiz_questions[${questionCount}][options]" placeholder="Options (comma separated for multiple choice)">
+                <div class="form-text">For multiple choice: option1, option2, option3, option4</div>
+            </div>
+            <div class="mt-2">
+                <input type="text" class="form-control" name="quiz_questions[${questionCount}][correct_answer]" placeholder="Correct answer">
+            </div>
+        `;
+        
+        container.appendChild(questionDiv);
+    }
+
+    function removeQuizQuestion(button) {
+        button.closest('.quiz-question').remove();
+        // Renumber remaining questions
+        const questions = document.querySelectorAll('.quiz-question');
+        questions.forEach((question, index) => {
+            const questionTitle = question.querySelector('h6');
+            if (questionTitle) {
+                questionTitle.textContent = `Question ${index + 1}`;
+            }
+        });
     }
 
     function showNotification(message, type) {
