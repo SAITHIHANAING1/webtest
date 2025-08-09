@@ -100,9 +100,11 @@ endblock %} {% block extra_css %}
   .module-beginner::before {
     background: linear-gradient(90deg, #48bb78 0%, #38ef7d 100%);
   }
+
   .module-intermediate::before {
     background: linear-gradient(90deg, #ed8936 0%, #fbb040 100%);
   }
+
   .module-advanced::before {
     background: linear-gradient(90deg, #f56565 0%, #fc466b 100%);
   }
@@ -122,9 +124,11 @@ endblock %} {% block extra_css %}
   .module-beginner .module-icon {
     background: linear-gradient(135deg, #48bb78 0%, #38ef7d 100%);
   }
+
   .module-intermediate .module-icon {
     background: linear-gradient(135deg, #ed8936 0%, #fbb040 100%);
   }
+
   .module-advanced .module-icon {
     background: linear-gradient(135deg, #f56565 0%, #fc466b 100%);
   }
@@ -283,7 +287,6 @@ endblock %} {% block extra_css %}
     border-left: 4px solid #667eea;
     margin-bottom: 1rem;
   }
-  
 </style>
 {% endblock %} {% block content %}
 <!-- Training Header -->
@@ -294,24 +297,17 @@ endblock %} {% block extra_css %}
         <h1 class="training-title mb-2">
           <i class="fas fa-graduation-cap me-3"></i>Training Library
         </h1>
-        <p
-          class="mb-0"
-          style="
+        <p class="mb-0" style="
             font-size: 1.1rem;
             opacity: 0.9;
             position: relative;
             z-index: 1;
-          "
-        >
+          ">
           Enhance your caregiving skills with our comprehensive training modules
         </p>
       </div>
       <div class="col-md-4 text-md-end">
-        <button
-          class="btn btn-light btn-lg"
-          data-bs-toggle="modal"
-          data-bs-target="#certificateModal"
-        >
+        <button class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#certificateModal">
           <i class="fas fa-certificate me-2"></i>My Certificates
         </button>
       </div>
@@ -352,18 +348,12 @@ endblock %} {% block extra_css %}
               <span class="input-group-text bg-white border-end-0">
                 <i class="fas fa-search text-muted"></i>
               </span>
-              <input
-                type="text"
-                class="form-control search-bar border-start-0"
-                placeholder="Search training modules..."
-                id="moduleSearch"
-              />
+              <input type="text" class="form-control search-bar border-start-0" placeholder="Search training modules..."
+                id="moduleSearch" />
             </div>
           </div>
           <div class="col-md-6">
-            <div
-              class="d-flex gap-2 justify-content-md-end justify-content-start"
-            >
+            <div class="d-flex gap-2 justify-content-md-end justify-content-start">
               <button class="filter-btn active" data-filter="all">All</button>
               <button class="filter-btn" data-filter="beginner">
                 Beginner
@@ -380,11 +370,7 @@ endblock %} {% block extra_css %}
 
         <!-- Module List -->
         <div id="modulesList">
-          <div
-            class="module-item module-beginner"
-            data-difficulty="beginner"
-            onclick="startModule(1)"
-          >
+          <div class="module-item module-beginner" data-difficulty="beginner" onclick="startModule(1)">
             <div class="row align-items-center">
               <div class="col-md-2">
                 <div class="module-icon">
@@ -398,9 +384,7 @@ endblock %} {% block extra_css %}
                   response protocols.
                 </p>
                 <div class="d-flex gap-2 mb-2">
-                  <span class="difficulty-badge difficulty-beginner"
-                    >Beginner</span
-                  >
+                  <span class="difficulty-badge difficulty-beginner">Beginner</span>
                   <span class="completion-status status-completed">
                     <i class="fas fa-check-circle me-1"></i>Completed
                   </span>
@@ -427,11 +411,7 @@ endblock %} {% block extra_css %}
             </div>
           </div>
 
-          <div
-            class="module-item module-intermediate"
-            data-difficulty="intermediate"
-            onclick="startModule(2)"
-          >
+          <div class="module-item module-intermediate" data-difficulty="intermediate" onclick="startModule(2)">
             <div class="row align-items-center">
               <div class="col-md-2">
                 <div class="module-icon">
@@ -445,9 +425,7 @@ endblock %} {% block extra_css %}
                   zones effectively.
                 </p>
                 <div class="d-flex gap-2 mb-2">
-                  <span class="difficulty-badge difficulty-intermediate"
-                    >Intermediate</span
-                  >
+                  <span class="difficulty-badge difficulty-intermediate">Intermediate</span>
                   <span class="completion-status status-in-progress">
                     <i class="fas fa-play-circle me-1"></i>In Progress
                   </span>
@@ -466,19 +444,16 @@ endblock %} {% block extra_css %}
                   <small class="text-warning fw-bold">60% Complete</small>
                 </div>
                 <div class="text-center mt-2">
-                  <button class="btn btn-primary btn-sm">
+                  <a href="{{ url_for('static', filename='page1content.html') }}" class="btn btn-primary btn-sm">
                     <i class="fas fa-play me-1"></i>Continue
-                  </button>
+                  </a>
                 </div>
+
               </div>
             </div>
           </div>
 
-          <div
-            class="module-item module-advanced"
-            data-difficulty="advanced"
-            onclick="startModule(3)"
-          >
+          <div class="module-item module-advanced" data-difficulty="advanced" onclick="startModule(3)">
             <div class="row align-items-center">
               <div class="col-md-2">
                 <div class="module-icon">
@@ -492,9 +467,7 @@ endblock %} {% block extra_css %}
                   advanced management strategies.
                 </p>
                 <div class="d-flex gap-2 mb-2">
-                  <span class="difficulty-badge difficulty-advanced"
-                    >Advanced</span
-                  >
+                  <span class="difficulty-badge difficulty-advanced">Advanced</span>
                   <span class="completion-status status-not-started">
                     <i class="fas fa-circle me-1"></i>Not Started
                   </span>
@@ -521,11 +494,7 @@ endblock %} {% block extra_css %}
             </div>
           </div>
 
-          <div
-            class="module-item module-beginner"
-            data-difficulty="beginner"
-            onclick="startModule(4)"
-          >
+          <div class="module-item module-beginner" data-difficulty="beginner" onclick="startModule(4)">
             <div class="row align-items-center">
               <div class="col-md-2">
                 <div class="module-icon">
@@ -539,9 +508,7 @@ endblock %} {% block extra_css %}
                   for crisis situations.
                 </p>
                 <div class="d-flex gap-2 mb-2">
-                  <span class="difficulty-badge difficulty-beginner"
-                    >Beginner</span
-                  >
+                  <span class="difficulty-badge difficulty-beginner">Beginner</span>
                   <span class="completion-status status-completed">
                     <i class="fas fa-check-circle me-1"></i>Completed
                   </span>
@@ -598,9 +565,7 @@ endblock %} {% block extra_css %}
         </div>
 
         <div class="text-center">
-          <small class="text-muted"
-            >3 achievements earned • 2 more to unlock</small
-          >
+          <small class="text-muted">3 achievements earned • 2 more to unlock</small>
         </div>
       </div>
 
@@ -636,10 +601,7 @@ endblock %} {% block extra_css %}
         </h3>
 
         <div class="d-flex align-items-center mb-3">
-          <div
-            class="module-icon me-3"
-            style="width: 40px; height: 40px; font-size: 1rem"
-          >
+          <div class="module-icon me-3" style="width: 40px; height: 40px; font-size: 1rem">
             <i class="fas fa-users"></i>
           </div>
           <div>
@@ -649,10 +611,7 @@ endblock %} {% block extra_css %}
         </div>
 
         <div class="d-flex align-items-center mb-3">
-          <div
-            class="module-icon me-3"
-            style="width: 40px; height: 40px; font-size: 1rem"
-          >
+          <div class="module-icon me-3" style="width: 40px; height: 40px; font-size: 1rem">
             <i class="fas fa-clipboard-list"></i>
           </div>
           <div>
@@ -673,21 +632,14 @@ endblock %} {% block extra_css %}
         <h5 class="modal-title">
           <i class="fas fa-certificate me-2"></i>My Certificates
         </h5>
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="modal"
-        ></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
         <div class="row">
           <div class="col-md-6 mb-3">
             <div class="card">
               <div class="card-body text-center">
-                <i
-                  class="fas fa-certificate text-warning mb-3"
-                  style="font-size: 3rem"
-                ></i>
+                <i class="fas fa-certificate text-warning mb-3" style="font-size: 3rem"></i>
                 <h6>Seizure First Aid Basics</h6>
                 <p class="text-muted small">Completed: Jan 15, 2024</p>
                 <button class="btn btn-primary btn-sm">Download PDF</button>
@@ -697,10 +649,7 @@ endblock %} {% block extra_css %}
           <div class="col-md-6 mb-3">
             <div class="card">
               <div class="card-body text-center">
-                <i
-                  class="fas fa-certificate text-warning mb-3"
-                  style="font-size: 3rem"
-                ></i>
+                <i class="fas fa-certificate text-warning mb-3" style="font-size: 3rem"></i>
                 <h6>Emergency Response</h6>
                 <p class="text-muted small">Completed: Jan 12, 2024</p>
                 <button class="btn btn-primary btn-sm">Download PDF</button>

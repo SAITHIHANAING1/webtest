@@ -17,7 +17,7 @@ supabase: Client = None
 
 def init_supabase():
     """Initialize Supabase client"""
-    global supabase
+    global supabase, supabase_available
     
     url = os.environ.get('SUPABASE_URL')
     key = os.environ.get('SUPABASE_KEY')
@@ -25,18 +25,28 @@ def init_supabase():
     if url and key:
         try:
             supabase = create_client(url, key)
+            supabase_available = True
             print("✅ Supabase client initialized successfully!")
             return True
         except Exception as e:
+            supabase_available = False
             print(f"❌ Failed to initialize Supabase client: {e}")
             return False
     else:
+        supabase_available = False
         print("ℹ️ Supabase credentials not found, using SQLite fallback")
         return False
 
 def get_supabase_client() -> Client:
     """Get the Supabase client instance"""
     return supabase
+
+def get_supabase_admin_client() -> Client:
+    """Get the Supabase client instance (admin access)"""
+    return supabase
+
+# Add this variable to check if supabase is available
+supabase_available = False
 
 def test_supabase_features():
     """Test Supabase-specific features"""
@@ -56,6 +66,38 @@ def test_supabase_features():
         return True
     except Exception as e:
         print(f"❌ Supabase features test failed: {e}")
+        return False
+
+def setup_supabase_tables():
+    """Setup required tables in Supabase"""
+    if not supabase:
+        print("❌ Supabase client not initialized")
+        return False
+    
+    try:
+        # Check if zones table exists by trying to select from it
+        result = supabase.table('zones').select('id').limit(1).execute()
+        print("✅ Zones table exists in Supabase")
+        return True
+    except Exception as e:
+        print(f"⚠️ Zones table might not exist in Supabase: {e}")
+        print("📝 Please create the zones table in your Supabase dashboard with the following schema:")
+        print("""
+        CREATE TABLE zones (
+            id BIGSERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            description TEXT,
+            latitude DOUBLE PRECISION,
+            longitude DOUBLE PRECISION,
+            radius DOUBLE PRECISION,
+            zone_type VARCHAR(20) DEFAULT 'safe',
+            status VARCHAR(20) DEFAULT 'approved',
+            is_active BOOLEAN DEFAULT true,
+            user_id BIGINT,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        );
+        """)
         return False
 
 # Analytics-specific Supabase functions
