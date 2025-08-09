@@ -1185,7 +1185,7 @@ def get_analytics_metrics():
         from sqlalchemy import func, and_
         
         try:
-            from models import IncidentRecord, PwidProfile
+            # Models are already defined in this file
             
             # Calculate date ranges based on filter
             end_date = datetime.utcnow()
@@ -1387,279 +1387,9 @@ def get_alert_distribution():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/analytics/export-pdf', methods=['POST'])
-@login_required
-@admin_required
-def export_analytics_pdf():
-    """Export analytics data as PDF report"""
-    try:
-        # Get filter parameters
-        filters = request.get_json() or {}
-        date_range = filters.get('dateRange', '30')
-        pwid_filter = filters.get('pwidFilter', '')
-        location_filter = filters.get('locationFilter', '')
-        incident_type_filter = filters.get('incidentType', '')
-        
-        # Get analytics data
-        try:
-            from supabase_integration import get_analytics_metrics_supabase, get_seizure_trends_supabase, get_location_distribution_supabase
-            from export_utils import AnalyticsExporter
-            
-            # Get comprehensive data
-            metrics_data = get_analytics_metrics_supabase(date_range, pwid_filter, location_filter, incident_type_filter)
-            trends_data = get_seizure_trends_supabase(date_range)
-            location_data = get_location_distribution_supabase(date_range)
-            
-            # Prepare data for export
-            export_data = {
-                'total_incidents': metrics_data.get('total_incidents', 0),
-                'seizure_count': metrics_data.get('seizure_count', 0),
-                'high_risk_patients': metrics_data.get('high_risk_patients', 0),
-                'avg_response_time': metrics_data.get('avg_response_time', 0),
-                'active_monitoring': metrics_data.get('active_monitoring', 0),
-                'recent_incidents': metrics_data.get('recent_incidents', []),
-                'patients': metrics_data.get('patients', [])
-            }
-            
-            charts_data = {
-                'trends': trends_data.get('data', []),
-                'distribution': location_data.get('data', [])
-            }
-            
-            # Generate PDF using the new exporter
-            exporter = AnalyticsExporter()
-            pdf_result = exporter.generate_analytics_pdf(filters, export_data, charts_data)
-            
-            if pdf_result['success']:
-                return jsonify({
-                    'success': True,
-                    'message': f'Analytics report generated successfully for {date_range} days',
-                    'download_url': pdf_result['download_url'],
-                    'filename': pdf_result['filename'],
-                    'filters_applied': filters,
-                    'data_source': 'Supabase'
-                })
-            else:
-                return jsonify({
-                    'success': False,
-                    'error': pdf_result.get('error', 'PDF generation failed')
-                }), 500
-                
-        except Exception as e:
-            print(f"Supabase export failed, falling back to SQLite: {e}")
-        
-        # Fallback to SQLite
-        from models import IncidentRecord, PwidProfile, DatasetReference
-        from datetime import datetime
-        import json
-        
-        # Get current data based on filters
-        days = int(date_range)
-        end_date = datetime.utcnow()
-        start_date = end_date - timedelta(days=days)
-        
-        # Build query with filters
-        base_query = IncidentRecord.query.filter(
-            IncidentRecord.incident_date >= start_date
-        )
-        
-        if location_filter:
-            base_query = base_query.filter(IncidentRecord.environment == location_filter)
-        if incident_type_filter:
-            base_query = base_query.filter(IncidentRecord.incident_type == incident_type_filter)
-        
-        total_incidents = base_query.count()
-        seizure_count = base_query.filter(IncidentRecord.incident_type == 'seizure').count()
-        
-        # Generate report timestamp
-        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
-        
-        # Create a simple text-based report for now (in production, use WeasyPrint)
-        report_content = f"""
-SafeStep Analytics Report
-Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}
-Report Period: Last {date_range} days
-Filters Applied: {json.dumps(filters, indent=2)}
 
-=== SUMMARY METRICS ===
-Total Incidents: {total_incidents}
-Seizure Events: {seizure_count}
-High-Risk Patients: {PwidProfile.query.filter(PwidProfile.risk_status.in_(['High', 'Critical'])).count()}
 
-=== DATA SOURCES ===
-Based on real research datasets:
-{chr(10).join([f"- {ref.name} ({ref.publication_year})" for ref in DatasetReference.query.all()])}
-
-Report ID: analytics_report_{timestamp}
-        """
-        
-        # In a real implementation, save this as PDF using WeasyPrint
-        # Return success with download info
-        
-        return jsonify({
-            'success': True,
-            'message': f'Analytics report generated successfully for {date_range} days',
-            'download_url': f'/static/reports/analytics_report_{timestamp}.pdf',
-            'report_id': f'analytics_report_{timestamp}',
-            'filters_applied': filters,
-            'data_source': 'SQLite',
-            'summary': {
-                'total_incidents': total_incidents,
-                'seizure_count': seizure_count,
-                'period_days': days
-            }
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-# Real Data Analytics Endpoints
-@app.route('/api/analytics/seizure-trends')
-@login_required
-@admin_required
-def get_seizure_trends():
-    """Get real seizure trends data for charts"""
-    try:
-        # Get filter parameters
-        date_range = request.args.get('dateRange', '30')
-        
-        # Try Supabase first, fallback to SQLite
-        try:
-            from supabase_integration import get_seizure_trends_supabase
-            
-            # Try to get data from Supabase
-            supabase_data = get_seizure_trends_supabase(date_range=int(date_range))
-            
-            if supabase_data:
-                return jsonify(supabase_data)
-                
-        except Exception as e:
-            print(f"Supabase seizure trends failed, falling back to SQLite: {e}")
-        
-        # Fallback to SQLite
-        from sqlalchemy import func, extract
-        
-        # Get date range from request
-        period = request.args.get('period', '7d')
-        
-        # Calculate date range
-        end_date = datetime.now()
-        if period == '7d':
-            start_date = end_date - timedelta(days=7)
-        elif period == '30d':
-            start_date = end_date - timedelta(days=30)
-        elif period == '90d':
-            start_date = end_date - timedelta(days=90)
-        else:  # 1y
-            start_date = end_date - timedelta(days=365)
-        
-        # Query seizure sessions within date range
-        seizure_data = db.session.query(
-            func.date(SeizureSession.created_at).label('date'),
-            func.count(SeizureSession.id).label('count'),
-            func.avg(
-                func.case(
-                    (SeizureSession.severity == 'mild', 1),
-                    (SeizureSession.severity == 'moderate', 2),
-                    (SeizureSession.severity == 'severe', 3),
-                    else_=1
-                )
-            ).label('risk_score')
-        ).filter(
-            SeizureSession.created_at >= start_date,
-            SeizureSession.created_at <= end_date
-        ).group_by(
-            func.date(SeizureSession.created_at)
-        ).order_by('date').all()
-        
-        # Format data for Chart.js
-        labels = []
-        risk_scores = []
-        
-        # Fill in missing dates with zero values
-        current_date = start_date.date()
-        end_date = end_date.date()
-        
-        # Create a dictionary from query results
-        data_dict = {item.date: item for item in seizure_data}
-        
-        while current_date <= end_date:
-            labels.append(current_date.strftime('%m/%d'))
-            
-            if current_date in data_dict:
-                # Calculate risk score as percentage (1-3 scale to 0-100)
-                raw_score = data_dict[current_date].risk_score or 1
-                risk_percentage = ((raw_score - 1) / 2) * 100  # Convert 1-3 to 0-100
-                risk_scores.append(min(100, max(0, risk_percentage)))
-            else:
-                risk_scores.append(0)
-            
-            current_date += timedelta(days=1)
-        
-        return jsonify({
-            'success': True,
-            'labels': labels,
-            'risk_scores': risk_scores
-        })
-        
-    except Exception as e:
-        print(f"Error fetching seizure trends: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@app.route('/api/analytics/location-distribution')
-@login_required
-@admin_required
-def get_location_distribution():
-    """Get real incidents by location data"""
-    try:
-        # Get filter parameters
-        date_range = request.args.get('dateRange', '30')
-        
-        # Try Supabase first, fallback to SQLite
-        try:
-            from supabase_integration import get_location_distribution_supabase
-            
-            # Try to get data from Supabase
-            supabase_data = get_location_distribution_supabase(date_range=int(date_range))
-            
-            if supabase_data:
-                return jsonify(supabase_data)
-                
-        except Exception as e:
-            print(f"Supabase location distribution failed, falling back to SQLite: {e}")
-        
-        # Fallback to SQLite
-        from sqlalchemy import func
-        
-        # Query incidents by location in the last 30 days
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=30)
-        
-        location_data = db.session.query(
-            SeizureSession.location,
-            func.count(SeizureSession.id).label('count')
-        ).filter(
-            SeizureSession.created_at >= start_date,
-            SeizureSession.created_at <= end_date
-        ).group_by(
-            SeizureSession.location
-        ).order_by(
-            func.count(SeizureSession.id).desc()
-        ).all()
-        
-        # Format data for charts
-        locations = [item.location or 'Unknown' for item in location_data]
-        counts = [item.count for item in location_data]
-        
-        return jsonify({
-            'success': True,
-            'locations': locations,
-            'counts': counts
-        })
-        
-    except Exception as e:
-        print(f"Error fetching location distribution: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+# Enhanced Analytics Endpoints (replacing older versions)
 
 @app.route('/admin/monitoring')
 @login_required
@@ -1685,9 +1415,9 @@ def get_enhanced_seizure_trends():
         location_filter = request.args.get('locationFilter', '')
         incident_type_filter = request.args.get('incidentType', '')
         
-        # Try to use new models, fallback to old ones
+        # Try to use models defined in this file
         try:
-            from models import IncidentRecord, PwidProfile
+            # Models are already defined in this file
             
             # Use dateRange filter if provided, otherwise use period
             if date_range:
@@ -1807,9 +1537,9 @@ def get_enhanced_location_distribution():
         pwid_filter = request.args.get('pwidFilter', '')
         incident_type_filter = request.args.get('incidentType', '')
         
-        # Try to use new models, fallback to old ones
+        # Try to use models defined in this file
         try:
-            from models import IncidentRecord, PwidProfile
+            # Models are already defined in this file
             
             # Calculate date range
             days = int(date_range)
@@ -1890,7 +1620,7 @@ def get_prediction_results():
         
         # Fallback to SQLite
         try:
-            from models import PwidProfile, PredictionJob
+            # Models are already defined in this file
             
             # Get recent prediction results
             patients = PwidProfile.query.filter(
@@ -2116,101 +1846,9 @@ def predict_patient_risk(patient_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/analytics/export-csv', methods=['POST'])
-@login_required
-@admin_required
-def export_analytics_csv():
-    """Export analytics data as CSV"""
-    try:
-        filters = request.get_json() or {}
-        date_range = filters.get('dateRange', '30')
-        pwid_filter = filters.get('pwidFilter', '')
-        location_filter = filters.get('locationFilter', '')
-        incident_type_filter = filters.get('incidentType', '')
-        
-        try:
-            from supabase_integration import get_analytics_metrics_supabase
-            from export_utils import AnalyticsExporter
-            
-            # Get analytics data
-            metrics_data = get_analytics_metrics_supabase(date_range, pwid_filter, location_filter, incident_type_filter)
-            
-            # Export to CSV
-            exporter = AnalyticsExporter()
-            csv_result = exporter.export_to_csv(metrics_data)
-            
-            if csv_result['success']:
-                return jsonify({
-                    'success': True,
-                    'message': 'Analytics data exported to CSV successfully',
-                    'data': csv_result['data'],
-                    'filename': csv_result['filename']
-                })
-            else:
-                return jsonify({
-                    'success': False,
-                    'error': csv_result.get('error', 'CSV export failed')
-                }), 500
-                
-        except Exception as e:
-            print(f"Supabase CSV export failed: {e}")
-            return jsonify({
-                'success': False,
-                'error': 'Export service unavailable'
-            }), 500
-            
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/analytics/export-patient-report/<patient_id>', methods=['GET'])
-@login_required
-@admin_required
-def export_patient_report(patient_id):
-    """Export patient-specific report as PDF"""
-    try:
-        try:
-            from supabase_integration import get_supabase_client
-            from export_utils import AnalyticsExporter
-            
-            supabase_client = get_supabase_client()
-            
-            # Get patient data
-            patient_response = supabase_client.table('pwids').select('*').eq('patient_id', patient_id).execute()
-            if not patient_response.data:
-                return jsonify({'success': False, 'error': 'Patient not found'}), 404
-            
-            patient_data = patient_response.data[0]
-            
-            # Get patient incidents
-            incidents_response = supabase_client.table('incidents').select('*').eq('patient_id', patient_id).order('incident_date', desc=True).limit(20).execute()
-            incidents_data = incidents_response.data
-            
-            # Generate patient report
-            exporter = AnalyticsExporter()
-            report_result = exporter.export_patient_report(patient_id, patient_data, incidents_data)
-            
-            if report_result['success']:
-                return jsonify({
-                    'success': True,
-                    'message': f'Patient report generated for {patient_id}',
-                    'download_url': report_result['download_url'],
-                    'filename': report_result['filename']
-                })
-            else:
-                return jsonify({
-                    'success': False,
-                    'error': report_result.get('error', 'Report generation failed')
-                }), 500
-                
-        except Exception as e:
-            print(f"Patient report generation failed: {e}")
-            return jsonify({
-                'success': False,
-                'error': 'Report service unavailable'
-            }), 500
-            
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 
 # CRUD API Endpoints for Analytics
 @app.route('/api/analytics/patient', methods=['POST'])
@@ -2787,13 +2425,7 @@ def end_session(session_id):
     db.session.commit()
     return jsonify({'success': True})
 
-@app.route('/static/reports/<filename>')
-def serve_report(filename):
-    """Serve generated report files"""
-    try:
-        return send_from_directory('static/reports', filename)
-    except Exception as e:
-        return jsonify({'error': 'Report not found'}), 404
+
 
 if __name__ == '__main__':
     with app.app_context():
@@ -2832,9 +2464,6 @@ if __name__ == '__main__':
     print("  • AI-powered prediction engine")
     print("  • Interactive analytics dashboard")
     print("  • Live data visualization")
-    print("  • PDF export functionality")
-    print("  • CSV export functionality")
-    print("  • Patient-specific reports")
     print("  • Enhanced ML Analysis with detailed results")
     print("=" * 50)
     print("Access: http://localhost:5000/analytics")

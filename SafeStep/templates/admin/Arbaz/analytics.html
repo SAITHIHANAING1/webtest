@@ -686,14 +686,6 @@
                 <i class="fas fa-brain"></i>
                 🤖 Run AI Analysis
             </button>
-            <button class="btn-primary" onclick="exportReport()">
-                <i class="fas fa-file-pdf"></i>
-                Export to PDF
-            </button>
-            <button class="btn btn-success" onclick="exportToCSV()">
-                <i class="fas fa-file-csv"></i>
-                Export to CSV
-            </button>
             <button class="btn-primary" onclick="showSystemInfo()"
                 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                 <i class="fas fa-info-circle"></i>
@@ -2475,128 +2467,11 @@
         document.getElementById('loadingSpinner').classList.remove('active');
     }
 
-    async function exportReport() {
-        const btn = event.target;
-        const originalText = btn.innerHTML;
 
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
-        btn.disabled = true;
 
-        try {
-            showNotification('📊 Generating comprehensive PDF report...', 'info');
-            const filters = getCurrentFilters();
 
-            const response = await fetch('/api/analytics/export-pdf', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(filters)
-            });
 
-            const data = await response.json();
 
-            if (data.success) {
-                // Create a download link for the report
-                const downloadLink = document.createElement('a');
-                downloadLink.href = data.download_url;
-                downloadLink.download = data.filename || `analytics_report_${new Date().toISOString().slice(0, 10)}.pdf`;
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-
-                showNotification('✅ PDF Report Generated Successfully!', 'success');
-                showExportSuccessModal('PDF Report', data.filename, data.download_url);
-            } else {
-                showNotification('❌ Export failed: ' + (data.error || 'Unknown error'), 'error');
-            }
-        } catch (error) {
-            console.error('Error exporting report:', error);
-            showNotification('❌ Error exporting report', 'error');
-        } finally {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        }
-    }
-
-    async function exportToCSV() {
-        try {
-            showNotification('📊 Generating CSV export...', 'info');
-
-            const filters = getCurrentFilters();
-
-            const response = await fetch('/api/analytics/export-csv', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(filters)
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                showNotification('✅ CSV Export Generated Successfully!', 'success');
-
-                // Create and download CSV file
-                const blob = new Blob([data.data], { type: 'text/csv' });
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = data.filename || 'analytics_export.csv';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                window.URL.revokeObjectURL(url);
-
-                showExportSuccessModal('CSV Export', data.filename, null);
-            } else {
-                showNotification('❌ CSV export failed: ' + (data.error || 'Unknown error'), 'error');
-            }
-        } catch (error) {
-            console.error('Error exporting CSV:', error);
-            showNotification('❌ Error exporting CSV', 'error');
-        }
-    }
-
-    function showExportSuccessModal(type, filename, downloadUrl) {
-        const modal = document.createElement('div');
-        modal.className = 'modal fade';
-        modal.id = 'exportSuccessModal';
-        modal.innerHTML = `
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header bg-success text-white">
-                        <h5 class="modal-title">✅ Export Successful</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="text-center mb-3">
-                            <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
-                        </div>
-                        <h6>${type} Generated Successfully!</h6>
-                        <p><strong>Filename:</strong> ${filename}</p>
-                        <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
-                        ${downloadUrl ? `<p><strong>Download URL:</strong> <a href="${downloadUrl}" target="_blank">${downloadUrl}</a></p>` : ''}
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        ${downloadUrl ? `<a href="${downloadUrl}" class="btn btn-primary" download="${filename}">
-                            <i class="fas fa-download"></i> Download Again
-                        </a>` : ''}
-                    </div>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-        const modalInstance = new bootstrap.Modal(modal);
-        modalInstance.show();
-
-        modal.addEventListener('hidden.bs.modal', () => {
-            modal.remove();
-        });
-    }
 
     async function refreshPredictions() {
         try {
@@ -2688,7 +2563,6 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" onclick="exportPatientReport('${patientId}')">Export Report</button>
                     </div>
                 </div>
             </div>
@@ -2713,33 +2587,7 @@
         }
     }
 
-    async function exportPatientReport(patientId) {
-        try {
-            showNotification(`📊 Generating patient report for ${patientId}...`, 'info');
 
-            const response = await fetch(`/api/analytics/export-patient-report/${patientId}`);
-            const data = await response.json();
-
-            if (data.success) {
-                showNotification('✅ Patient report generated successfully!', 'success');
-
-                // Create a download link for the report
-                const downloadLink = document.createElement('a');
-                downloadLink.href = data.download_url;
-                downloadLink.download = data.filename || `patient_report_${patientId}.pdf`;
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-
-                showExportSuccessModal('Patient Report', data.filename, data.download_url);
-            } else {
-                showNotification('❌ Patient report generation failed: ' + (data.error || 'Unknown error'), 'error');
-            }
-        } catch (error) {
-            console.error('Error exporting patient report:', error);
-            showNotification('❌ Error generating patient report', 'error');
-        }
-    }
 
     function showSystemInfo() {
         const info = `
@@ -2765,9 +2613,7 @@
         showNotification(info, 'info', 8000);
     }
 
-    function exportPredictions() {
-        exportToCSV();
-    }
+
 
     async function runMLAnalysis() {
         const btn = event.target;
