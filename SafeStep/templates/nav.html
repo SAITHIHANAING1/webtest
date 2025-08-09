@@ -1,68 +1,68 @@
 <style>
     /* Global dashboard dark mode: all boxes black, all text white, except landing, sign in, sign up */
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .card,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .modal-content,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .dropdown-menu,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .table,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .progress,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .input-group-text {
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .card,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .modal-content,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .dropdown-menu,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .table,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .progress,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .input-group-text {
         background: #18191a !important;
         color: #fff !important;
         border-color: #232946 !important;
     }
 
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .card-header,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .card-footer,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .modal-header,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .modal-footer {
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .card-header,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .card-footer,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .modal-header,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .modal-footer {
         background: #232946 !important;
         color: #fff !important;
         border: none !important;
     }
 
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .form-label,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .form-control,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .form-control:focus,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .form-select,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .form-select:focus {
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .form-label,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .form-control,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .form-control:focus,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .form-select,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .form-select:focus {
         color: #fff !important;
         background: #232946 !important;
         border-color: #444 !important;
     }
 
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .btn-primary {
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .btn-primary {
         background: #667eea !important;
         border: none !important;
         color: #fff !important;
     }
 
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .btn-secondary {
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .btn-secondary {
         background: #444 !important;
         border: none !important;
         color: #fff !important;
     }
 
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-dark,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-muted,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-primary,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-success,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-info,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-warning,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page) .text-danger {
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .text-dark,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .text-muted,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .text-primary,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .text-success,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .text-info,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .text-warning,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .text-danger {
         color: #fff !important;
     }
 
-    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) h1,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) h2,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) h3,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) h4,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) h5,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) h6,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) p,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) span,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) label,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) small,
-    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page) a {
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page):not(.admin-page) h1,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page):not(.admin-page) h2,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page):not(.admin-page) h3,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page):not(.admin-page) h4,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page):not(.admin-page) h5,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page):not(.admin-page) h6,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page):not(.admin-page) p,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page):not(.admin-page) span,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page):not(.admin-page) label,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page):not(.admin-page) small,
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page):not(.admin-page) a {
         color: #fff !important;
     }
 </style>
