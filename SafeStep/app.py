@@ -45,6 +45,9 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(16))
 
 # Database configuration - Supabase PostgreSQL or fallback to SQLite
 database_url = os.environ.get('DATABASE_URL')
+print(f"🔍 DATABASE_URL from environment: {database_url}")
+print(f"🔍 supabase_available: {supabase_available}")
+
 if database_url and supabase_available:
     # Using Supabase/PostgreSQL
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
@@ -53,6 +56,7 @@ else:
     # Fallback to SQLite for local development
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///safestep.db'
     print("🔗 Using SQLite database (local)")
+    print(f"🔗 SQLite path: {os.path.abspath('safestep.db')}")
     
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -621,6 +625,12 @@ def training_management():
 @admin_required
 def analytics():
     return render_template('admin/Arbaz/analytics.html')
+
+@app.route('/admin/reports')
+@login_required
+@admin_required
+def reports():
+    return render_template('admin/Arbaz/reports.html')
 
 @app.route('/analytics')
 @login_required

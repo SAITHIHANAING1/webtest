@@ -2,352 +2,365 @@
 
 {% block title %}Admin Dashboard - SAFE-Step{% endblock %}
 
+{% block body_class %}admin-page{% endblock %}
+
 {% block extra_css %}
 <style>
-/* Admin Dashboard Specific Styles */
-.admin-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 2rem 0;
-    margin-bottom: 2rem;
-    border-radius: 0 0 25px 25px;
-    position: relative;
-    overflow: hidden;
-}
+    /* Admin Dashboard Specific Styles */
+    .admin-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 25px 25px;
+        position: relative;
+        overflow: hidden;
+    }
 
-.admin-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='m0 40l40-40h-40v40zm40 0v-40h-40l40 40z'/%3E%3C/g%3E%3C/svg%3E");
-}
+    .admin-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='m0 40l40-40h-40v40zm40 0v-40h-40l40 40z'/%3E%3C/g%3E%3C/svg%3E");
+    }
 
-.admin-title {
-    font-size: 2.5rem;
-    font-weight: 900;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    position: relative;
-    z-index: 1;
-}
-
-.admin-subtitle {
-    font-size: 1.1rem;
-    opacity: 0.9;
-    position: relative;
-    z-index: 1;
-}
-
-/* Dashboard Cards */
-.dashboard-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    border-radius: 20px;
-    padding: 2rem;
-    border: 1px solid rgba(0,0,0,0.05);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    position: relative;
-    overflow: hidden;
-    height: 100%;
-}
-
-.dashboard-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-    transform: scaleX(0);
-    transition: transform 0.4s ease;
-}
-
-.dashboard-card:hover::before {
-    transform: scaleX(1);
-}
-
-.dashboard-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-}
-
-/* Stat Cards */
-.stat-card {
-    background: white;
-    border-radius: 20px;
-    padding: 1.5rem;
-    border: none;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    transition: transform 0.3s ease;
-    transform: scaleX(0);
-}
-
-.stat-card:hover::before {
-    transform: scaleX(1);
-}
-
-.stat-card-users::before { background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%); }
-.stat-card-sessions::before { background: linear-gradient(90deg, #fc466b 0%, #3f5efb 100%); }
-.stat-card-tickets::before { background: linear-gradient(90deg, #fa709a 0%, #fee140 100%); }
-.stat-card-alerts::before { background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); }
-
-.stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-}
-
-.stat-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-}
-
-.stat-icon-users { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
-.stat-icon-sessions { background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%); }
-.stat-icon-tickets { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-.stat-icon-alerts { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-
-.stat-number {
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: #2d3748;
-    margin-bottom: 0.5rem;
-}
-
-.stat-label {
-    color: #718096;
-    font-weight: 500;
-    font-size: 0.9rem;
-}
-
-.stat-change {
-    font-size: 0.8rem;
-    font-weight: 600;
-}
-
-.stat-change.positive { color: #48bb78; }
-.stat-change.negative { color: #f56565; }
-
-/* Action Cards */
-.action-card {
-    background: white;
-    border-radius: 15px;
-    padding: 1.5rem;
-    border: 1px solid rgba(0,0,0,0.05);
-    transition: all 0.3s ease;
-    text-decoration: none;
-    color: inherit;
-    display: block;
-    height: 100%;
-}
-
-.action-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    text-decoration: none;
-    color: inherit;
-}
-
-.action-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.25rem;
-    margin-bottom: 1rem;
-}
-
-.action-icon-users { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-.action-icon-training { background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%); }
-.action-icon-tickets { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-.action-icon-analytics { background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%); }
-
-/* Charts Container */
-.chart-container {
-    position: relative;
-    height: 300px;
-    background: white;
-    border-radius: 15px;
-    padding: 1.5rem;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-}
-
-/* Quick Actions */
-.quick-action-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    border-radius: 12px;
-    color: white;
-    padding: 0.75rem 1.5rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    margin-right: 0.5rem;
-    margin-bottom: 0.5rem;
-}
-
-.quick-action-btn:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-    color: white;
-}
-
-/* Recent Activity */
-.activity-item {
-    padding: 1rem;
-    border-bottom: 1px solid #e2e8f0;
-    transition: background 0.2s ease;
-}
-
-.activity-item:hover {
-    background: #f7fafc;
-}
-
-.activity-item:last-child {
-    border-bottom: none;
-}
-
-.activity-time {
-    font-size: 0.8rem;
-    color: #718096;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
     .admin-title {
-        font-size: 2rem;
+        font-size: 2.5rem;
+        font-weight: 900;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        position: relative;
+        z-index: 1;
     }
-    
-    .stat-number {
-        font-size: 2rem;
+
+    .admin-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        position: relative;
+        z-index: 1;
     }
-    
+
+    /* Dashboard Cards */
     .dashboard-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 20px;
+        padding: 2rem;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+    }
+
+    .dashboard-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        transform: scaleX(0);
+        transition: transform 0.4s ease;
+    }
+
+    .dashboard-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .dashboard-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Stat Cards */
+    .stat-card {
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem;
+        border: none;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        transition: transform 0.3s ease;
+        transform: scaleX(0);
+    }
+
+    .stat-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .stat-card-users::before {
+        background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%);
+    }
+
+    .stat-card-sessions::before {
+        background: linear-gradient(90deg, #fc466b 0%, #3f5efb 100%);
+    }
+
+    .stat-card-tickets::before {
+        background: linear-gradient(90deg, #fa709a 0%, #fee140 100%);
+    }
+
+    .stat-card-alerts::before {
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
         margin-bottom: 1rem;
     }
-}
+
+    .stat-icon-users {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+
+    .stat-icon-sessions {
+        background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+    }
+
+    .stat-icon-tickets {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+
+    .stat-icon-alerts {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: #718096;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    .stat-change {
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .stat-change.positive {
+        color: #48bb78;
+    }
+
+    .stat-change.negative {
+        color: #f56565;
+    }
+
+    /* Action Cards */
+    .action-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        height: 100%;
+    }
+
+    .action-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .action-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .action-icon-users {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .action-icon-training {
+        background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%);
+    }
+
+    .action-icon-tickets {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+
+    .action-icon-analytics {
+        background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+    }
+
+    .action-icon-reports {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+
+    /* Charts Container */
+    .chart-container {
+        position: relative;
+        height: 300px;
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Quick Actions */
+    .quick-action-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 12px;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .quick-action-btn:hover {
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+
+    /* Recent Activity */
+    .activity-item {
+        padding: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+        transition: background 0.2s ease;
+    }
+
+    .activity-item:hover {
+        background: #f7fafc;
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-time {
+        font-size: 0.8rem;
+        color: #718096;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .admin-title {
+            font-size: 2rem;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+        }
+
+        .dashboard-card {
+            margin-bottom: 1rem;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Admin Header -->
-<div class="admin-header">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <h1 class="admin-title mb-2">
-                    <i class="fas fa-tachometer-alt me-3"></i>Admin Dashboard
-                </h1>
-                <p class="admin-subtitle mb-0">
-                    Welcome back, {{ current_user.first_name }}! Here's what's happening with SAFE-Step today.
-                </p>
-            </div>
-            <div class="col-md-4 text-md-end">
-                <div class="d-flex justify-content-md-end justify-content-start mt-3 mt-md-0">
-                    <button class="quick-action-btn me-2" onclick="refreshDashboard()">
-                        <i class="fas fa-sync-alt me-1"></i>Refresh
-                    </button>
-                    <button class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#emergencyModal">
-                        <i class="fas fa-exclamation-triangle me-1"></i>Emergency
-                    </button>
-                </div>
-            </div>
+<div class="admin-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">
+                <i class="fas fa-tachometer-alt me-3"></i>Admin Dashboard
+            </h1>
+            <p class="mb-0" style="font-size: 1.1rem; opacity: 0.8; color: #666;">
+                Welcome back, {{ current_user.first_name }}! Here's what's happening with SAFE-Step today.
+            </p>
+        </div>
+        <div class="header-buttons">
+            <button class="btn btn-primary" onclick="refreshDashboard()">
+                <i class="fas fa-sync-alt me-1"></i>Refresh
+            </button>
+            <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#emergencyModal">
+                <i class="fas fa-exclamation-triangle me-1"></i>Emergency
+            </button>
         </div>
     </div>
-</div>
-
-<div class="container-fluid">
     <!-- Statistics Row -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="stat-card stat-card-users">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon stat-icon-users">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <div class="stat-number">{{ total_users or 24 }}</div>
-                        <div class="stat-label">Active Users</div>
-                        <div class="stat-change positive">
-                            <i class="fas fa-arrow-up me-1"></i>+12%
-                        </div>
-                    </div>
-                </div>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="metric-value">{{ total_users or 24 }}</div>
+            <div class="metric-label">Active Users</div>
+            <div class="metric-change positive">
+                <i class="fas fa-arrow-up me-1"></i>+12%
             </div>
         </div>
-        
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="stat-card stat-card-sessions">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon stat-icon-sessions">
-                        <i class="fas fa-heartbeat"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <div class="stat-number">{{ total_sessions or 156 }}</div>
-                        <div class="stat-label">Monitoring Sessions</div>
-                        <div class="stat-change positive">
-                            <i class="fas fa-arrow-up me-1"></i>+8%
-                        </div>
-                    </div>
-                </div>
+
+        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fas fa-heartbeat"></i>
+            </div>
+            <div class="metric-value">{{ total_sessions or 156 }}</div>
+            <div class="metric-label">Monitoring Sessions</div>
+            <div class="metric-change positive">
+                <i class="fas fa-arrow-up me-1"></i>+8%
             </div>
         </div>
-        
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="stat-card stat-card-tickets">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon stat-icon-tickets">
-                        <i class="fas fa-ticket-alt"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <div class="stat-number">{{ open_tickets or 7 }}</div>
-                        <div class="stat-label">Open Tickets</div>
-                        <div class="stat-change negative">
-                            <i class="fas fa-arrow-down me-1"></i>-3%
-                        </div>
-                    </div>
-                </div>
+
+        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fas fa-ticket-alt"></i>
+            </div>
+            <div class="metric-value">{{ open_tickets or 7 }}</div>
+            <div class="metric-label">Open Tickets</div>
+            <div class="metric-change negative">
+                <i class="fas fa-arrow-down me-1"></i>-3%
             </div>
         </div>
-        
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="stat-card stat-card-alerts">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon stat-icon-alerts">
-                        <i class="fas fa-bell"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <div class="stat-number">3</div>
-                        <div class="stat-label">Active Alerts</div>
-                        <div class="stat-change positive">
-                            <i class="fas fa-arrow-up me-1"></i>+2
-                        </div>
-                    </div>
-                </div>
+
+        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fas fa-bell"></i>
+            </div>
+            <div class="metric-value">3</div>
+            <div class="metric-label">Active Alerts</div>
+            <div class="metric-change positive">
+                <i class="fas fa-arrow-up me-1"></i>+2
             </div>
         </div>
     </div>
@@ -397,6 +410,15 @@
                             <p class="text-muted small mb-0">View detailed reports and insights</p>
                         </a>
                     </div>
+                    <div class="col-md-6 col-lg-3 mb-3">
+                        <a href="{{ url_for('reports') }}" class="action-card">
+                            <div class="action-icon action-icon-reports">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <h6 class="fw-bold mb-2">Reports</h6>
+                            <p class="text-muted small mb-0">Generate comprehensive reports</p>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -441,9 +463,12 @@
                         <i class="fas fa-chart-line me-2 text-info"></i>Usage Analytics
                     </h3>
                     <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-secondary active" onclick="updateChart('7d')">7 Days</button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="updateChart('30d')">30 Days</button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="updateChart('90d')">90 Days</button>
+                        <button type="button" class="btn btn-outline-secondary active" onclick="updateChart('7d')">7
+                            Days</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="updateChart('30d')">30
+                            Days</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="updateChart('90d')">90
+                            Days</button>
                     </div>
                 </div>
                 <div class="chart-container">
@@ -528,146 +553,127 @@
         </div>
     </div>
 </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// Admin Dashboard JavaScript
-document.addEventListener('DOMContentLoaded', function() {
-    initializeChart();
-    updateLastUpdateTime();
-    setInterval(updateLastUpdateTime, 60000); // Update every minute
-});
-
-function initializeChart() {
-    const ctx = document.getElementById('usageChart').getContext('2d');
-    const chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-            datasets: [{
-                label: 'Active Sessions',
-                data: [65, 59, 80, 81, 56, 55, 40],
-                borderColor: '#667eea',
-                backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4
-            }, {
-                label: 'New Users',
-                data: [28, 48, 40, 19, 86, 27, 90],
-                borderColor: '#764ba2',
-                backgroundColor: 'rgba(118, 75, 162, 0.1)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'top',
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
+    // Admin Dashba    Script
+    document.addEventListen    er('DOMContentLoaded', function () {
+    initializeChar t();
+        updateLastUpdateTim
+        setInterval(updateL        pdateTime, 60000); // Update every minute
     });
-    window.usageChart = chart;
+
+    function initializ    eChar    t() {
+        const ctx = documen        tElementById('usageChart').getContext('2d');
+        const chart = new C(ctx, {
+            type: 'line',
+            ata: {
+                els: ['M                'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [label: ',
+                data: [56, 55, 40],
+                        borderC                    
+                backgro                    102, 126, 234, 0.1)',
+                borderW                             fill: t                         tension
+    }, {
+        bel: data: [86, 27, 90],
+            borderC                    
+                backgro                    118, 75, 162, 0.1) ',
+                borderW                             fill: t                         tension
+    }]
+                        pti                           responsive:                       maintainAsp                lse,
+        plugins: {
+        legend: pos
+    }
+    {
+        y: {
+            beg
+        }
+    }                 w            ag        rt = rt;
 }
 
-function updateChart(period) {
-    // Update button states
-    document.querySelectorAll('.btn-group .btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    event.target.classList.add('active');
-    
-    // Update chart data based on period
-    const data = {
-        '7d': {
-            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-            sessions: [65, 59, 80, 81, 56, 55, 40],
-            users: [28, 48, 40, 19, 86, 27, 90]
+    function updateChart(pe    riod) {
+        // Update button st        
+        document.querySelec        ll('.btn-group .btn').forEach(btn => {
+            btn.classList.r            ctive');
+        });
+        event.targe        assL        add('active');
+
+        // Update chart        sed on period
+        const data = {
+            '7d': {
+                els: ['M                'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            sessions: [81, 56, 55, 40],
+                    users: [28, 86, 27, 90]
         },
-        '30d': {
-            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-            sessions: [450, 520, 480, 600],
-            users: [120, 150, 140, 180]
+            '30d                           bels: ['W                k 2', 'Week 3', 'Week 4'],
+            sessions: [0, 600],
+            users: [120                180]
         },
-        '90d': {
-            labels: ['Month 1', 'Month 2', 'Month 3'],
-            sessions: [1800, 2100, 2300],
-            users: [500, 650, 750]
-        }
+        '90d                           bels: ['M                nth 2', 'Month 3'],
+        sessions: [2300],
+            users: [500                        }
     };
-    
-    window.usageChart.data.labels = data[period].labels;
-    window.usageChart.data.datasets[0].data = data[period].sessions;
-    window.usageChart.data.datasets[1].data = data[period].users;
-    window.usageChart.update();
+
+    w.eChd        labels = data[period].labels;
+    window.usageChart.d        datasets[0].data = data[period].sessions;
+    window.usageChart.d        datasets[1].data = data[period].users;
+    window.usageChart.u        e();
 }
 
-function refreshDashboard() {
-    // Show loading state
-    const refreshBtn = document.querySelector('.quick-action-btn');
-    const originalText = refreshBtn.innerHTML;
-    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Refreshing...';
-    refreshBtn.disabled = true;
-    
-    // Simulate refresh
-    setTimeout(() => {
-        refreshBtn.innerHTML = originalText;
-        refreshBtn.disabled = false;
-        updateLastUpdateTime();
-        
-        // Show success notification
-        showNotification('Dashboard refreshed successfully!', 'success');
+    function refreshDash    boa    rd() {
+        // Show loading sta           const refreshBtn =         ment.querySelector('.quick-action-btn');
+        const originalText         freshBtn.innerHTML;
+        refreshBtn.innerHTM        '<i class="fas fa-spinner fa-spin me-1"></i>Refreshing...';
+        refreshBtn.disabled        rue;
+
+        // Simulate reh         setTimeout(() => {
+        refreshBtn.inne            originalText;
+        refreshBtn.disa            alse;
+        updateLastUpdat
+
+        // Shos            ation
+        showNotificatio            oard refreshed successfully!', 'success');
     }, 2000);
 }
 
-function updateLastUpdateTime() {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString();
-    document.getElementById('lastUpdate').textContent = timeString;
-}
+functi        pdateLastU    pda    teTime() {
+        const now = new Dat
+        const timeString = toLocaleTimeString();
+        document.getElement('lastUpdate').textContent = timeString;
+    }
 
-function triggerSystemAlert() {
-    showNotification('System-wide alert triggered!', 'warning');
-    document.querySelector('[data-bs-dismiss="modal"]').click();
-}
+    function triggerSyst    emA    lert() {
+        showNotification('S        m-wide alert triggered!', 'warning');
+        document.querySelec        '[data-bs-dismiss="modal"]').click();
+    }
 
-function activateEmergencyProtocol() {
-    showNotification('Emergency protocol activated!', 'danger');
-    document.querySelector('[data-bs-dismiss="modal"]').click();
-}
+    function activateEme    rge    ncyProtocol() {
+        showNotification('E        ency protocol activated!', 'danger');
+        document.querySelec        '[data-bs-dismiss="modal"]').click();
+    }
 
-function contactEmergencyServices() {
-    showNotification('Emergency services contacted!', 'info');
-    document.querySelector('[data-bs-dismiss="modal"]').click();
-}
+    function contactEmer    gen    cyServices() {
+        showNotification('E        ency services contacted!', 'info');
+        document.querySelec        '[data-bs-dismiss="modal"]').click();
+    }
 
-function showNotification(message, type) {
-    // Create and show a toast notification
-    const toast = document.createElement('div');
-    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    toast.innerHTML = `
-        ${message}
+    function showNotific    ati    on(message, type) {
+        // Create and show         ast notification
+        const toast = docum        createElement('div');
+        toast.className = `        t alert-${type} alert-dismissible fade show position-fixed`;
+        toast.style.cssText        top: 20px; right: 20px; z - index: 9999; min - width: 300px; ';
+        toast.innerHTML = `             ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
-    
-    document.body.appendChild(toast);
-    
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-        if (toast.parentNode) {
-            toast.remove();
+
+        document.body.n        ld(toast);
+
+        // Auto removee        seconds
+        setTimeout(() => {
+            if (toast.paren            
+            toast.remov
         }
     }, 5000);
 }

@@ -2,299 +2,298 @@
 
 {% block title %}Training Management - SAFE-Step Admin{% endblock %}
 
+{% block body_class %}admin-page{% endblock %}
+
 {% block extra_css %}
 <style>
-/* Training Management Specific Styles */
-.admin-header {
-    background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%);
-    color: white;
-    padding: 2rem 0;
-    margin-bottom: 2rem;
-    border-radius: 0 0 25px 25px;
-    position: relative;
-    overflow: hidden;
-}
+    /* Training Management Specific Styles */
+    .admin-header {
+        background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 25px 25px;
+        position: relative;
+        overflow: hidden;
+    }
 
-.admin-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='m0 40l40-40h-40v40zm40 0v-40h-40l40 40z'/%3E%3C/g%3E%3C/svg%3E");
-}
+    .admin-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='m0 40l40-40h-40v40zm40 0v-40h-40l40 40z'/%3E%3C/g%3E%3C/svg%3E");
+    }
 
-.admin-title {
-    font-size: 2.5rem;
-    font-weight: 900;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    position: relative;
-    z-index: 1;
-}
+    .admin-title {
+        font-size: 2.5rem;
+        font-weight: 900;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        position: relative;
+        z-index: 1;
+    }
 
-.management-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    border-radius: 20px;
-    padding: 2rem;
-    border: 1px solid rgba(0,0,0,0.05);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 2rem;
-}
+    .management-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 20px;
+        padding: 2rem;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
 
-.management-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #06beb6 0%, #48b1bf 100%);
-    transform: scaleX(0);
-    transition: transform 0.4s ease;
-}
+    .management-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #06beb6 0%, #48b1bf 100%);
+        transform: scaleX(0);
+        transition: transform 0.4s ease;
+    }
 
-.management-card:hover::before {
-    transform: scaleX(1);
-}
+    .management-card:hover::before {
+        transform: scaleX(1);
+    }
 
-.management-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-}
+    .management-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
 
-.module-card {
-    background: white;
-    border-radius: 15px;
-    padding: 1.5rem;
-    border: 1px solid rgba(0,0,0,0.05);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-    transition: all 0.3s ease;
-    margin-bottom: 1rem;
-    position: relative;
-    overflow: hidden;
-}
+    .module-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+        position: relative;
+        overflow: hidden;
+    }
 
-.module-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-}
+    .module-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
 
-.module-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #06beb6 0%, #48b1bf 100%);
-    transform: scaleX(0);
-    transition: transform 0.3s ease;
-}
+    .module-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #06beb6 0%, #48b1bf 100%);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
 
-.module-card:hover::before {
-    transform: scaleX(1);
-}
+    .module-card:hover::before {
+        transform: scaleX(1);
+    }
 
-.module-thumbnail {
-    width: 80px;
-    height: 80px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 2rem;
-    margin-bottom: 1rem;
-}
+    .module-thumbnail {
+        width: 80px;
+        height: 80px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
 
-.difficulty-badge {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
-}
+    .difficulty-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
 
-.difficulty-beginner {
-    background: rgba(72, 187, 120, 0.1);
-    color: #48bb78;
-}
+    .difficulty-beginner {
+        background: rgba(72, 187, 120, 0.1);
+        color: #48bb78;
+    }
 
-.difficulty-intermediate {
-    background: rgba(237, 137, 54, 0.1);
-    color: #ed8936;
-}
+    .difficulty-intermediate {
+        background: rgba(237, 137, 54, 0.1);
+        color: #ed8936;
+    }
 
-.difficulty-advanced {
-    background: rgba(245, 101, 101, 0.1);
-    color: #f56565;
-}
+    .difficulty-advanced {
+        background: rgba(245, 101, 101, 0.1);
+        color: #f56565;
+    }
 
-.completion-bar {
-    height: 8px;
-    background: #e2e8f0;
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 0.5rem;
-}
+    .completion-bar {
+        height: 8px;
+        background: #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+    }
 
-.completion-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #06beb6 0%, #48b1bf 100%);
-    transition: width 0.3s ease;
-}
+    .completion-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #06beb6 0%, #48b1bf 100%);
+        transition: width 0.3s ease;
+    }
 
-.status-badge {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
-}
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
 
-.status-published {
-    background: rgba(72, 187, 120, 0.1);
-    color: #48bb78;
-}
+    .status-published {
+        background: rgba(72, 187, 120, 0.1);
+        color: #48bb78;
+    }
 
-.status-draft {
-    background: rgba(237, 137, 54, 0.1);
-    color: #ed8936;
-}
+    .status-draft {
+        background: rgba(237, 137, 54, 0.1);
+        color: #ed8936;
+    }
 
-.status-archived {
-    background: rgba(113, 128, 150, 0.1);
-    color: #718096;
-}
+    .status-archived {
+        background: rgba(113, 128, 150, 0.1);
+        color: #718096;
+    }
 
-.action-btn {
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    border: none;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    margin-right: 0.5rem;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
-}
+    .action-btn {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
 
-.btn-edit {
-    background: rgba(102, 126, 234, 0.1);
-    color: #667eea;
-}
+    .btn-edit {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+    }
 
-.btn-edit:hover {
-    background: #667eea;
-    color: white;
-    transform: translateY(-2px);
-}
+    .btn-edit:hover {
+        background: #667eea;
+        color: white;
+        transform: translateY(-2px);
+    }
 
-.btn-preview {
-    background: rgba(6, 190, 182, 0.1);
-    color: #06beb6;
-}
+    .btn-preview {
+        background: rgba(6, 190, 182, 0.1);
+        color: #06beb6;
+    }
 
-.btn-preview:hover {
-    background: #06beb6;
-    color: white;
-    transform: translateY(-2px);
-}
+    .btn-preview:hover {
+        background: #06beb6;
+        color: white;
+        transform: translateY(-2px);
+    }
 
-.btn-archive {
-    background: rgba(113, 128, 150, 0.1);
-    color: #718096;
-}
+    .btn-archive {
+        background: rgba(113, 128, 150, 0.1);
+        color: #718096;
+    }
 
-.btn-archive:hover {
-    background: #718096;
-    color: white;
-    transform: translateY(-2px);
-}
+    .btn-archive:hover {
+        background: #718096;
+        color: white;
+        transform: translateY(-2px);
+    }
 
-.stat-item {
-    text-align: center;
-    padding: 1rem;
-}
+    .stat-item {
+        text-align: center;
+        padding: 1rem;
+    }
 
-.stat-number {
-    font-size: 2rem;
-    font-weight: bold;
-    color: #06beb6;
-}
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #06beb6;
+    }
 
-.stat-label {
-    color: #718096;
-    font-size: 0.9rem;
-}
+    .stat-label {
+        color: #718096;
+        font-size: 0.9rem;
+    }
 
-.progress-chart {
-    position: relative;
-    height: 300px;
-    background: white;
-    border-radius: 15px;
-    padding: 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+    .progress-chart {
+        position: relative;
+        height: 300px;
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Admin Header -->
-<div class="admin-header">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <h1 class="admin-title mb-2">
-                    <i class="fas fa-graduation-cap me-3"></i>Training Management
-                </h1>
-                <p class="mb-0" style="font-size: 1.1rem; opacity: 0.9; position: relative; z-index: 1;">
-                    Create and manage training modules for caregivers
-                </p>
-            </div>
-            <div class="col-md-4 text-md-end">
-                <button class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#createModuleModal">
-                    <i class="fas fa-plus me-2"></i>Create Module
-                </button>
-            </div>
+<div class="admin-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">
+                <i class="fas fa-graduation-cap me-3"></i>Training Management
+            </h1>
+            <p class="mb-0" style="font-size: 1.1rem; opacity: 0.8; color: #666;">
+                Create and manage training modules for caregivers
+            </p>
+        </div>
+        <div class="header-buttons">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModuleModal">
+                <i class="fas fa-plus me-2"></i>Create Module
+            </button>
         </div>
     </div>
-</div>
-
-<div class="container-fluid">
     <!-- Statistics Row -->
-    <div class="management-card">
-        <div class="row">
-            <div class="col-md-3">
-                <div class="stat-item">
-                    <div class="stat-number">{{ modules|length or 12 }}</div>
-                    <div class="stat-label">Total Modules</div>
-                </div>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fas fa-book"></i>
             </div>
-            <div class="col-md-3">
-                <div class="stat-item">
-                    <div class="stat-number">{{ modules|selectattr("is_active", "equalto", true)|list|length or 8 }}</div>
-                    <div class="stat-label">Published</div>
-                </div>
+            <div class="metric-value">{{ modules|length or 12 }}</div>
+            <div class="metric-label">Total Modules</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fas fa-check-circle"></i>
             </div>
-            <div class="col-md-3">
-                <div class="stat-item">
-                    <div class="stat-number">156</div>
-                    <div class="stat-label">Total Enrollments</div>
-                </div>
+            <div class="metric-value">{{ modules|selectattr("is_active", "equalto", true)|list|length or 8 }}</div>
+            <div class="metric-label">Published</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fas fa-users"></i>
             </div>
-            <div class="col-md-3">
-                <div class="stat-item">
-                    <div class="stat-number">89%</div>
-                    <div class="stat-label">Avg Completion</div>
-                </div>
+            <div class="metric-value">156</div>
+            <div class="metric-label">Total Enrollments</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fas fa-chart-line"></i>
             </div>
+            <div class="metric-value">89%</div>
+            <div class="metric-label">Avg Completion</div>
         </div>
     </div>
 
@@ -319,168 +318,173 @@
 
                 <div id="modulesList">
                     {% if modules %}
-                        {% for module in modules %}
-                        <div class="module-card">
-                            <div class="row align-items-center">
-                                <div class="col-md-2">
-                                    <div class="module-thumbnail">
-                                        <i class="fas fa-{{ module.icon or 'book' }}"></i>
-                                    </div>
+                    {% for module in modules %}
+                    <div class="module-card">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <div class="module-thumbnail">
+                                    <i class="fas fa-{{ module.icon or 'book' }}"></i>
                                 </div>
-                                <div class="col-md-6">
-                                    <h6 class="fw-bold mb-2">{{ module.title }}</h6>
-                                    <p class="text-muted small mb-2">{{ module.description[:100] }}...</p>
-                                    <div class="d-flex gap-2 mb-2">
-                                        <span class="difficulty-badge difficulty-{{ module.difficulty_level }}">
-                                            {{ module.difficulty_level.title() }}
-                                        </span>
-                                        <span class="status-badge status-{{ 'published' if module.is_active else 'draft' }}">
-                                            {{ 'Published' if module.is_active else 'Draft' }}
-                                        </span>
-                                    </div>
-                                    <small class="text-muted">
-                                        <i class="fas fa-clock me-1"></i>{{ module.duration_minutes or '30' }} minutes
-                                        <span class="mx-2">•</span>
-                                        <i class="fas fa-users me-1"></i>{{ module.enrollments or '0' }} enrolled
-                                    </small>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold mb-2">{{ module.title }}</h6>
+                                <p class="text-muted small mb-2">{{ module.description[:100] }}...</p>
+                                <div class="d-flex gap-2 mb-2">
+                                    <span class="difficulty-badge difficulty-{{ module.difficulty_level }}">
+                                        {{ module.difficulty_level.title() }}
+                                    </span>
+                                    <span
+                                        class="status-badge status-{{ 'published' if module.is_active else 'draft' }}">
+                                        {{ 'Published' if module.is_active else 'Draft' }}
+                                    </span>
                                 </div>
-                                <div class="col-md-2">
-                                    <div class="completion-bar">
-                                        <div class="completion-fill" style="width: '{{ module.completion_rate|default(0) }}%'"></div>
-                                    </div>
-                                    <small class="text-muted">{{ module.completion_rate|default('0') }}% completion</small>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>{{ module.duration_minutes or '30' }} minutes
+                                    <span class="mx-2">•</span>
+                                    <i class="fas fa-users me-1"></i>{{ module.enrollments or '0' }} enrolled
+                                </small>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="completion-bar">
+                                    <div class="completion-fill"
+                                        style="width: '{{ module.completion_rate|default(0) }}%'"></div>
                                 </div>
-                                <div class="col-md-2">
-                                    <div class="d-flex flex-column gap-2">
-                                        <button class="action-btn btn-edit" onclick="editModule('{{ module.id }}')">
-                                            <i class="fas fa-edit me-1"></i>Edit
-                                        </button>
-                                        <button class="action-btn btn-preview" onclick="previewModule('{{ module.id }}')">
-                                            <i class="fas fa-eye me-1"></i>Preview
-                                        </button>
-                                    </div>
+                                <small class="text-muted">{{ module.completion_rate|default('0') }}% completion</small>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="d-flex flex-column gap-2">
+                                    <button class="action-btn btn-edit" onclick="editModule('{{ module.id }}')">
+                                        <i class="fas fa-edit me-1"></i>Edit
+                                    </button>
+                                    <button class="action-btn btn-preview" onclick="previewModule('{{ module.id }}')">
+                                        <i class="fas fa-eye me-1"></i>Preview
+                                    </button>
                                 </div>
                             </div>
                         </div>
-                        {% endfor %}
+                    </div>
+                    {% endfor %}
                     {% else %}
-                        <!-- Sample Modules -->
-                        <div class="module-card">
-                            <div class="row align-items-center">
-                                <div class="col-md-2">
-                                    <div class="module-thumbnail">
-                                        <i class="fas fa-heart"></i>
-                                    </div>
+                    <!-- Sample Modules -->
+                    <div class="module-card">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <div class="module-thumbnail">
+                                    <i class="fas fa-heart"></i>
                                 </div>
-                                <div class="col-md-6">
-                                    <h6 class="fw-bold mb-2">Seizure First Aid Basics</h6>
-                                    <p class="text-muted small mb-2">Learn the essential steps to provide immediate care during a seizure episode...</p>
-                                    <div class="d-flex gap-2 mb-2">
-                                        <span class="difficulty-badge difficulty-beginner">Beginner</span>
-                                        <span class="status-badge status-published">Published</span>
-                                    </div>
-                                    <small class="text-muted">
-                                        <i class="fas fa-clock me-1"></i>25 minutes
-                                        <span class="mx-2">•</span>
-                                        <i class="fas fa-users me-1"></i>45 enrolled
-                                    </small>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold mb-2">Seizure First Aid Basics</h6>
+                                <p class="text-muted small mb-2">Learn the essential steps to provide immediate care
+                                    during a seizure episode...</p>
+                                <div class="d-flex gap-2 mb-2">
+                                    <span class="difficulty-badge difficulty-beginner">Beginner</span>
+                                    <span class="status-badge status-published">Published</span>
                                 </div>
-                                <div class="col-md-2">
-                                    <div class="completion-bar">
-                                        <div class="completion-fill" style="width: 92%"></div>
-                                    </div>
-                                    <small class="text-muted">92% completion</small>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>25 minutes
+                                    <span class="mx-2">•</span>
+                                    <i class="fas fa-users me-1"></i>45 enrolled
+                                </small>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="completion-bar">
+                                    <div class="completion-fill" style="width: 92%"></div>
                                 </div>
-                                <div class="col-md-2">
-                                    <div class="d-flex flex-column gap-2">
-                                        <button class="action-btn btn-edit" onclick="editModule(1)">
-                                            <i class="fas fa-edit me-1"></i>Edit
-                                        </button>
-                                        <button class="action-btn btn-preview" onclick="previewModule(1)">
-                                            <i class="fas fa-eye me-1"></i>Preview
-                                        </button>
-                                    </div>
+                                <small class="text-muted">92% completion</small>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="d-flex flex-column gap-2">
+                                    <button class="action-btn btn-edit" onclick="editModule(1)">
+                                        <i class="fas fa-edit me-1"></i>Edit
+                                    </button>
+                                    <button class="action-btn btn-preview" onclick="previewModule(1)">
+                                        <i class="fas fa-eye me-1"></i>Preview
+                                    </button>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="module-card">
-                            <div class="row align-items-center">
-                                <div class="col-md-2">
-                                    <div class="module-thumbnail">
-                                        <i class="fas fa-shield-alt"></i>
-                                    </div>
+                    <div class="module-card">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <div class="module-thumbnail">
+                                    <i class="fas fa-shield-alt"></i>
                                 </div>
-                                <div class="col-md-6">
-                                    <h6 class="fw-bold mb-2">Safety Zone Management</h6>
-                                    <p class="text-muted small mb-2">Advanced techniques for setting up and monitoring GPS safety zones...</p>
-                                    <div class="d-flex gap-2 mb-2">
-                                        <span class="difficulty-badge difficulty-intermediate">Intermediate</span>
-                                        <span class="status-badge status-published">Published</span>
-                                    </div>
-                                    <small class="text-muted">
-                                        <i class="fas fa-clock me-1"></i>40 minutes
-                                        <span class="mx-2">•</span>
-                                        <i class="fas fa-users me-1"></i>32 enrolled
-                                    </small>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold mb-2">Safety Zone Management</h6>
+                                <p class="text-muted small mb-2">Advanced techniques for setting up and monitoring GPS
+                                    safety zones...</p>
+                                <div class="d-flex gap-2 mb-2">
+                                    <span class="difficulty-badge difficulty-intermediate">Intermediate</span>
+                                    <span class="status-badge status-published">Published</span>
                                 </div>
-                                <div class="col-md-2">
-                                    <div class="completion-bar">
-                                        <div class="completion-fill" style="width: 78%"></div>
-                                    </div>
-                                    <small class="text-muted">78% completion</small>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>40 minutes
+                                    <span class="mx-2">•</span>
+                                    <i class="fas fa-users me-1"></i>32 enrolled
+                                </small>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="completion-bar">
+                                    <div class="completion-fill" style="width: 78%"></div>
                                 </div>
-                                <div class="col-md-2">
-                                    <div class="d-flex flex-column gap-2">
-                                        <button class="action-btn btn-edit" onclick="editModule(2)">
-                                            <i class="fas fa-edit me-1"></i>Edit
-                                        </button>
-                                        <button class="action-btn btn-preview" onclick="previewModule(2)">
-                                            <i class="fas fa-eye me-1"></i>Preview
-                                        </button>
-                                    </div>
+                                <small class="text-muted">78% completion</small>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="d-flex flex-column gap-2">
+                                    <button class="action-btn btn-edit" onclick="editModule(2)">
+                                        <i class="fas fa-edit me-1"></i>Edit
+                                    </button>
+                                    <button class="action-btn btn-preview" onclick="previewModule(2)">
+                                        <i class="fas fa-eye me-1"></i>Preview
+                                    </button>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="module-card">
-                            <div class="row align-items-center">
-                                <div class="col-md-2">
-                                    <div class="module-thumbnail">
-                                        <i class="fas fa-brain"></i>
-                                    </div>
+                    <div class="module-card">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <div class="module-thumbnail">
+                                    <i class="fas fa-brain"></i>
                                 </div>
-                                <div class="col-md-6">
-                                    <h6 class="fw-bold mb-2">Understanding Epilepsy</h6>
-                                    <p class="text-muted small mb-2">Comprehensive overview of epilepsy types, triggers, and management...</p>
-                                    <div class="d-flex gap-2 mb-2">
-                                        <span class="difficulty-badge difficulty-advanced">Advanced</span>
-                                        <span class="status-badge status-draft">Draft</span>
-                                    </div>
-                                    <small class="text-muted">
-                                        <i class="fas fa-clock me-1"></i>60 minutes
-                                        <span class="mx-2">•</span>
-                                        <i class="fas fa-users me-1"></i>0 enrolled
-                                    </small>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold mb-2">Understanding Epilepsy</h6>
+                                <p class="text-muted small mb-2">Comprehensive overview of epilepsy types, triggers, and
+                                    management...</p>
+                                <div class="d-flex gap-2 mb-2">
+                                    <span class="difficulty-badge difficulty-advanced">Advanced</span>
+                                    <span class="status-badge status-draft">Draft</span>
                                 </div>
-                                <div class="col-md-2">
-                                    <div class="completion-bar">
-                                        <div class="completion-fill" style="width: 0%"></div>
-                                    </div>
-                                    <small class="text-muted">0% completion</small>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>60 minutes
+                                    <span class="mx-2">•</span>
+                                    <i class="fas fa-users me-1"></i>0 enrolled
+                                </small>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="completion-bar">
+                                    <div class="completion-fill" style="width: 0%"></div>
                                 </div>
-                                <div class="col-md-2">
-                                    <div class="d-flex flex-column gap-2">
-                                        <button class="action-btn btn-edit" onclick="editModule(3)">
-                                            <i class="fas fa-edit me-1"></i>Edit
-                                        </button>
-                                        <button class="action-btn btn-archive" onclick="archiveModule(3)">
-                                            <i class="fas fa-archive me-1"></i>Archive
-                                        </button>
-                                    </div>
+                                <small class="text-muted">0% completion</small>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="d-flex flex-column gap-2">
+                                    <button class="action-btn btn-edit" onclick="editModule(3)">
+                                        <i class="fas fa-edit me-1"></i>Edit
+                                    </button>
+                                    <button class="action-btn btn-archive" onclick="archiveModule(3)">
+                                        <i class="fas fa-archive me-1"></i>Archive
+                                    </button>
                                 </div>
                             </div>
                         </div>
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -503,7 +507,7 @@
                     <div class="progress mb-3">
                         <div class="progress-bar bg-success" style="width: 92%"></div>
                     </div>
-                    
+
                     <div class="d-flex justify-content-between mb-2">
                         <span>Safety Zones</span>
                         <span class="text-info">78%</span>
@@ -511,7 +515,7 @@
                     <div class="progress mb-3">
                         <div class="progress-bar bg-info" style="width: 78%"></div>
                     </div>
-                    
+
                     <div class="d-flex justify-content-between mb-2">
                         <span>Emergency Response</span>
                         <span class="text-warning">65%</span>
@@ -532,13 +536,13 @@
                     <div class="text-muted small">Sarah Chen completed "Seizure First Aid"</div>
                     <div class="text-muted small">2 hours ago</div>
                 </div>
-                
+
                 <div class="activity-item border-start border-info ps-3 mb-3">
                     <div class="fw-medium">New Enrollment</div>
                     <div class="text-muted small">5 new users enrolled in "Safety Zones"</div>
                     <div class="text-muted small">4 hours ago</div>
                 </div>
-                
+
                 <div class="activity-item border-start border-warning ps-3 mb-3">
                     <div class="fw-medium">Module Updated</div>
                     <div class="text-muted small">"Emergency Response" content updated</div>
@@ -575,12 +579,12 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label class="form-label">Description</label>
                         <textarea class="form-control" name="description" rows="3" required></textarea>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -606,10 +610,11 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label class="form-label">Content</label>
-                        <textarea class="form-control" name="content" rows="5" placeholder="Enter module content here..."></textarea>
+                        <textarea class="form-control" name="content" rows="5"
+                            placeholder="Enter module content here..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -622,76 +627,77 @@
         </div>
     </div>
 </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// Training Management JavaScript
-document.addEventListener('DOMContentLoaded', function() {
-    initializeChart();
-    
-    // Create module form
-    document.getElementById('createModuleForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        showNotification('Training module created successfully!', 'success');
-        bootstrap.Modal.getInstance(document.getElementById('createModuleModal')).hide();
-    });
-});
+    // Training Management JavaScript
+    document.addEventListener('DOMContentLoaded', function () {
+        initializeChart();
 
-function initializeChart() {
-    const ctx = document.getElementById('moduleChart').getContext('2d');
-    const chart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Completed', 'In Progress', 'Not Started'],
-            datasets: [{
-                data: [65, 25, 10],
-                backgroundColor: ['#48bb78', '#ed8936', '#e2e8f0'],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
+        // Create module form
+        document.getElementById('createModuleForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            showNotification('Training module created successfully!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('createModuleModal')).hide();
+        });
+    });
+
+    function initializeChart() {
+        const ctx = document.getElementById('moduleChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Completed', 'In Progress', 'Not Started'],
+                datasets: [{
+                    data: [65, 25, 10],
+                    backgroundColor: ['#48bb78', '#ed8936', '#e2e8f0'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
                 }
             }
-        }
-    });
-}
-
-function editModule(moduleId) {
-    showNotification('Edit module functionality would be implemented here', 'info');
-}
-
-function previewModule(moduleId) {
-    showNotification('Module preview would be shown here', 'info');
-}
-
-function archiveModule(moduleId) {
-    if (confirm('Are you sure you want to archive this module?')) {
-        showNotification('Module archived successfully!', 'success');
+        });
     }
-}
 
-function showNotification(message, type) {
-    const toast = document.createElement('div');
-    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    toast.innerHTML = `
+    function editModule(moduleId) {
+        showNotification('Edit module functionality would be implemented here', 'info');
+    }
+
+    function previewModule(moduleId) {
+        showNotification('Module preview would be shown here', 'info');
+    }
+
+    function archiveModule(moduleId) {
+        if (confirm('Are you sure you want to archive this module?')) {
+            showNotification('Module archived successfully!', 'success');
+        }
+    }
+
+    function showNotification(message, type) {
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        toast.innerHTML = `
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
-    
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        if (toast.parentNode) {
-            toast.remove();
-        }
-    }, 5000);
-}
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+        }, 5000);
+    }
 </script>
 {% endblock %}

@@ -1,0 +1,484 @@
+{% extends "base.html" %}
+
+{% block title %}Reports & Insights - SafeStep{% endblock %}
+
+{% block body_class %}admin-page{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">Reports & Insights</h1>
+        <div class="header-buttons">
+            <button class="btn btn-primary" onclick="exportCurrentReport()">
+                <i class="fas fa-download me-2"></i>Export Report
+            </button>
+            <button class="btn btn-success" onclick="scheduleReport()">
+                <i class="fas fa-clock me-2"></i>Schedule Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Report Type Selector -->
+    <div class="admin-card">
+        <h3 class="form-title">
+            <i class="fas fa-filter me-2"></i>Select Report Type
+        </h3>
+        <div class="grid-4">
+            <div class="report-type-card active" onclick="selectReportType('incident')">
+                <div class="report-type-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="report-type-title">Incident Reports</div>
+                <div class="report-type-desc">Seizure incidents & safety events</div>
+            </div>
+            <div class="report-type-card" onclick="selectReportType('patient')">
+                <div class="report-type-icon">
+                    <i class="fas fa-user-injured"></i>
+                </div>
+                <div class="report-type-title">Patient Analytics</div>
+                <div class="report-type-desc">Individual patient performance</div>
+            </div>
+            <div class="report-type-card" onclick="selectReportType('system')">
+                <div class="report-type-icon">
+                    <i class="fas fa-server"></i>
+                </div>
+                <div class="report-type-title">System Performance</div>
+                <div class="report-type-desc">Platform metrics & uptime</div>
+            </div>
+            <div class="report-type-card" onclick="selectReportType('compliance')">
+                <div class="report-type-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="report-type-title">Compliance Reports</div>
+                <div class="report-type-desc">Safety & regulatory compliance</div>
+            </div>
+        </div>
+
+        <!-- Date Range Filters -->
+        <div class="grid-4 mt-4">
+            <div class="form-group">
+                <label class="form-label">Date Range</label>
+                <select class="form-control" id="dateRange">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="90">Last 3 Months</option>
+                    <option value="365">Last Year</option>
+                    <option value="custom">Custom Range</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Location</label>
+                <select class="form-control" id="locationFilter">
+                    <option value="">All Locations</option>
+                    <option value="home">Home</option>
+                    <option value="work">Work</option>
+                    <option value="public">Public</option>
+                    <option value="medical">Medical Facility</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Severity Level</label>
+                <select class="form-control" id="severityFilter">
+                    <option value="">All Severities</option>
+                    <option value="mild">Mild</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="severe">Severe</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">&nbsp;</label>
+                <button class="btn btn-primary w-100" onclick="generateReport()">
+                    <i class="fas fa-sync-alt me-2"></i>Generate Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Content -->
+    <div id="reportContent">
+        <!-- Incident Reports Section -->
+        <div id="incidentReport" class="report-section">
+            <div class="admin-card">
+                <div class="page-header">
+                    <h2 class="page-title">Incident Analysis Report</h2>
+                    <div class="header-buttons">
+                        <button class="btn btn-outline-primary btn-sm" onclick="printReport()">
+                            <i class="fas fa-print me-1"></i>Print
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" onclick="shareReport()">
+                            <i class="fas fa-share me-1"></i>Share
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Key Insights -->
+                <div class="insight-card">
+                    <div class="insight-title">Critical Finding</div>
+                    <div class="insight-value">23%</div>
+                    <div class="insight-description">Increase in incidents during evening hours (6 PM - 10 PM)</div>
+                </div>
+
+                <!-- Summary Grid -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="metric-value">156</div>
+                        <div class="metric-label">Total Incidents</div>
+                        <div class="metric-change positive">+12 from last month</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="metric-value">3.2 min</div>
+                        <div class="metric-label">Average Response Time</div>
+                        <div class="metric-change positive">-0.8m improvement</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <div class="metric-value">8</div>
+                        <div class="metric-label">High-Risk Patients</div>
+                        <div class="metric-change neutral">No change</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="metric-value">87%</div>
+                        <div class="metric-label">Safety Score</div>
+                        <div class="metric-change positive">+5% improvement</div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="grid-2">
+                    <div class="admin-card">
+                        <h5 class="chart-title">Incident Trends Over Time</h5>
+                        <div class="chart-container-large">
+                            <canvas id="incidentTrendChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="admin-card">
+                        <h5 class="chart-title">Incident Distribution by Location</h5>
+                        <div class="chart-container-large">
+                            <canvas id="locationChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Table -->
+                <div class="admin-card">
+                    <h5 class="chart-title">Recent Incidents</h5>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Patient ID</th>
+                                    <th>Location</th>
+                                    <th>Severity</th>
+                                    <th>Response Time</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="incidentTableBody">
+                                <!-- Data will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Other report sections will be added here -->
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Reports Page Specific Styles */
+    .report-type-card {
+        background: white;
+        border: 2px solid #e1e5e9;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .report-type-card:hover {
+        border-color: #4285f4;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(66, 133, 244, 0.15);
+    }
+
+    .report-type-card.active {
+        border-color: #4285f4;
+        background: #f8f9ff;
+    }
+
+    .report-type-icon {
+        font-size: 32px;
+        color: #4285f4;
+        margin-bottom: 10px;
+    }
+
+    .report-type-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 5px;
+    }
+
+    .report-type-desc {
+        font-size: 12px;
+        color: #666;
+    }
+
+    .insight-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .insight-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .insight-value {
+        font-size: 32px;
+        font-weight: 800;
+        margin-bottom: 5px;
+    }
+
+    .insight-description {
+        font-size: 14px;
+        opacity: 0.9;
+    }
+
+    .report-section {
+        display: none;
+    }
+
+    .report-section.active {
+        display: block;
+    }
+
+    .chart-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 15px;
+    }
+
+    .chart-container-large {
+        height: 400px;
+        position: relative;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let currentReportType = 'incident';
+    let incidentTrendChart, locationChart;
+
+    // Initialize the reports page
+    document.addEventListener('DOMContentLoaded', function () {
+        initializeReports();
+    });
+
+    function initializeReports() {
+        generateReport();
+        setupEventListeners();
+    }
+
+    function setupEventListeners() {
+        // Date range change
+        document.getElementById('dateRange').addEventListener('change', function () {
+            if (this.value === 'custom') {
+                showCustomDateRange();
+            }
+        });
+
+        // Filter changes
+        document.getElementById('locationFilter').addEventListener('change', generateReport);
+        document.getElementById('severityFilter').addEventListener('change', generateReport);
+    }
+
+    function selectReportType(type) {
+        currentReportType = type;
+
+        // Update active card
+        document.querySelectorAll('.report-type-card').forEach(card => {
+            card.classList.remove('active');
+        });
+        event.currentTarget.classList.add('active');
+
+        generateReport();
+    }
+
+    function generateReport() {
+        loadIncidentReport();
+    }
+
+    function loadIncidentReport() {
+        // Load incident trend chart
+        createIncidentTrendChart();
+
+        // Load location distribution chart
+        createLocationChart();
+
+        // Load incident table data
+        loadIncidentTable();
+    }
+
+    function createIncidentTrendChart() {
+        const ctx = document.getElementById('incidentTrendChart').getContext('2d');
+
+        if (incidentTrendChart) {
+            incidentTrendChart.destroy();
+        }
+
+        incidentTrendChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'Incidents',
+                    data: [12, 19, 15, 25],
+                    borderColor: '#4285f4',
+                    backgroundColor: 'rgba(66, 133, 244, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    function createLocationChart() {
+        const ctx = document.getElementById('locationChart').getContext('2d');
+
+        if (locationChart) {
+            locationChart.destroy();
+        }
+
+        locationChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Home', 'Work', 'Public', 'Medical'],
+                datasets: [{
+                    data: [45, 25, 20, 10],
+                    backgroundColor: [
+                        '#4285f4',
+                        '#34a853',
+                        '#fbbc04',
+                        '#ea4335'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+
+    function loadIncidentTable() {
+        const tableBody = document.getElementById('incidentTableBody');
+
+        // Sample data
+        const incidents = [
+            {
+                date: '2024-01-15 14:30',
+                patientId: 'P001',
+                location: 'Home',
+                severity: 'Moderate',
+                responseTime: '2.5 min',
+                status: 'Resolved'
+            },
+            {
+                date: '2024-01-15 10:15',
+                patientId: 'P003',
+                location: 'Work',
+                severity: 'Mild',
+                responseTime: '1.8 min',
+                status: 'Resolved'
+            },
+            {
+                date: '2024-01-14 18:45',
+                patientId: 'P007',
+                location: 'Public',
+                severity: 'Severe',
+                responseTime: '4.2 min',
+                status: 'Under Review'
+            }
+        ];
+
+        tableBody.innerHTML = incidents.map(incident => `
+            <tr>
+                <td>${incident.date}</td>
+                <td>${incident.patientId}</td>
+                <td>${incident.location}</td>
+                <td><span class="status-badge status-${incident.severity.toLowerCase()}">${incident.severity}</span></td>
+                <td>${incident.responseTime}</td>
+                <td><span class="status-badge status-completed">${incident.status}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewIncidentDetails('${incident.patientId}')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function showCustomDateRange() {
+        alert('Custom date range picker would be implemented here');
+    }
+
+    function exportCurrentReport() {
+        const link = document.createElement('a');
+        link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent('Report Data CSV');
+        link.download = `${currentReportType}_report_${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+    }
+
+    function scheduleReport() {
+        alert('Report scheduling feature would be implemented here');
+    }
+
+    function printReport() {
+        window.print();
+    }
+
+    function shareReport() {
+        alert('Report sharing feature would be implemented here');
+    }
+
+    function viewIncidentDetails(patientId) {
+        alert(`Viewing details for patient ${patientId}`);
+    }
+</script>
+{% endblock %}

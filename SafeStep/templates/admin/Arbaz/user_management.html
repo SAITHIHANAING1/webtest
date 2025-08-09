@@ -2,6 +2,8 @@
 
 {% block title %}User Management - SAFE-Step Admin{% endblock %}
 
+{% block body_class %}admin-page{% endblock %}
+
 {% block extra_css %}
 <style>
 /* User Management Specific Styles */
@@ -223,79 +225,70 @@
 {% endblock %}
 
 {% block content %}
-<!-- Admin Header -->
-<div class="admin-header">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <h1 class="admin-title mb-2">
-                    <i class="fas fa-users me-3"></i>User Management
-                </h1>
-                <p class="mb-0" style="font-size: 1.1rem; opacity: 0.9; position: relative; z-index: 1;">
-                    Manage system users, roles, and permissions
-                </p>
-            </div>
-            <div class="col-md-4 text-md-end">
-                <button class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#addUserModal">
-                    <i class="fas fa-plus me-2"></i>Add New User
-                </button>
-            </div>
+<div class="admin-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">
+                <i class="fas fa-users me-3"></i>User Management
+            </h1>
+            <p class="mb-0" style="font-size: 1.1rem; opacity: 0.8; color: #666;">
+                Manage system users, roles, and permissions
+            </p>
+        </div>
+        <div class="header-buttons">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                <i class="fas fa-plus me-2"></i>Add New User
+            </button>
         </div>
     </div>
-</div>
-
-<div class="container-fluid">
     <!-- Statistics Row -->
-    <div class="stats-row">
-        <div class="management-card">
-            <div class="row">
-                <div class="col-md-3">
-                    <div class="stat-item">
-                        <div class="stat-number">{{ users|length or 24 }}</div>
-                        <div class="stat-label">Total Users</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-item">
-                        <div class="stat-number">{{ users|selectattr("is_active")|list|length or 22 }}</div>
-                        <div class="stat-label">Active Users</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-item">
-                        <div class="stat-number">{{ users|selectattr("role", "equalto", "admin")|list|length or 2 }}</div>
-                        <div class="stat-label">Administrators</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-item">
-                        <div class="stat-number">{{ users|selectattr("role", "equalto", "caregiver")|list|length or 22 }}</div>
-                        <div class="stat-label">Caregivers</div>
-                    </div>
-                </div>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fas fa-users"></i>
             </div>
+            <div class="metric-value">{{ users|length or 24 }}</div>
+            <div class="metric-label">Total Users</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fas fa-user-check"></i>
+            </div>
+            <div class="metric-value">{{ users|selectattr("is_active")|list|length or 22 }}</div>
+            <div class="metric-label">Active Users</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            <div class="metric-value">{{ users|selectattr("role", "equalto", "admin")|list|length or 2 }}</div>
+            <div class="metric-label">Administrators</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fas fa-user-md"></i>
+            </div>
+            <div class="metric-value">{{ users|selectattr("role", "equalto", "caregiver")|list|length or 22 }}</div>
+            <div class="metric-label">Caregivers</div>
         </div>
     </div>
 
     <!-- Search and Filter -->
-    <div class="management-card">
-        <div class="row align-items-center mb-4">
-            <div class="col-md-6">
-                <div class="input-group">
-                    <span class="input-group-text bg-white border-end-0">
-                        <i class="fas fa-search text-muted"></i>
-                    </span>
-                    <input type="text" class="form-control search-bar border-start-0" placeholder="Search users by name, email, or username..." id="userSearch">
-                </div>
+    <div class="admin-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="input-group" style="max-width: 400px;">
+                <span class="input-group-text bg-white border-end-0">
+                    <i class="fas fa-search text-muted"></i>
+                </span>
+                <input type="text" class="form-control search-bar border-start-0" placeholder="Search users by name, email, or username..." id="userSearch">
             </div>
-            <div class="col-md-6">
-                <div class="d-flex gap-2 justify-content-md-end justify-content-start">
-                    <button class="filter-btn active" data-filter="all">All Users</button>
-                    <button class="filter-btn" data-filter="active">Active</button>
-                    <button class="filter-btn" data-filter="inactive">Inactive</button>
-                    <button class="filter-btn" data-filter="admin">Admins</button>
-                    <button class="filter-btn" data-filter="caregiver">Caregivers</button>
-                </div>
+            <div class="d-flex gap-2">
+                <button class="filter-btn active" data-filter="all">All Users</button>
+                <button class="filter-btn" data-filter="active">Active</button>
+                <button class="filter-btn" data-filter="inactive">Inactive</button>
+                <button class="filter-btn" data-filter="admin">Admins</button>
+                <button class="filter-btn" data-filter="caregiver">Caregivers</button>
             </div>
         </div>
 
@@ -538,6 +531,7 @@
             </form>
         </div>
     </div>
+</div>
 </div>
 {% endblock %}
 
