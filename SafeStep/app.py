@@ -1292,6 +1292,15 @@ def delete_training_module(module_id):
     return jsonify({'success': True, 'message': 'Module deleted'})
     
 
+# Preview module (read-only)
+@app.route('/admin/training/preview/<int:module_id>')
+@login_required
+@admin_required
+def preview_training_module(module_id):
+    module = TrainingModule.query.get_or_404(module_id)
+    return render_template('admin/Ethan/preview_module.html', module=module)
+    
+
 @app.route('/admin/analytics')
 @login_required
 @admin_required

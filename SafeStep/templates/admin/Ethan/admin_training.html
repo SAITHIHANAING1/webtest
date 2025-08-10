@@ -306,13 +306,20 @@
                     <h3 class="h5 mb-0">
                         <i class="fas fa-book me-2"></i>Training Modules
                     </h3>
-                    <div>
-                        <button class="btn btn-outline-secondary btn-sm me-2">
-                            <i class="fas fa-filter me-1"></i>Filter
-                        </button>
-                        <button class="btn btn-outline-secondary btn-sm">
-                            <i class="fas fa-sort me-1"></i>Sort
-                        </button>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-filter me-1"></i>Filter
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                                <li><a class="dropdown-item" href="#" onclick="sortModules('name-asc'); return false;">Name (A-Z)</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="sortModules('name-desc'); return false;">Name (Z-A)</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" onclick="sortModules('difficulty-asc'); return false;">Difficulty (Easy → Hard)</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="sortModules('difficulty-desc'); return false;">Difficulty (Hard → Easy)</a></li>
+                            </ul>
+                        </div>
+                        <input type="text" id="moduleSearch" class="form-control form-control-sm" placeholder="Search modules by name..." style="width: 220px;">
                     </div>
                 </div>
 
@@ -780,5 +787,54 @@ function showNotification(message, type) {
         }
     }, 5000);
 }
+
+function previewModule(moduleId) {
+    // Open the preview page in a new tab
+    window.open(`/admin/training/preview/${moduleId}`, '_blank');
+}
+</script>
+<script>
+// Sorting logic for modules
+function sortModules(type) {
+    const container = document.getElementById('modulesList');
+    const cards = Array.from(container.querySelectorAll('.module-card'));
+    let getDifficultyRank = (level) => {
+        if (!level) return 0;
+        const map = { 'beginner': 1, 'intermediate': 2, 'advanced': 3 };
+        return map[level.toLowerCase()] || 0;
+    };
+    cards.sort((a, b) => {
+        const nameA = a.querySelector('h6.fw-bold')?.textContent.trim().toLowerCase() || '';
+        const nameB = b.querySelector('h6.fw-bold')?.textContent.trim().toLowerCase() || '';
+        const diffA = a.querySelector('.difficulty-badge')?.textContent.trim().toLowerCase() || '';
+        const diffB = b.querySelector('.difficulty-badge')?.textContent.trim().toLowerCase() || '';
+        if (type === 'name-asc') return nameA.localeCompare(nameB);
+        if (type === 'name-desc') return nameB.localeCompare(nameA);
+        if (type === 'difficulty-asc') return getDifficultyRank(diffA) - getDifficultyRank(diffB);
+        if (type === 'difficulty-desc') return getDifficultyRank(diffB) - getDifficultyRank(diffA);
+        return 0;
+    });
+    // Remove all cards and re-append in sorted order
+    cards.forEach(card => container.appendChild(card));
+}
+</script>
+<script>
+// Search/filter modules by name
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('moduleSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            const query = this.value.toLowerCase();
+            document.querySelectorAll('.module-card').forEach(card => {
+                const title = card.querySelector('h6.fw-bold');
+                if (title && title.textContent.toLowerCase().includes(query)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
+});
 </script>
 {% endblock %}
