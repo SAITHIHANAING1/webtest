@@ -700,7 +700,34 @@ function editModule(moduleId) {
         form.appendChild(editField);
     }
     editField.value = module.id;
+    // Change button text to 'Update Module'
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Update Module';
+    }
 }
+
+// Reset modal to create mode when opened for creation
+document.addEventListener('DOMContentLoaded', function () {
+    const createBtn = document.querySelector('[data-bs-target="#createModuleModal"]');
+    if (createBtn) {
+        createBtn.addEventListener('click', function () {
+            const form = document.getElementById('createModuleForm');
+            // Reset form fields
+            form.reset();
+            // Remove edit_module_id if present
+            let editField = form.querySelector('[name="edit_module_id"]');
+            if (editField) {
+                editField.remove();
+            }
+            // Change button text to 'Create Module'
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Create Module';
+            }
+        });
+    }
+});
 
 function showNotification(message, type) {
     const toast = document.createElement('div');
