@@ -1,152 +1,136 @@
-# SafeStep - Seizure Monitoring and Caregiver Support Platform
+# SAFE-Step – Seizure Monitoring & Caregiver Support
 
-SafeStep is a comprehensive web application designed to help caregivers monitor and support individuals with seizure conditions. The platform provides real-time monitoring, training modules, safety zone management, and administrative tools.
+SAFE-Step is a Flask-based web app that helps caregivers and admins coordinate safety zones, monitor activity, and manage training resources.
 
-## Features
+## ✨ Features
 
-### For Caregivers
-- **Dashboard**: Overview of recent seizure sessions, safety zones, and training progress
-- **Seizure Monitoring**: Real-time monitoring and session tracking
-- **Seizure History**: Detailed history of seizure sessions with analytics
-- **Safety Zones**: GPS-based safety zone creation and management
-- **Training Modules**: Interactive training content with progress tracking
-- **Prediction Dashboard**: AI-powered seizure prediction insights
-- **Support Tickets**: Direct communication with support team
+### Caregivers
+- Personal dashboard with quick stats (zones, incidents, training)
+- Zones overview
+- Training modules
+- Monitoring interface
 
-### For Administrators
-- **Admin Dashboard**: System-wide analytics and metrics
-- **User Management**: Complete CRUD operations for user accounts
-- **Ticket Management**: Support ticket handling and resolution
-- **Training Management**: Content creation and module management
-- **System Monitoring**: Real-time system health and performance
-- **Analytics**: Comprehensive reporting and data visualization
+### Administrators
+- Admin dashboard with summary cards and recent incidents
+- Zones management (list, edit modal UI placeholder)
+- User management
+- Incident oversight
+- Training management
 
-## Technology Stack
+> The top navigation adapts to the current role (admin vs caregiver).*
 
-- **Backend**: Flask (Python)
-- **Database**: SQLAlchemy with PostgreSQL (Supabase) / SQLite fallback
-- **Authentication**: Flask-Login with Supabase Auth integration
-- **Frontend**: Bootstrap 5.3.0, JavaScript, HTML5
-- **Cloud Services**: Supabase for authentication and database
+## 🧱 Tech Stack
 
-## Installation
+- **Backend:** Flask
+- **Config:** `Config` class (env-driven) with SQLAlchemy settings pre-wired
+- **Templates:** Jinja2 + Bootstrap 5
+- **Static assets:** Vanilla JS, CSS
+- **(Deps):** Flask-Login, Flask-SQLAlchemy, Flask-WTF, python-dotenv
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/SAITHIHANAING1/webtest.git
-   cd webtest/SafeStep
-   ```
-
-2. **Create virtual environment**:
-   ```bash
-   python -m venv venv
-   venv\Scripts\activate  # Windows
-   # or
-   source venv/bin/activate  # Linux/Mac
-   ```
-
-3. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Environment Setup**:
-   Create a `.env` file in the SafeStep directory:
-   ```env
-   SECRET_KEY=your-secret-key-here
-   SUPABASE_URL=your-supabase-url
-   SUPABASE_KEY=your-supabase-anon-key
-   DATABASE_URL=your-database-url (optional)
-   ```
-
-5. **Initialize Database**:
-   ```bash
-   python app.py
-   ```
-
-## Usage
-
-1. **Start the application**:
-   ```bash
-   python app.py
-   ```
-
-2. **Access the application**:
-   - Open your browser and navigate to `http://127.0.0.1:5000`
-   - Default admin credentials: username `admin`, password `admin123`
-
-3. **User Types**:
-   - **Caregiver**: Access to monitoring, history, safety zones, and training
-   - **Admin**: Full system access including user management and analytics
-
-## Project Structure
+## 📁 Project Structure
+```
+safe-step/
+├─ app.py
+├─ config.py
+├─ requirements.txt
+├─ templates/
+│  ├─ base.html
+│  ├─ header.html
+│  ├─ footer.html
+│  ├─ landing.html
+│  ├─ caregiver\_dashboard.html
+│  ├─ caregiver\_zones.html
+│  ├─ caregiver\_monitor.html
+│  ├─ caregiver\_training.html
+│  ├─ admin\_dashboard.html
+│  ├─ admin\_zones.html
+│  ├─ admin\_users.html
+│  └─ admin\_incidents.html
+└─ static/
+├─ css/
+│  └─ style.css
+└─ js/
+└─ main.js
 
 ```
-SafeStep/
-├── app.py                      # Main Flask application
-├── supabase_integration.py     # Supabase authentication and database
-├── migrate_database.py         # Database migration utilities
-├── setup_fresh_db.py          # Fresh database setup
-├── requirements.txt            # Python dependencies
-├── .env                        # Environment variables (create this)
-├── static/
-│   ├── css/style.css          # Custom styles
-│   └── js/main.js             # JavaScript functionality
-├── templates/
-│   ├── base.html              # Base template
-│   ├── landing.html           # Landing page
-│   ├── auth/                  # Authentication templates
-│   ├── caregiver/             # Caregiver dashboard templates
-│   └── admin/                 # Admin dashboard templates
-└── instance/
-    └── safestep.db           # SQLite database (fallback)
+
+## ⚙️ Configuration
+
+App settings are loaded from `Config` in `config.py`. Provide environment variables as needed:
+
+- `SECRET_KEY` – Flask secret (required for sessions)
+- `DATABASE_URL` – SQLAlchemy connection string (defaults to SQLite `sqlite:///safe-step.db`)
+
+Example `.env` (optional if you export vars another way):
+
 ```
 
-## Database Models
+SECRET\_KEY=replace-me
+DATABASE\_URL=sqlite:///safe-step.db
 
-- **User**: User accounts with role-based access
-- **SeizureSession**: Seizure episode tracking
-- **SafetyZone**: GPS-based safety zones
-- **TrainingModule**: Educational content modules
-- **TrainingProgress**: User training completion tracking
-- **SupportTicket**: Support request management
-- **PredictionJob**: AI prediction results
+````
 
-## API Endpoints
+## 🚀 Getting Started
 
-### Authentication
-- `POST /login` - User authentication
-- `POST /signup` - User registration
-- `GET /logout` - User logout
+1) **Clone & enter the project**
+```bash
+git clone https://github.com/<your-org-or-user>/<your-repo>.git
+cd <your-repo>
+````
 
-### Caregiver Routes
-- `GET /caregiver/dashboard` - Main dashboard
-- `GET /caregiver/monitoring` - Real-time monitoring
-- `GET /caregiver/history` - Seizure history
-- `GET /caregiver/zones` - Safety zone management
-- `GET /caregiver/training` - Training modules
+2. **Create & activate a virtual environment**
 
-### Admin Routes
-- `GET /admin/dashboard` - Admin dashboard
-- `GET /admin/users` - User management
-- `POST /admin/users/delete/<id>` - Delete user
-- `POST /admin/users/toggle-status/<id>` - Toggle user status
+```bash
+python -m venv venv
+# Windows
+venv\Scripts\activate
+# macOS/Linux
+source venv/bin/activate
+```
 
-## Contributing
+3. **Install dependencies**
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/new-feature`)
-3. Commit your changes (`git commit -am 'Add new feature'`)
-4. Push to the branch (`git push origin feature/new-feature`)
-5. Create a Pull Request
+```bash
+pip install -r requirements.txt
+```
+
+4. **Run the app**
+
+```bash
+python app.py
+```
+
+5. **Open in browser**
+
+```
+http://127.0.0.1:5000/
+```
+
+## 🧭 App Routing
+
+* `/` – Public landing page
+* Caregiver views: dashboard, monitor, zones, training
+* Admin views: dashboard, zones, users, incidents, training
+
+> The app registers `admin` and `caregiver` blueprints in `app.py`. Make sure their packages expose `routes.py` that defines `admin_bp` and `caregiver_bp`.
+
+## 🧪 Development Notes
+
+* UI uses Bootstrap 5 + Font Awesome via CDN (see `base.html`).
+* Global styles live in `static/css/style.css`.
+* Page-level behavior can go in `static/js/main.js`. A sample handler for zone delete buttons is included.
+
+## 🤝 Contributing
+
+1. Create a feature branch
+   `git checkout -b feat/short-name`
+2. Commit changes
+   `git commit -m "feat: add <thing>"`
+3. Push & open a PR
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For support and questions, please create a support ticket through the application or contact the development team.
 
 ## Development Team
 
@@ -154,3 +138,4 @@ For support and questions, please create a support ticket through the applicatio
 - **Arbaz**: Analytics and User Management
 - **Ethan**: Training System
 - **Issac**: Monitoring and Predictions
+

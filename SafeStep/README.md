@@ -116,7 +116,17 @@ A comprehensive web application for epilepsy management, featuring real-time ana
 
 ## 🚀 Quick Start
 
-### 1. Environment Setup
+### Option 1: Automated Setup (Recommended)
+```bash
+# Clone the repository
+git clone <repository-url>
+cd SafeStep
+
+# Run the automated setup script
+python setup.py
+```
+
+### Option 2: Manual Setup
 ```bash
 # Clone the repository
 git clone <repository-url>
@@ -128,25 +138,110 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
+
+# Run database migration (IMPORTANT!)
+python migrate_db.py
 ```
 
-### 2. Environment Configuration
-Create a `.env` file in the SafeStep directory:
+### Database Migration (IMPORTANT!)
+After cloning the repository, you MUST run the database migration to fix schema issues:
+
+```bash
+# Run the database migration script
+python migrate_db.py
+```
+
+This script will:
+- Add missing database columns (like `patient_id` in `seizure_session` table)
+- Fix demo user password hashes
+- Create missing demo users if needed
+
+### Environment Configuration
+Create a `config.env` file in the SafeStep directory:
 ```env
 SUPABASE_URL=your_supabase_url
 SUPABASE_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_KEY=your_supabase_service_key
 FLASK_SECRET_KEY=your_secret_key
+DATABASE_URL=your_database_url_if_using_postgresql
 ```
 
-### 3. Database Setup
-1. Create a Supabase project
-2. Execute the SQL schema in Supabase SQL Editor
-3. Populate with sample data using the provided SQL scripts
+### Database Setup
+1. **Option A (Recommended)**: Create a Supabase project
+   - Execute the SQL schema in Supabase SQL Editor
+   - Populate with sample data using the provided SQL scripts
+   
+2. **Option B**: Use local SQLite (for development)
+   - The app will automatically create a local SQLite database
+   - Run the migration script to ensure proper schema
 
-### 4. Run the Application
+### Run the Application
 ```bash
 python app.py
 ```
+
+### Demo Login Credentials
+After running the migration script, use these credentials:
+- **Admin**: username=`admin`, password=`admin123`
+- **Caregiver**: username=`demo`, password=`demo123`
+- **Caregiver**: username=`caregiver`, password=`caregiver123`
+
+## 🛠️ Troubleshooting
+
+### Common Issues After Cloning
+
+#### 1. SQLite Database Error: `no such column: seizure_session.patient_id`
+**Solution**: Run the database migration script
+```bash
+python migrate_db.py
+```
+
+#### 2. Login Failed: Invalid password for demo users
+**Solution**: The migration script will fix this, but you can also manually update:
+```bash
+python -c "
+import sqlite3
+from werkzeug.security import generate_password_hash
+conn = sqlite3.connect('../instance/safestep.db')
+cursor = conn.cursor()
+cursor.execute('UPDATE user SET password_hash = ? WHERE username = ?', 
+               (generate_password_hash('demo123'), 'demo'))
+conn.commit()
+conn.close()
+print('Demo password updated')
+"
+```
+
+#### 3. Database File Not Found
+**Solution**: Start the app once to create the database, then run migration:
+```bash
+# Start app (it will create the database then exit with error)
+python app.py
+# Stop with Ctrl+C, then run migration
+python migrate_db.py
+# Start app again
+python app.py
+```
+
+#### 4. Missing Dependencies
+**Solution**: Install requirements
+```bash
+pip install -r requirements.txt
+```
+
+#### 5. Supabase Connection Issues
+**Solution**: The app falls back to SQLite. Check your config.env file:
+```env
+SUPABASE_URL=your_actual_supabase_url
+SUPABASE_KEY=your_actual_anon_key
+```
+
+### Development Workflow
+1. Clone repository
+2. Run `python setup.py` (automated) or follow manual setup
+3. Always run `python migrate_db.py` after cloning
+4. Create/update `config.env` with your credentials
+5. Start development with `python app.py`
 
 Access the application at: `http://localhost:5000`
 
