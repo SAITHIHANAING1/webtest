@@ -10,20 +10,6 @@ import json
 from dotenv import load_dotenv
 
 # Import models
-print("✅ UserQuestionnaire model defined in app.py")
-
-
-# Import models
-print("✅ UserQuestionnaire model defined in app.py")
-
-
-# Import models
-print("✅ UserQuestionnaire model defined in app.py")
-
-app = Flask(__name__)
-
-
-
 # Load environment variables from config.env file
 load_dotenv('config.env')
 
@@ -38,9 +24,6 @@ try:
 except ImportError:
     print("ℹ️ Supabase integration not available")
     supabase_available = False
-
-# Import models
-print("✅ UserQuestionnaire model defined in app.py")
 
 app = Flask(__name__)
 
@@ -675,21 +658,30 @@ def admin_required(f):
 # Landing and Authentication
 @app.route('/')
 def landing():
+    # Allow users to view landing page even if authenticated
+    # Only auto-redirect on the root path if they came from login
+    return render_template('landing.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    # Debug: Check if user is already authenticated when accessing login page
+    print(f"🔍 Login route accessed - User authenticated: {current_user.is_authenticated}")
+    if current_user.is_authenticated:
+        print(f"🔍 Current user: {current_user.username} ({current_user.role})")
+    
+    # If user is already logged in, redirect to appropriate dashboard
     if current_user.is_authenticated:
         if current_user.role == 'admin':
             return redirect(url_for('admin_dashboard'))
         else:
             return redirect(url_for('caregiver_dashboard'))
-    return render_template('landing.html')
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
+    
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '').strip()
         user_type = request.form.get('userType', '').strip()
         
-        print(f"🔍 Login attempt - Username: {username}, UserType: {user_type}")
+        print(f"Login attempt - Username: {username}, UserType: {user_type}")
         
         if not username or not password or not user_type:
             flash('Please fill in all fields', 'error')
@@ -703,24 +695,33 @@ def login():
             user = User.query.filter_by(email=username).first()
         
         if user:
-            print(f"🔍 User found - Role: {user.role}, Active: {user.is_active}")
+            print(f"User found - Role: {user.role}, Active: {user.is_active}")
+            
+            # Force fresh query to get latest password hash from database
+            db.session.refresh(user)
+            fresh_user = User.query.filter_by(username=username).first()
+            print(f"Fresh query - Password hash: {fresh_user.password_hash}")
             
             # Check if user type matches user role
             if user.role != user_type:
-                print(f"🔍 Role mismatch - User role: {user.role}, Selected type: {user_type}")
+                print(f"Role mismatch - User role: {user.role}, Selected type: {user_type}")
                 flash('Invalid user type for this account', 'error')
                 return render_template('auth/login.html')
             
             # Verify password - try both local and Supabase authentication
             password_valid = False
             
-            # First try local password verification
-            if check_password_hash(user.password_hash, password):
+            # First try local password verification with fresh hash
+            if check_password_hash(fresh_user.password_hash, password):
                 password_valid = True
-                print("🔍 Local password check passed")
+                print("✅ Local password check passed")
+            else:
+                print(f"❌ Local password check failed for user: {user.username}")
+                print(f"Password provided: {password}")
+                print(f"Stored hash: {fresh_user.password_hash}")
             
             # If local password fails and Supabase is available, try Supabase auth
-            elif supabase_available:
+            if not password_valid and supabase_available:
                 try:
                     from supabase_integration import get_supabase_client
                     supabase = get_supabase_client()
@@ -733,19 +734,19 @@ def login():
                         
                         if auth_response.user:
                             password_valid = True
-                            print("🔍 Supabase password check passed")
+                            print("Supabase password check passed")
                             
                             # Update local password hash for future logins
                             user.password_hash = generate_password_hash(password)
                             db.session.commit()
                             
                 except Exception as e:
-                    print(f"🔍 Supabase authentication failed: {e}")
+                    print(f"Supabase authentication failed: {e}")
             
             if password_valid:
                 if user.is_active:
                     login_user(user, remember=True)
-                    print(f"🔍 User logged in successfully as {user.role}")
+                    print(f"User logged in successfully as {user.role}")
                     
                     # Store session info
                     session['user_id'] = user.id
@@ -758,13 +759,13 @@ def login():
                     else:
                         return redirect(url_for('caregiver_dashboard'))
                 else:
-                    print("🔍 User account is not active")
+                    print("User account is not active")
                     flash('Account is deactivated', 'error')
             else:
-                print("🔍 Password check failed")
+                print("Password check failed")
                 flash('Invalid password', 'error')
         else:
-            print("🔍 User not found")
+            print("User not found")
             flash('Invalid username or email', 'error')
     
     return render_template('auth/login.html')
@@ -772,8 +773,6 @@ def login():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        print("🔍 Signup attempt received")
-        print(f"🔍 Form data: {request.form}")
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
@@ -1012,13 +1011,56 @@ def logout():
 
 
 @app.route('/create_module')
+@login_required
 def create_module():
-    if current_user.is_authenticated:
-        if current_user.role == 'admin':
-            return redirect(url_for('admin_dashboard'))
-        else:
-            return redirect(url_for('caregiver_dashboard'))
-    return render_template('landing.html')
+    # Allow only admin users to create modules
+    if current_user.role != 'admin':
+        flash('You need admin privileges to create modules.', 'error')
+        return redirect(url_for('caregiver_dashboard'))
+    return render_template('caregiver/Ethan/create_module.html')
+
+# Demo route for caregiver functionality
+@app.route('/demo/caregiver')
+def demo_caregiver():
+    """Demo route to showcase caregiver features without authentication"""
+    # Mock data for demo
+    mock_sessions = [
+        {
+            'id': 1,
+            'severity': 'mild',
+            'location': 'Classroom A',
+            'start_time': datetime.utcnow() - timedelta(hours=2),
+            'notes': 'Brief episode, student was alert throughout'
+        },
+        {
+            'id': 2,
+            'severity': 'moderate',
+            'location': 'Cafeteria',
+            'start_time': datetime.utcnow() - timedelta(days=1),
+            'notes': 'Lasted about 90 seconds, full recovery'
+        }
+    ]
+    
+    mock_zones = [
+        {
+            'id': 1,
+            'name': 'Classroom Block A',
+            'description': 'Main teaching area',
+            'status': 'active'
+        },
+        {
+            'id': 2,
+            'name': 'Playground',
+            'description': 'Outdoor recreation area',
+            'status': 'active'
+        }
+    ]
+    
+    return render_template('caregiver/Sai/dashboard.html', 
+                         recent_sessions=mock_sessions,
+                         active_zones=len(mock_zones),
+                         completed_modules=3,
+                         demo_mode=True)
 
 # Caregiver Routes
 @app.route('/caregiver/dashboard')
@@ -3483,6 +3525,129 @@ def end_session(session_id):
     return jsonify({'success': True})
 
 
+def create_sample_data_for_demo(demo_user):
+    """Create sample data for demo caregiver user"""
+    try:
+        # Create sample seizure sessions
+        sample_sessions = [
+            SeizureSession(
+                user_id=demo_user.id,
+                start_time=datetime.utcnow() - timedelta(hours=3),
+                end_time=datetime.utcnow() - timedelta(hours=3) + timedelta(minutes=2),
+                severity='mild',
+                location='Classroom A',
+                triggers='Stress, lack of sleep',
+                notes='Brief episode, student remained conscious. Full recovery within 2 minutes.'
+            ),
+            SeizureSession(
+                user_id=demo_user.id,
+                start_time=datetime.utcnow() - timedelta(days=2),
+                end_time=datetime.utcnow() - timedelta(days=2) + timedelta(minutes=5),
+                severity='moderate',
+                location='Cafeteria',
+                triggers='Flashing lights',
+                notes='Tonic-clonic seizure. Emergency protocol activated. Student recovered well.'
+            ),
+            SeizureSession(
+                user_id=demo_user.id,
+                start_time=datetime.utcnow() - timedelta(days=7),
+                end_time=datetime.utcnow() - timedelta(days=7) + timedelta(minutes=1),
+                severity='mild',
+                location='Art Room',
+                triggers='Unknown',
+                notes='Short absence seizure. No intervention needed.'
+            )
+        ]
+        
+        for session in sample_sessions:
+            db.session.add(session)
+        
+        # Create sample training progress
+        modules = TrainingModule.query.all()
+        if not modules:
+            # Create sample training modules if none exist
+            sample_modules = [
+                TrainingModule(
+                    title='Seizure First Aid Basics',
+                    description='Learn the fundamental steps of providing first aid during a seizure',
+                    content='This module covers basic seizure first aid including when to call emergency services.',
+                    duration_minutes=30,
+                    difficulty_level='beginner',
+                    module_type='video',
+                    is_active=True
+                ),
+                TrainingModule(
+                    title='GPS Zone Management',
+                    description='Understanding how to set up and manage GPS safety zones',
+                    content='Learn to create, monitor, and manage GPS safety zones for optimal security.',
+                    duration_minutes=45,
+                    difficulty_level='intermediate',
+                    module_type='interactive',
+                    is_active=True
+                ),
+                TrainingModule(
+                    title='Emergency Response Protocol',
+                    description='Comprehensive emergency response procedures for seizure incidents',
+                    content='Detailed protocols for different types of seizure emergencies and response strategies.',
+                    duration_minutes=60,
+                    difficulty_level='advanced',
+                    module_type='reading',
+                    is_active=True
+                )
+            ]
+            
+            for module in sample_modules:
+                db.session.add(module)
+            db.session.commit()
+            modules = sample_modules
+            
+        if modules:
+            for i, module in enumerate(modules[:3]):  # Only first 3 modules
+                progress = TrainingProgress(
+                    user_id=demo_user.id,
+                    module_id=module.id,
+                    completed=i < 2,  # First 2 completed
+                    completion_percentage=100 if i < 2 else 60,
+                    quiz_score=85 + (i * 5) if i < 2 else None,
+                    completed_at=datetime.utcnow() - timedelta(days=i+1) if i < 2 else None
+                )
+                db.session.add(progress)
+        
+        # Create sample questionnaire for demo user
+        questionnaire = UserQuestionnaire(
+            user_id=demo_user.id,
+            age=28,
+            gender='M',
+            height_cm=175.0,
+            weight_kg=70.0,
+            has_epilepsy=False,  # Caregiver, not patient
+            sleep_hours_avg=7.5,
+            stress_level='moderate',
+            exercise_frequency='weekly',
+            alcohol_consumption='occasional',
+            lives_alone=False,
+            emergency_contact='Sarah Johnson',
+            emergency_contact_phone='+65 9123 4567',
+            has_medical_alert=True,
+            smartphone_usage='advanced',
+            wearable_device=True,
+            monitoring_preference='continuous',
+            caregiver_relationship='professional',
+            caregiver_experience_years=5,
+            caregiver_training=True
+        )
+        questionnaire.calculate_risk_score()
+        questionnaire.generate_recommendations()
+        db.session.add(questionnaire)
+        
+        db.session.commit()
+        print("✅ Sample data created for demo caregiver")
+        
+    except Exception as e:
+        print(f"⚠️ Error creating sample data: {e}")
+        db.session.rollback()
+
+
 if __name__ == '__main__':
     with app.app_context():
         try:
@@ -3517,22 +3682,106 @@ if __name__ == '__main__':
                     admin.is_active = True
                     db.session.commit()
                     print("✅ Admin user activated!")
-                print(f"✅ Admin user exists: {admin.username} - Active: {admin.is_active}")
+                
+            # Create default demo caregiver user if doesn't exist
+            demo_caregiver = User.query.filter_by(username='demo').first()
+            if not demo_caregiver:
+                # Try to create demo user in Supabase first
+                supabase_demo_id = None
+                if supabase_available:
+                    try:
+                        from supabase_integration import get_supabase_client
+                        supabase = get_supabase_client()
+                        
+                        if supabase:
+                            # Create demo user in Supabase Auth
+                            auth_response = supabase.auth.sign_up({
+                                "email": "demo@safestep.com",
+                                "password": "demo123",
+                                "options": {
+                                    "data": {
+                                        "first_name": "Demo",
+                                        "last_name": "Caregiver",
+                                        "username": "demo",
+                                        "role": "caregiver"
+                                    }
+                                }
+                            })
+                            
+                            if auth_response.user:
+                                supabase_demo_id = auth_response.user.id
+                                print(f"✅ Demo user created in Supabase: {supabase_demo_id}")
+                            
+                    except Exception as e:
+                        print(f"⚠️ Supabase demo user creation failed: {e}")
+                        print("⚠️ Continuing with local demo user only")
+                
+                # Create demo user in local database
+                demo_caregiver = User(
+                    username='demo',
+                    email='demo@safestep.com',
+                    password_hash=generate_password_hash('demo123'),
+                    first_name='Demo',
+                    last_name='Caregiver',
+                    role='caregiver',
+                    is_active=True,
+                    supabase_user_id=supabase_demo_id
+                )
+                db.session.add(demo_caregiver)
+                db.session.commit()
+                print("✅ Default demo caregiver user created successfully!")
+                
+                # Create sample data for demo caregiver
+                create_sample_data_for_demo(demo_caregiver)
+                
+            else:
+                # Ensure existing demo caregiver is active
+                if not demo_caregiver.is_active:
+                    demo_caregiver.is_active = True
+                    db.session.commit()
+                    print("✅ Demo caregiver user activated!")
+                
+                # Check if demo user needs Supabase sync
+                if not demo_caregiver.supabase_user_id and supabase_available:
+                    try:
+                        from supabase_integration import get_supabase_client
+                        supabase = get_supabase_client()
+                        
+                        if supabase:
+                            # Try to create demo user in Supabase
+                            auth_response = supabase.auth.sign_up({
+                                "email": "demo@safestep.com",
+                                "password": "demo123",
+                                "options": {
+                                    "data": {
+                                        "first_name": "Demo",
+                                        "last_name": "Caregiver",
+                                        "username": "demo",
+                                        "role": "caregiver"
+                                    }
+                                }
+                            })
+                            
+                            if auth_response.user:
+                                demo_caregiver.supabase_user_id = auth_response.user.id
+                                db.session.commit()
+                                print(f"✅ Demo user synced to Supabase: {auth_response.user.id}")
+                            
+                    except Exception as e:
+                        print(f"⚠️ Demo user Supabase sync failed: {e}")
+                        print("⚠️ Demo user will use local authentication only")
+                
+            print(f"✅ Admin user exists: {admin.username} - Active: {admin.is_active}")
+            print(f"✅ Demo caregiver exists: {demo_caregiver.username} - Active: {demo_caregiver.is_active}")
         except Exception as e:
-            print(f"⚠️ Admin user setup failed: {e}")
-            print("🔄 Continuing without admin user...")
+            print(f"Admin user setup failed: {e}")
     
-    print("\n🧠 SafeStep Enhanced Analytics Dashboard")
+    print("\n✅ SafeStep Application Starting")
     print("=" * 50)
-    print("Features:")
-    print("  • Real epilepsy dataset integration")  
-    print("  • AI-powered prediction engine")
-    print("  • Interactive analytics dashboard")
-    print("  • Live data visualization")
-    print("  • Enhanced ML Analysis with detailed results")
-    print("=" * 50)
-    print("Access: http://localhost:5000/analytics")
-    print("Login: admin / admin123")
+    print("🌐 Web Interface: http://localhost:5000")
+    print("👤 Admin Login: admin / admin123")
+    print("👥 Caregiver Login: demo / demo123")
+    print("🎯 Demo Mode: /demo/caregiver")
     print("=" * 50)
     
     app.run(debug=True)

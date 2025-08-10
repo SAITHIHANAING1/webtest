@@ -6,17 +6,33 @@
 
 {% block content %}
 <div class="caregiver-container">
+    {% if demo_mode %}
+    <!-- Demo Mode Notice -->
+    <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+        <i class="fas fa-eye me-2"></i>
+        <strong>Demo Mode:</strong> You're viewing a demonstration of the SAFE-Step caregiver dashboard with sample data.
+        <a href="{{ url_for('signup') }}" class="alert-link">Sign up</a> to create your own account.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+    
     <!-- Welcome Header -->
     <div class="caregiver-header">
         <div class="d-flex justify-content-between align-items-center">
             <div>
-                <h1>Welcome back, {{ current_user.first_name }}!</h1>
+                <h1>Welcome back, {% if demo_mode %}Demo User{% else %}{{ current_user.first_name }}{% endif %}!</h1>
                 <p>Here's what's happening with your patient monitoring today.</p>
             </div>
             <div class="d-flex gap-2">
+                {% if not demo_mode %}
                 <a class="btn btn-success btn-lg" href="{{ url_for('seizure_monitoring') }}?autostart=1">
                     <i class="fas fa-heartbeat me-2"></i>Start Monitoring
                 </a>
+                {% else %}
+                <button class="btn btn-success btn-lg" onclick="alert('Demo mode: Sign up to enable full functionality!')">
+                    <i class="fas fa-heartbeat me-2"></i>Start Monitoring (Demo)
+                </button>
+                {% endif %}
             </div>
         </div>
     </div>
