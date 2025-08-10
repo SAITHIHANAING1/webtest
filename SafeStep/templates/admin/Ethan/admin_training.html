@@ -363,7 +363,7 @@
                                     <button class="action-btn btn-edit" onclick="editModule('{{ module.id }}')">
                                         <i class="fas fa-edit me-1"></i>Edit
                                     </button>
-                                    <button class="action-btn btn-preview" onclick="previewModule('{{ module.id }}')">
+                                        <button class="action-btn btn-preview" onclick="previewModule('{{ module.id }}')" data-bs-toggle="modal" data-bs-target="#previewModuleModal">
                                         <i class="fas fa-eye me-1"></i>Preview
                                     </button>
                                 </div>
@@ -412,7 +412,37 @@
                             </div>
                         </div>
                     </div>
-
+// Preview Module Modal logic
+function previewModule(moduleId) {
+    const module = modules.find(m => m.id == moduleId || m.id == parseInt(moduleId));
+    if (!module) {
+        showNotification('Module not found. Please refresh the page.', 'danger');
+        return;
+    }
+    // Clear previous content
+    document.getElementById('previewModuleTitle').innerText = '';
+    document.getElementById('previewModuleDescription').innerText = '';
+    document.getElementById('previewModuleDifficulty').innerText = '';
+    document.getElementById('previewModuleDuration').innerText = '';
+    document.getElementById('previewModuleContent').innerHTML = '';
+    // Fill modal fields
+    document.getElementById('previewModuleTitle').innerText = module.title || '';
+    document.getElementById('previewModuleDescription').innerText = module.description || '';
+    document.getElementById('previewModuleDifficulty').innerText = module.difficulty_level ? module.difficulty_level.charAt(0).toUpperCase() + module.difficulty_level.slice(1) : '';
+    document.getElementById('previewModuleDuration').innerText = module.duration_minutes ? module.duration_minutes + ' minutes' : '';
+    document.getElementById('previewModuleContent').innerText = module.content || '';
+    // Video
+    const videoSection = document.getElementById('previewModuleVideoSection');
+    const videoTag = document.getElementById('previewModuleVideo');
+    if (module.video_url) {
+        videoSection.style.display = '';
+        videoTag.src = module.video_url;
+        videoTag.load && videoTag.load();
+    } else {
+        videoSection.style.display = 'none';
+        videoTag.src = '';
+    }
+}
                     <div class="module-card">
                         <div class="row align-items-center">
                             <div class="col-md-2">
@@ -555,6 +585,97 @@
                     <div class="text-muted small">"Emergency Response" content updated</div>
                     <div class="text-muted small">Yesterday</div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Preview Module Modal -->
+<style>
+    .preview-modal-content {
+        background: #fafdff;
+        border-radius: 18px;
+        border: 1px solid #e3eaf3;
+        box-shadow: 0 8px 32px rgba(72, 177, 191, 0.08);
+        padding: 0;
+    }
+    .preview-modal-header {
+        background: linear-gradient(90deg, #e0f7fa 0%, #fafdff 100%);
+        border-bottom: 1px solid #e3eaf3;
+        border-radius: 18px 18px 0 0;
+        padding: 1.25rem 2rem 1rem 2rem;
+    }
+    .preview-modal-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #06beb6;
+        margin-bottom: 0;
+    }
+    .preview-modal-body {
+        padding: 2rem 2rem 1.5rem 2rem;
+    }
+    .preview-modal-label {
+        color: #48b1bf;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        font-size: 1.05rem;
+    }
+    .preview-modal-section {
+        margin-bottom: 1.25rem;
+    }
+    .preview-modal-content-box {
+        background: #f3fbfd;
+        border-radius: 10px;
+        padding: 1rem;
+        border: 1px solid #e3eaf3;
+        color: #333;
+        white-space: pre-line;
+        font-size: 1rem;
+    }
+    .preview-modal-footer {
+        border-top: 1px solid #e3eaf3;
+        background: #fafdff;
+        border-radius: 0 0 18px 18px;
+        padding: 1rem 2rem;
+    }
+</style>
+<div class="modal fade" id="previewModuleModal" tabindex="-1" aria-labelledby="previewModuleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content preview-modal-content">
+            <div class="modal-header preview-modal-header">
+                <h5 class="modal-title preview-modal-title" id="previewModuleModalLabel"><i class="fas fa-eye me-2"></i>Preview Module</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body preview-modal-body">
+                <div class="preview-modal-section">
+                    <div class="preview-modal-label">Title</div>
+                    <div id="previewModuleTitle"></div>
+                </div>
+                <div class="preview-modal-section">
+                    <div class="preview-modal-label">Description</div>
+                    <div id="previewModuleDescription"></div>
+                </div>
+                <div class="preview-modal-section">
+                    <div class="preview-modal-label">Difficulty</div>
+                    <div id="previewModuleDifficulty"></div>
+                </div>
+                <div class="preview-modal-section">
+                    <div class="preview-modal-label">Duration</div>
+                    <div id="previewModuleDuration"></div>
+                </div>
+                <div class="preview-modal-section">
+                    <div class="preview-modal-label">Content</div>
+                    <div id="previewModuleContent" class="preview-modal-content-box"></div>
+                </div>
+                <div class="preview-modal-section" id="previewModuleVideoSection" style="display:none;">
+                    <div class="preview-modal-label">Video</div>
+                    <video id="previewModuleVideo" class="w-100" style="max-width:600px; border-radius:12px; margin-top:0.5rem;" controls>
+                        <source type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+            </div>
+            <div class="modal-footer preview-modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -788,10 +909,6 @@ function showNotification(message, type) {
     }, 5000);
 }
 
-function previewModule(moduleId) {
-    // Open the preview page in a new tab
-    window.open(`/admin/training/preview/${moduleId}`, '_blank');
-}
 </script>
 <script>
 // Sorting logic for modules
