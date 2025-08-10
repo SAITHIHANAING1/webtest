@@ -2,109 +2,69 @@
 
 {% block title %}Caregiver Dashboard - Safe-Step{% endblock %}
 
+{% block body_class %}caregiver-page{% endblock %}
+
 {% block content %}
-<div class="container-fluid mt-4">
+<div class="caregiver-container">
     <!-- Welcome Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h3 mb-1">Welcome back, {{ current_user.first_name }}!</h1>
-                    <p class="text-muted mb-0">Here's what's happening with your patient monitoring today.</p>
-                </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-success btn-lg" onclick="startEmergencyMonitoring()">
-                        <i class="fas fa-heartbeat me-2"></i>Start Monitoring
-                    </button>
-                </div>
+    <div class="caregiver-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1>Welcome back, {{ current_user.first_name }}!</h1>
+                <p>Here's what's happening with your patient monitoring today.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-success btn-lg" onclick="startEmergencyMonitoring()">
+                    <i class="fas fa-heartbeat me-2"></i>Start Monitoring
+                </button>
             </div>
         </div>
     </div>
 
     <!-- Quick Stats -->
-    <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-primary text-white h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <h2 class="h4 mb-0">{{ recent_sessions|length }}</h2>
-                            <p class="mb-0">Recent Sessions</p>
-                        </div>
-                        <div class="fs-1">
-                            <i class="fas fa-calendar-alt"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-footer bg-primary bg-opacity-75">
-                    <a href="{{ url_for('seizure_history') }}" class="text-white text-decoration-none">
-                        View History <i class="fas fa-arrow-right ms-1"></i>
-                    </a>
-                </div>
+    <div class="caregiver-stats">
+        <div class="caregiver-stat-card">
+            <div class="caregiver-stat-icon" style="background: var(--gradient-primary);">
+                <i class="fas fa-calendar-alt"></i>
             </div>
+            <div class="caregiver-stat-value">{{ recent_sessions|length }}</div>
+            <div class="caregiver-stat-label">Recent Sessions</div>
+            <a href="{{ url_for('seizure_history') }}" class="btn btn-sm btn-outline-primary mt-2">
+                View History <i class="fas fa-arrow-right ms-1"></i>
+            </a>
         </div>
         
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-success text-white h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <h2 class="h4 mb-0">{{ active_zones }}</h2>
-                            <p class="mb-0">Active Safety Zones</p>
-                        </div>
-                        <div class="fs-1">
-                            <i class="fas fa-map-marker-alt"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-footer bg-success bg-opacity-75">
-                    <a href="{{ url_for('safety_zones') }}" class="text-white text-decoration-none">
-                        Manage Zones <i class="fas fa-arrow-right ms-1"></i>
-                    </a>
-                </div>
+        <div class="caregiver-stat-card">
+            <div class="caregiver-stat-icon" style="background: var(--gradient-success);">
+                <i class="fas fa-map-marker-alt"></i>
             </div>
+            <div class="caregiver-stat-value">{{ active_zones }}</div>
+            <div class="caregiver-stat-label">Active Safety Zones</div>
+            <a href="{{ url_for('safety_zones') }}" class="btn btn-sm btn-outline-success mt-2">
+                Manage Zones <i class="fas fa-arrow-right ms-1"></i>
+            </a>
         </div>
         
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-info text-white h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <h2 class="h4 mb-0">{{ completed_modules }}</h2>
-                            <p class="mb-0">Training Completed</p>
-                        </div>
-                        <div class="fs-1">
-                            <i class="fas fa-graduation-cap"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-footer bg-info bg-opacity-75">
-                    <a href="{{ url_for('training_modules') }}" class="text-white text-decoration-none">
-                        Continue Learning <i class="fas fa-arrow-right ms-1"></i>
-                    </a>
-                </div>
+        <div class="caregiver-stat-card">
+            <div class="caregiver-stat-icon" style="background: var(--gradient-info);">
+                <i class="fas fa-graduation-cap"></i>
             </div>
+            <div class="caregiver-stat-value">{{ completed_modules }}</div>
+            <div class="caregiver-stat-label">Training Completed</div>
+            <a href="{{ url_for('training_modules') }}" class="btn btn-sm btn-outline-info mt-2">
+                Continue Learning <i class="fas fa-arrow-right ms-1"></i>
+            </a>
         </div>
         
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-warning text-dark h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <h2 class="h4 mb-0">94%</h2>
-                            <p class="mb-0">Prediction Accuracy</p>
-                        </div>
-                        <div class="fs-1">
-                            <i class="fas fa-brain"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-footer bg-warning bg-opacity-75">
-                    <a href="{{ url_for('prediction_dashboard') }}" class="text-dark text-decoration-none">
-                        View Predictions <i class="fas fa-arrow-right ms-1"></i>
-                    </a>
-                </div>
+        <div class="caregiver-stat-card">
+            <div class="caregiver-stat-icon" style="background: var(--gradient-warning);">
+                <i class="fas fa-brain"></i>
             </div>
+            <div class="caregiver-stat-value">94%</div>
+            <div class="caregiver-stat-label">Prediction Accuracy</div>
+            <a href="{{ url_for('prediction_dashboard') }}" class="btn btn-sm btn-outline-warning mt-2">
+                View Predictions <i class="fas fa-arrow-right ms-1"></i>
+            </a>
         </div>
     </div>
 
@@ -113,7 +73,7 @@
         <!-- Left Column -->
         <div class="col-lg-8">
             <!-- Recent Sessions -->
-            <div class="card mb-4">
+            <div class="caregiver-card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
                         <i class="fas fa-history me-2"></i>Recent Sessions
@@ -174,38 +134,26 @@
             </div>
 
             <!-- Quick Actions -->
-            <div class="card mb-4">
+            <div class="caregiver-card">
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="fas fa-bolt me-2"></i>Quick Actions
                     </h5>
                 </div>
                 <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <div class="d-grid">
-                                <button class="btn btn-success btn-lg" onclick="startEmergencyMonitoring()">
-                                    <i class="fas fa-heartbeat d-block mb-2" style="font-size: 1.5rem;"></i>
-                                    Start Monitoring
-                                </button>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="d-grid">
-                                <a href="{{ url_for('new_zone') }}" class="btn btn-info btn-lg">
-                                    <i class="fas fa-plus d-block mb-2" style="font-size: 1.5rem;"></i>
-                                    Add Safety Zone
-                                </a>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="d-grid">
-                                <a href="{{ url_for('support_ticket') }}" class="btn btn-warning btn-lg">
-                                    <i class="fas fa-life-ring d-block mb-2" style="font-size: 1.5rem;"></i>
-                                    Get Support
-                                </a>
-                            </div>
-                        </div>
+                    <div class="caregiver-quick-actions">
+                        <a href="#" class="caregiver-action-btn" onclick="startEmergencyMonitoring()">
+                            <i class="fas fa-heartbeat"></i>
+                            <span>Start Monitoring</span>
+                        </a>
+                        <a href="{{ url_for('new_zone') }}" class="caregiver-action-btn">
+                            <i class="fas fa-plus"></i>
+                            <span>Add Safety Zone</span>
+                        </a>
+                        <a href="{{ url_for('support_ticket') }}" class="caregiver-action-btn">
+                            <i class="fas fa-life-ring"></i>
+                            <span>Get Support</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -214,7 +162,7 @@
         <!-- Right Column -->
         <div class="col-lg-4">
             <!-- AI Predictions Panel -->
-            <div class="card mb-4">
+            <div class="caregiver-card">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-brain me-2"></i>AI Predictions
@@ -256,7 +204,7 @@
             </div>
 
             <!-- System Status -->
-            <div class="card mb-4">
+            <div class="caregiver-card">
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="fas fa-cog me-2"></i>System Status
@@ -291,7 +239,7 @@
             </div>
 
             <!-- Training Progress -->
-            <div class="card">
+            <div class="caregiver-card">
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="fas fa-graduation-cap me-2"></i>Training Progress

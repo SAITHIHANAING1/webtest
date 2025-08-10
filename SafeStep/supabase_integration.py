@@ -434,7 +434,7 @@ def export_analytics_data_supabase(filters):
 
 # Authentication helpers (optional, for future use)
 def create_supabase_user(email: str, password: str):
-    """Create a user using Supabase auth"""
+    """Create a new user in Supabase Auth"""
     if not supabase:
         return None
     
@@ -445,11 +445,11 @@ def create_supabase_user(email: str, password: str):
         })
         return response
     except Exception as e:
-        print(f"Error creating Supabase user: {e}")
+        print(f"❌ Error creating Supabase user: {e}")
         return None
 
 def sign_in_supabase_user(email: str, password: str):
-    """Sign in a user using Supabase auth"""
+    """Sign in a user with Supabase Auth"""
     if not supabase:
         return None
     
@@ -460,8 +460,138 @@ def sign_in_supabase_user(email: str, password: str):
         })
         return response
     except Exception as e:
-        print(f"Error signing in Supabase user: {e}")
+        print(f"❌ Error signing in Supabase user: {e}")
         return None
+
+def sync_questionnaire_to_supabase(questionnaire_data: dict):
+    """Sync questionnaire data to Supabase user_questionnaires table"""
+    if not supabase:
+        print("❌ Supabase client not available")
+        return False
+    
+    try:
+        # Ensure the questionnaire data has the correct structure
+        supabase_questionnaire = {
+            'user_id': questionnaire_data.get('user_id'),
+            'age': questionnaire_data.get('age'),
+            'gender': questionnaire_data.get('gender'),
+            'height_cm': questionnaire_data.get('height_cm'),
+            'weight_kg': questionnaire_data.get('weight_kg'),
+            'has_epilepsy': questionnaire_data.get('has_epilepsy'),
+            'epilepsy_diagnosis_age': questionnaire_data.get('epilepsy_diagnosis_age'),
+            'epilepsy_type': questionnaire_data.get('epilepsy_type'),
+            'seizure_frequency': questionnaire_data.get('seizure_frequency'),
+            'last_seizure_date': questionnaire_data.get('last_seizure_date'),
+            'current_medications': questionnaire_data.get('current_medications'),
+            'medication_compliance': questionnaire_data.get('medication_compliance'),
+            'medication_side_effects': questionnaire_data.get('medication_side_effects'),
+            'sleep_hours_avg': questionnaire_data.get('sleep_hours_avg'),
+            'stress_level': questionnaire_data.get('stress_level'),
+            'exercise_frequency': questionnaire_data.get('exercise_frequency'),
+            'alcohol_consumption': questionnaire_data.get('alcohol_consumption'),
+            'lives_alone': questionnaire_data.get('lives_alone'),
+            'emergency_contact': questionnaire_data.get('emergency_contact'),
+            'emergency_contact_phone': questionnaire_data.get('emergency_contact_phone'),
+            'has_medical_alert': questionnaire_data.get('has_medical_alert'),
+            'wears_helmet': questionnaire_data.get('wears_helmet'),
+            'smartphone_usage': questionnaire_data.get('smartphone_usage'),
+            'wearable_device': questionnaire_data.get('wearable_device'),
+            'monitoring_preference': questionnaire_data.get('monitoring_preference'),
+            'risk_score': questionnaire_data.get('risk_score', 0.0),
+            'risk_factors': questionnaire_data.get('risk_factors'),
+            'recommendations': questionnaire_data.get('recommendations'),
+            'is_complete': True,
+            'completed_at': datetime.utcnow().isoformat(),
+            'created_at': datetime.utcnow().isoformat(),
+            'updated_at': datetime.utcnow().isoformat()
+        }
+        
+        # Insert into Supabase
+        result = supabase.table('user_questionnaires').insert(supabase_questionnaire).execute()
+        
+        if result.data:
+            print(f"✅ Questionnaire synced to Supabase with ID: {result.data[0].get('id')}")
+            return True
+        else:
+            print("❌ Failed to sync questionnaire to Supabase")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error syncing questionnaire to Supabase: {e}")
+        return False
+
+def get_questionnaire_from_supabase(user_id: int):
+    """Get questionnaire data from Supabase for a specific user"""
+    if not supabase:
+        return None
+    
+    try:
+        result = supabase.table('user_questionnaires').select('*').eq('user_id', user_id).execute()
+        
+        if result.data:
+            return result.data[0]
+        else:
+            return None
+            
+    except Exception as e:
+        print(f"❌ Error getting questionnaire from Supabase: {e}")
+        return None
+
+def update_questionnaire_in_supabase(questionnaire_id: int, questionnaire_data: dict):
+    """Update questionnaire data in Supabase"""
+    if not supabase:
+        return False
+    
+    try:
+        # Add updated timestamp
+        questionnaire_data['updated_at'] = datetime.utcnow().isoformat()
+        
+        result = supabase.table('user_questionnaires').update(questionnaire_data).eq('id', questionnaire_id).execute()
+        
+        if result.data:
+            print(f"✅ Questionnaire updated in Supabase")
+            return True
+        else:
+            print("❌ Failed to update questionnaire in Supabase")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error updating questionnaire in Supabase: {e}")
+        return False
+
+def get_all_questionnaires_from_supabase():
+    """Get all questionnaire data from Supabase for analytics"""
+    if not supabase:
+        return []
+    
+    try:
+        result = supabase.table('user_questionnaires').select('*').execute()
+        
+        if result.data:
+            return result.data
+        else:
+            return []
+            
+    except Exception as e:
+        print(f"❌ Error getting questionnaires from Supabase: {e}")
+        return []
+
+def get_epilepsy_patients_from_supabase():
+    """Get all patients with epilepsy from Supabase"""
+    if not supabase:
+        return []
+    
+    try:
+        result = supabase.table('user_questionnaires').select('*').eq('has_epilepsy', True).eq('is_complete', True).execute()
+        
+        if result.data:
+            return result.data
+        else:
+            return []
+            
+    except Exception as e:
+        print(f"❌ Error getting epilepsy patients from Supabase: {e}")
+        return []
 
 if __name__ == '__main__':
     print("🧪 Testing Supabase integration...")
