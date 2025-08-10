@@ -9,8 +9,8 @@ import secrets
 import json
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from config.env file
+load_dotenv('config.env')
 
 # Try to initialize Supabase client
 try:
@@ -50,7 +50,38 @@ database_url = os.environ.get('DATABASE_URL')
 print(f"🔍 DATABASE_URL from environment: {database_url}")
 print(f"🔍 supabase_available: {supabase_available}")
 
+# Try to test PostgreSQL connection before using it
+postgresql_available = False
 if database_url and supabase_available:
+    try:
+        # Test the connection by importing psycopg2 and trying to connect
+        import psycopg2
+        from urllib.parse import urlparse
+        
+        # Parse the DATABASE_URL to extract connection parameters
+        parsed = urlparse(database_url)
+        
+        # Test connection with a timeout
+        import socket
+        socket.setdefaulttimeout(5)  # 5 second timeout
+        
+        # Try to connect to the database
+        conn = psycopg2.connect(
+            host=parsed.hostname,
+            port=parsed.port or 5432,
+            database=parsed.path[1:],  # Remove leading slash
+            user=parsed.username,
+            password=parsed.password
+        )
+        conn.close()
+        postgresql_available = True
+        print("✅ PostgreSQL connection test successful")
+    except Exception as e:
+        print(f"⚠️ PostgreSQL connection test failed: {e}")
+        print("🔄 Falling back to SQLite database")
+        postgresql_available = False
+
+if postgresql_available:
     # Using Supabase/PostgreSQL
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     print("🔗 Using Supabase PostgreSQL database")
@@ -2490,33 +2521,42 @@ def end_session(session_id):
 
 if __name__ == '__main__':
     with app.app_context():
-        # Create all database tables
-        db.create_all()
+        try:
+            # Create all database tables
+            db.create_all()
+            print("✅ Database tables created successfully")
+        except Exception as e:
+            print(f"❌ Database initialization failed: {e}")
+            print("🔄 Attempting to continue with existing database...")
         
         print("✅ All models defined in app.py")
         
-        # Create default admin user if doesn't exist
-        admin = User.query.filter_by(username='admin').first()
-        if not admin:
-            admin = User(
-                username='admin',
-                email='admin@safestep.com',
-                password_hash=generate_password_hash('admin123'),
-                first_name='Admin',
-                last_name='User',
-                role='admin',
-                is_active=True
-            )
-            db.session.add(admin)
-            db.session.commit()
-            print("✅ Default admin user created successfully!")
-        else:
-            # Ensure existing admin is active
-            if not admin.is_active:
-                admin.is_active = True
+        try:
+            # Create default admin user if doesn't exist
+            admin = User.query.filter_by(username='admin').first()
+            if not admin:
+                admin = User(
+                    username='admin',
+                    email='admin@safestep.com',
+                    password_hash=generate_password_hash('admin123'),
+                    first_name='Admin',
+                    last_name='User',
+                    role='admin',
+                    is_active=True
+                )
+                db.session.add(admin)
                 db.session.commit()
-                print("✅ Admin user activated!")
-            print(f"✅ Admin user exists: {admin.username} - Active: {admin.is_active}")
+                print("✅ Default admin user created successfully!")
+            else:
+                # Ensure existing admin is active
+                if not admin.is_active:
+                    admin.is_active = True
+                    db.session.commit()
+                    print("✅ Admin user activated!")
+                print(f"✅ Admin user exists: {admin.username} - Active: {admin.is_active}")
+        except Exception as e:
+            print(f"⚠️ Admin user setup failed: {e}")
+            print("🔄 Continuing without admin user...")
     
     print("\n🧠 SafeStep Enhanced Analytics Dashboard")
     print("=" * 50)

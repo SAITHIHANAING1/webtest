@@ -9,8 +9,8 @@ from supabase import create_client, Client
 from datetime import datetime, timedelta
 import json
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from config.env
+load_dotenv('config.env')
 
 # Global Supabase client
 supabase: Client = None
