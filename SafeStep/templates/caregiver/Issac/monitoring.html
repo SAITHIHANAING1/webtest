@@ -1,3 +1,6 @@
+      <div id="emergency911Msg" style="display:none; margin-top: 2rem; text-align: center;">
+        <span style="color: red; font-weight: bold; font-size: 1.3rem;">Please call <a href="tel:911" style="color: #fff; background: red; padding: 0 0.4em; border-radius: 0.2em; text-decoration: underline;">911</a> immediately.</span>
+      </div>
 {% extends "base.html" %} {% block title %}Seizure Monitoring - Safe-Step{%
 endblock %} {% block content %}
 <div class="container-fluid mt-4">
@@ -45,7 +48,7 @@ endblock %} {% block content %}
       "
     >
       <span id="monitoringDuration" style="font-size: 3rem; font-weight: bold"
-        >00:00</span
+    style="color: black;">00:00</span
       >
     </div>
   </div>
@@ -374,33 +377,36 @@ endblock %} {% block content %}
   });
 
   function startMonitoring() {
-    // Hide header (h1 and subtitle) with visibility
-    const header = document.getElementById("monitoringHeader");
-    if (header) header.style.visibility = "hidden";
-    // Show timer
-    document.getElementById("timerRow").style.display = "";
-    const durationElem = document.getElementById("monitoringDuration");
-    durationElem.textContent = "00:00";
-    durationElem.style.color = "";
-    // Hide navbar and footer
-    const navbar = document.querySelector("nav.navbar");
-    if (navbar) navbar.style.display = "none";
-    const footer = document.querySelector("footer");
-    if (footer) footer.style.display = "none";
-    monitoringActive = true;
-    monitoringStartTime = new Date();
+  // Hide header (h1 and subtitle) with visibility
+  const header = document.getElementById("monitoringHeader");
+  if (header) header.style.visibility = "hidden";
+  // Show timer
+  document.getElementById("timerRow").style.display = "";
+  const durationElem = document.getElementById("monitoringDuration");
+  durationElem.textContent = "00:00";
+  durationElem.style.color = "";
+  // Hide navbar and footer
+  const navbar = document.querySelector("nav.navbar");
+  if (navbar) navbar.style.display = "none";
+  const footer = document.querySelector("footer");
+  if (footer) footer.style.display = "none";
+  // Set background to black
+  document.body.style.backgroundColor = "#000";
+  document.body.style.transition = "background-color 0.3s";
+  monitoringActive = true;
+  monitoringStartTime = new Date();
 
-    // Update UI
-    document.getElementById("startMonitoringBtn").classList.add("d-none");
-    document.getElementById("stopMonitoringBtn").classList.remove("d-none");
-    document.getElementById("statusText").textContent = "Monitoring Active";
-    document.getElementById("statusIndicator").className = "fas fa-circle text-success me-2";
-    document.getElementById("statusCard").className = "card border-success";
+  // Update UI
+  document.getElementById("startMonitoringBtn").classList.add("d-none");
+  document.getElementById("stopMonitoringBtn").classList.remove("d-none");
+  document.getElementById("statusText").textContent = "Monitoring Active";
+  document.getElementById("statusIndicator").className = "fas fa-circle text-success me-2";
+  document.getElementById("statusCard").className = "card border-success";
 
-    // Start monitoring interval
-    monitoringInterval = setInterval(updateMonitoringData, 1000);
+  // Start monitoring interval
+  monitoringInterval = setInterval(updateMonitoringData, 1000);
 
-    logEvent("Monitoring started by user", "info");
+  logEvent("Monitoring started by user", "info");
   }
 
   function stopMonitoring() {
@@ -416,6 +422,9 @@ endblock %} {% block content %}
     if (navbar) navbar.style.display = "";
     const footer = document.querySelector("footer");
     if (footer) footer.style.display = "";
+    // Set background to white
+    document.body.style.backgroundColor = "#fff";
+    document.body.style.transition = "background-color 0.3s";
     monitoringActive = false;
 
     // Clear intervals
@@ -466,11 +475,29 @@ endblock %} {% block content %}
       durationElem.textContent = `${minutes
         .toString()
         .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-      // Change color to red after 10 minutes (600 seconds)
+      // Change color to red after 10 minutes (600 seconds), else black. Never white.
       if (duration >= 600) {
         durationElem.style.color = "red";
+        // Hide all except stop button, duration, and emergency message
+        document.getElementById("statusCard").style.display = "none";
+        const leftCol = document.querySelector(".col-lg-8");
+        if (leftCol) leftCol.style.display = "none";
+        const rightCol = document.querySelector(".col-lg-4");
+        if (rightCol) rightCol.style.display = "none";
+        document.getElementById("stopMonitoringBtn").style.display = "inline-block";
+        durationElem.style.display = "block";
+        document.getElementById("emergency911Msg").style.display = "block";
       } else {
         durationElem.style.color = "black";
+        // Restore all content if previously hidden
+        document.getElementById("statusCard").style.display = "";
+        const leftCol = document.querySelector(".col-lg-8");
+        if (leftCol) leftCol.style.display = "";
+        const rightCol = document.querySelector(".col-lg-4");
+        if (rightCol) rightCol.style.display = "";
+        document.getElementById("stopMonitoringBtn").style.display = "";
+        durationElem.style.display = "block";
+        document.getElementById("emergency911Msg").style.display = "none";
       }
 
       // Simulate sensor data

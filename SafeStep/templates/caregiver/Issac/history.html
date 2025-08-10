@@ -156,6 +156,9 @@
                                             Severity <i class="fas fa-sort ms-1"></i>
                                         </th>
                                         <th class="sortable" onclick="sortTable(3)">
+                                            Patient <i class="fas fa-sort ms-1"></i>
+                                        </th>
+                                        <th class="sortable" onclick="sortTable(4)">
                                             Location <i class="fas fa-sort ms-1"></i>
                                         </th>
                                         <th>Triggers</th>
@@ -184,6 +187,18 @@
                                             <span class="badge bg-{{ 'danger' if session.severity == 'severe' else 'warning' if session.severity == 'moderate' else 'info' }}">
                                                 {{ session.severity|title if session.severity else 'Monitoring' }}
                                             </span>
+                                        </td>
+                                        <td>
+                                            {% if session.patient_id %}
+                                                {% set patient = patients_dict[session.patient_id] if patients_dict and session.patient_id in patients_dict else None %}
+                                                {% if patient %}
+                                                    {{ patient.name }} ({{ patient.gender }}, {{ patient.age }})
+                                                {% else %}
+                                                    <span class="text-muted">Unknown</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">None</span>
+                                            {% endif %}
                                         </td>
                                         <td>
                                             <i class="fas fa-map-marker-alt me-1 text-muted"></i>
