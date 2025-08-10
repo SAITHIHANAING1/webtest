@@ -293,8 +293,6 @@ function startMonitoring() {
     document.getElementById('statusText').textContent = 'Monitoring Active';
     document.getElementById('statusIndicator').className = 'fas fa-circle text-success me-2';
     document.getElementById('statusCard').className = 'card border-success';
-    document.querySelector('nav.navbar').style.display = 'none';
-    document.querySelector('footer').style.display = 'none';
 
     // Start monitoring interval
     monitoringInterval = setInterval(updateMonitoringData, 1000);
@@ -338,8 +336,6 @@ function stopMonitoring() {
     document.getElementById('statusIndicator').className = 'fas fa-circle text-secondary me-2';
     document.getElementById('statusCard').className = 'card border-secondary';
     document.getElementById('sessionId').textContent = 'No Active Session';
-    document.querySelector('nav.navbar').style.display = 'block';
-    document.querySelector('footer').style.display = 'block';
     
     // End session
     if (currentSessionId) {
