@@ -14,9 +14,9 @@
                 <p>Here's what's happening with your patient monitoring today.</p>
             </div>
             <div class="d-flex gap-2">
-                <button class="btn btn-success btn-lg" onclick="startEmergencyMonitoring()">
+                <a class="btn btn-success btn-lg" href="{{ url_for('seizure_monitoring') }}?autostart=1">
                     <i class="fas fa-heartbeat me-2"></i>Start Monitoring
-                </button>
+                </a>
             </div>
         </div>
     </div>
@@ -125,9 +125,9 @@
                             <i class="fas fa-clipboard-list text-muted mb-3" style="font-size: 3rem;"></i>
                             <h5 class="text-muted">No recent sessions</h5>
                             <p class="text-muted">Start monitoring to begin tracking seizure episodes.</p>
-                            <button class="btn btn-primary" onclick="startEmergencyMonitoring()">
+                            <a class="btn btn-primary" href="{{ url_for('seizure_monitoring') }}?autostart=1">
                                 <i class="fas fa-play me-2"></i>Start Monitoring
-                            </button>
+                            </a>
                         </div>
                     {% endif %}
                 </div>
@@ -142,7 +142,7 @@
                 </div>
                 <div class="card-body">
                     <div class="caregiver-quick-actions">
-                        <a href="#" class="caregiver-action-btn" onclick="startEmergencyMonitoring()">
+                        <a href="{{ url_for('seizure_monitoring') }}?autostart=1" class="caregiver-action-btn">
                             <i class="fas fa-heartbeat"></i>
                             <span>Start Monitoring</span>
                         </a>
@@ -332,103 +332,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-let monitoringInterval;
-let sessionStartTime;
-
-function startEmergencyMonitoring() {
-    sessionStartTime = new Date();
-    document.getElementById('sessionStart').textContent = sessionStartTime.toLocaleTimeString();
-    
-    const modal = new bootstrap.Modal(document.getElementById('monitoringModal'));
-    modal.show();
-    
-    // Start session timer
-    monitoringInterval = setInterval(updateSessionTimer, 1000);
-    
-    // Simulate creating a session
-    fetch('/api/sessions', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            severity: 'monitoring',
-            location: 'Home',
-            notes: 'Emergency monitoring session started'
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            window.currentSessionId = data.session_id;
-        }
-    });
-}
-
-function updateSessionTimer() {
-    if (sessionStartTime) {
-        const now = new Date();
-        const duration = Math.floor((now - sessionStartTime) / 1000);
-        const minutes = Math.floor(duration / 60);
-        const seconds = duration % 60;
-        document.getElementById('sessionDuration').textContent = 
-            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
-}
-
-function pauseMonitoring() {
-    clearInterval(monitoringInterval);
-    // Implement pause functionality
-    alert('Monitoring paused. Click "Start Monitoring" to resume.');
-    bootstrap.Modal.getInstance(document.getElementById('monitoringModal')).hide();
-}
-
-function stopMonitoring() {
-    clearInterval(monitoringInterval);
-    
-    if (window.currentSessionId) {
-        fetch(`/api/sessions/${window.currentSessionId}/end`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Monitoring session ended successfully.');
-                location.reload();
-            }
-        });
-    }
-    
-    bootstrap.Modal.getInstance(document.getElementById('monitoringModal')).hide();
-}
-
-// Auto-refresh dashboard every 30 seconds
-setInterval(() => {
-    // Update system status, vitals, etc.
-    updateSystemStatus();
-}, 30000);
-
-function updateSystemStatus() {
-    // Simulate real-time updates
-    const heartRate = 70 + Math.floor(Math.random() * 10);
-    const batteryLevel = 65 + Math.floor(Math.random() * 10);
-    
-    document.getElementById('heartRate').textContent = heartRate + ' BPM';
-    
-    // Update battery display if exists
-    const batteryElements = document.querySelectorAll('.badge:contains("Battery")');
-    batteryElements.forEach(el => {
-        if (el.textContent.includes('Battery')) {
-            el.innerHTML = `<i class="fas fa-battery-half me-1"></i>${batteryLevel}%`;
-        }
-    });
-}
-</script>
 {% endblock %}

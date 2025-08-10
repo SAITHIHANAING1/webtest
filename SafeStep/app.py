@@ -1,6 +1,3 @@
-
-
-
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory, send_file, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -148,6 +145,7 @@ class User(UserMixin, db.Model):
 class SeizureSession(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    patient_id = db.Column(db.Integer, nullable=True)  # New: patient_id column
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime)
     severity = db.Column(db.String(20))  # 'mild', 'moderate', 'severe'
@@ -1047,6 +1045,7 @@ def seizure_monitoring():
         notes = data.get('notes')
         end_time = data.get('end_time')
         start_time = data.get('start_time')
+        patient_id = data.get('patient_id')
         user_id = current_user.id
         # Use provided start_time if available, else fallback to now
         if start_time:
@@ -1063,6 +1062,7 @@ def seizure_monitoring():
             try:
                 payload = {
                     'user_id': user_id,
+                    'patient_id': int(patient_id) if patient_id else None,
                     'start_time': start_time_obj.isoformat(),
                     'severity': severity,
                     'location': location,
@@ -1084,6 +1084,7 @@ def seizure_monitoring():
             # Fallback: Save to local database
             session = SeizureSession(
                 user_id=user_id,
+                patient_id=int(patient_id) if patient_id else None,
                 start_time=start_time_obj,
                 severity=severity,
                 location=location,
@@ -1099,7 +1100,9 @@ def seizure_monitoring():
             db.session.commit()
             return jsonify({'success': True, 'message': 'Seizure event saved locally.'}), 201
 
-    return render_template('caregiver/Issac/monitoring.html')
+    # GET: fetch all patients for dropdown
+    patients = PwidProfile.query.all()
+    return render_template('caregiver/Issac/monitoring.html', patients=patients)
 
 @app.route('/caregiver/history', methods=['GET', 'POST'])
 @login_required
