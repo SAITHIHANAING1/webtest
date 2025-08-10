@@ -945,22 +945,34 @@ def seizure_monitoring():
         location = data.get('location')
         triggers = data.get('triggers')
         notes = data.get('notes')
+        end_time = data.get('end_time')
+        start_time = data.get('start_time')
         user_id = current_user.id
-        start_time = datetime.utcnow()
+        # Use provided start_time if available, else fallback to now
+        if start_time:
+            try:
+                start_time_obj = datetime.fromisoformat(start_time)
+            except Exception:
+                start_time_obj = datetime.utcnow()
+        else:
+            start_time_obj = datetime.utcnow()
 
         # If Supabase is available, insert into Supabase table
         if supabase_available:
             supabase = get_supabase_client()
             try:
-                response = supabase.table('seizure_session').insert({
+                payload = {
                     'user_id': user_id,
-                    'start_time': start_time.isoformat(),
+                    'start_time': start_time_obj.isoformat(),
                     'severity': severity,
                     'location': location,
                     'triggers': triggers,
                     'notes': notes,
-                    'created_at': start_time.isoformat()
-                }).execute()
+                    'created_at': start_time_obj.isoformat()
+                }
+                if end_time:
+                    payload['end_time'] = end_time
+                response = supabase.table('seizure_session').insert(payload).execute()
                 if getattr(response, 'data', None):
                     return jsonify({'success': True, 'message': 'Seizure event saved to Supabase.'}), 201
                 else:
@@ -972,12 +984,17 @@ def seizure_monitoring():
             # Fallback: Save to local database
             session = SeizureSession(
                 user_id=user_id,
-                start_time=start_time,
+                start_time=start_time_obj,
                 severity=severity,
                 location=location,
                 triggers=triggers,
                 notes=notes
             )
+            if end_time:
+                try:
+                    session.end_time = datetime.fromisoformat(end_time)
+                except Exception:
+                    pass
             db.session.add(session)
             db.session.commit()
             return jsonify({'success': True, 'message': 'Seizure event saved locally.'}), 201

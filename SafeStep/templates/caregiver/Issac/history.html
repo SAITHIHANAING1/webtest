@@ -174,8 +174,8 @@
                                         </td>
                                         <td>
                                             {% if session.end_time %}
-                                                {% set duration = ((session.end_time - session.start_time).seconds // 60) %}
-                                                <span class="badge bg-secondary">{{ duration }} min</span>
+                                                {% set duration = (session.end_time - session.start_time).total_seconds()|int %}
+                                                <span class="badge bg-secondary">{{ duration }} sec</span>
                                             {% else %}
                                                 <span class="badge bg-warning">Ongoing</span>
                                             {% endif %}

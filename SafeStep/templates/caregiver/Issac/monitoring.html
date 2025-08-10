@@ -1,526 +1,604 @@
-{% extends "base.html" %}
-
-{% block title %}Seizure Monitoring - Safe-Step{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Seizure Monitoring - Safe-Step{%
+endblock %} {% block content %}
 <div class="container-fluid mt-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h3 mb-1">
-                        <i class="fas fa-heartbeat me-2 text-danger"></i>Seizure Monitoring
-                    </h1>
-                    <p class="text-muted mb-0">Real-time monitoring and seizure detection system</p>
-                </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-success btn-lg" id="startMonitoringBtn" onclick="startMonitoring()">
-                        <i class="fas fa-play me-2"></i>Start Monitoring
-                    </button>
-                    <button class="btn btn-danger btn-lg d-none" id="stopMonitoringBtn" onclick="stopMonitoring()">
-                        <i class="fas fa-stop me-2"></i>Stop Monitoring
-                    </button>
-                </div>
-            </div>
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div id="monitoringHeader">
+          <h1 class="h3 mb-1">
+            <i class="fas fa-heartbeat me-2 text-danger"></i>Seizure Monitoring
+          </h1>
+          <p class="text-muted mb-0">
+            Real-time monitoring and seizure detection system
+          </p>
         </div>
+        <div class="d-flex gap-2">
+          <button
+            class="btn btn-success btn-lg"
+            id="startMonitoringBtn"
+            onclick="startMonitoring()"
+          >
+            <i class="fas fa-play me-2"></i>Start Monitoring
+          </button>
+          <button
+            class="btn btn-danger btn-lg d-none"
+            id="stopMonitoringBtn"
+            onclick="stopMonitoring()"
+          >
+            <i class="fas fa-stop me-2"></i>Stop Monitoring
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monitoring Timer (hidden by default) -->
+  <div class="row mb-2" id="timerRow" style="display: none">
+    <div
+      class="col-12 text-center"
+      style="
+        height: 500px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      "
+    >
+      <span id="monitoringDuration" style="font-size: 3rem; font-weight: bold"
+        >00:00</span
+      >
+    </div>
+  </div>
+
+  <!-- Monitoring Status -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-success" id="statusCard">
+        <div
+          class="card-header bg-success text-white d-flex justify-content-between align-items-center"
+        >
+          <h5 class="mb-0">
+            <i class="fas fa-circle text-success me-2" id="statusIndicator"></i>
+            <span id="statusText">Monitoring Inactive</span>
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row text-center">
+            <div class="col-md-3">
+              <div class="border-end">
+                <h3 class="text-primary mb-1" id="heartRate">--</h3>
+                <small class="text-muted">Heart Rate (BPM)</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="border-end">
+                <h3 class="text-info mb-1" id="movementLevel">--</h3>
+                <small class="text-muted">Movement Level</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="border-end">
+                <h3 class="text-warning mb-1" id="riskLevel">--</h3>
+                <small class="text-muted">Risk Level</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <h3 class="text-success mb-1" id="batteryLevel">--</h3>
+              <small class="text-muted">Battery Level</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="row">
+    <!-- Left Column - Live Data -->
+    <div class="col-lg-8">
+      <!-- Real-time Chart -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-chart-line me-2"></i>Real-time Data Stream
+          </h5>
+        </div>
+        <div class="card-body">
+          <canvas id="realTimeChart" height="100"></canvas>
+        </div>
+      </div>
+
+      <!-- Event Log -->
+      <div class="card">
+        <div
+          class="card-header d-flex justify-content-between align-items-center"
+        >
+          <h5 class="mb-0"><i class="fas fa-list me-2"></i>Event Log</h5>
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            onclick="clearEventLog()"
+          >
+            <i class="fas fa-trash me-1"></i>Clear Log
+          </button>
+        </div>
+        <div class="card-body">
+          <div
+            id="eventLog"
+            class="bg-dark text-light p-3 rounded"
+            style="height: 300px; overflow-y: auto; font-family: monospace"
+          >
+            <div class="text-muted">
+              Event log will appear here when monitoring starts...
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Monitoring Timer (hidden by default) -->
-    <div class="row mb-2" id="timerRow" style="display:none;">
-        <div class="col-12 text-center">
-            <span id="monitoringDuration" style="font-size:3rem; font-weight:bold;">00:00</span>
+    <!-- Right Column - Controls & Info -->
+    <div class="col-lg-4">
+      <!-- Device Status -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-microchip me-2"></i>Device Status
+          </h5>
         </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-6">
+              <div class="text-center p-2 border rounded">
+                <div class="text-success">
+                  <i class="fas fa-wifi fs-4"></i>
+                </div>
+                <small>WiFi<br /><strong>Connected</strong></small>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="text-center p-2 border rounded">
+                <div class="text-success">
+                  <i class="fas fa-bluetooth fs-4"></i>
+                </div>
+                <small>Bluetooth<br /><strong>Paired</strong></small>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="text-center p-2 border rounded">
+                <div class="text-success">
+                  <i class="fas fa-satellite-dish fs-4"></i>
+                </div>
+                <small>GPS<br /><strong>Active</strong></small>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="text-center p-2 border rounded">
+                <div class="text-warning">
+                  <i class="fas fa-battery-half fs-4"></i>
+                </div>
+                <small>Battery<br /><strong>65%</strong></small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Emergency Contacts -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-phone me-2"></i>Emergency Contacts
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="list-group list-group-flush">
+            <div
+              class="list-group-item d-flex justify-content-between align-items-center p-2"
+            >
+              <div>
+                <strong>Dr. Sarah Johnson</strong><br />
+                <small class="text-muted">Primary Physician</small>
+              </div>
+              <button
+                class="btn btn-sm btn-success"
+                onclick="callContact('dr-johnson')"
+              >
+                <i class="fas fa-phone"></i>
+              </button>
+            </div>
+            <div
+              class="list-group-item d-flex justify-content-between align-items-center p-2"
+            >
+              <div>
+                <strong>Emergency Services</strong><br />
+                <small class="text-muted">911</small>
+              </div>
+              <button
+                class="btn btn-sm btn-danger"
+                onclick="callContact('emergency')"
+              >
+                <i class="fas fa-phone"></i>
+              </button>
+            </div>
+            <div
+              class="list-group-item d-flex justify-content-between align-items-center p-2"
+            >
+              <div>
+                <strong>Family Contact</strong><br />
+                <small class="text-muted">John Doe</small>
+              </div>
+              <button
+                class="btn btn-sm btn-primary"
+                onclick="callContact('family')"
+              >
+                <i class="fas fa-phone"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-
-    <!-- Monitoring Status -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-success" id="statusCard">
-                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-circle text-success me-2" id="statusIndicator"></i>
-                        <span id="statusText">Monitoring Inactive</span>
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row text-center">
-                        <div class="col-md-3">
-                            <div class="border-end">
-                                <h3 class="text-primary mb-1" id="heartRate">--</h3>
-                                <small class="text-muted">Heart Rate (BPM)</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="border-end">
-                                <h3 class="text-info mb-1" id="movementLevel">--</h3>
-                                <small class="text-muted">Movement Level</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="border-end">
-                                <h3 class="text-warning mb-1" id="riskLevel">--</h3>
-                                <small class="text-muted">Risk Level</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <h3 class="text-success mb-1" id="batteryLevel">--</h3>
-                            <small class="text-muted">Battery Level</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="row">
-        <!-- Left Column - Live Data -->
-        <div class="col-lg-8">
-            <!-- Real-time Chart -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-line me-2"></i>Real-time Data Stream
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="realTimeChart" height="100"></canvas>
-                </div>
-            </div>
-
-            <!-- Event Log -->
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-list me-2"></i>Event Log
-                    </h5>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="clearEventLog()">
-                        <i class="fas fa-trash me-1"></i>Clear Log
-                    </button>
-                </div>
-                <div class="card-body">
-                    <div id="eventLog" class="bg-dark text-light p-3 rounded" style="height: 300px; overflow-y: auto; font-family: monospace;">
-                        <div class="text-muted">Event log will appear here when monitoring starts...</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Right Column - Controls & Info -->
-        <div class="col-lg-4">
-            <!-- Device Status -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-microchip me-2"></i>Device Status
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <div class="text-center p-2 border rounded">
-                                <div class="text-success">
-                                    <i class="fas fa-wifi fs-4"></i>
-                                </div>
-                                <small>WiFi<br><strong>Connected</strong></small>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-center p-2 border rounded">
-                                <div class="text-success">
-                                    <i class="fas fa-bluetooth fs-4"></i>
-                                </div>
-                                <small>Bluetooth<br><strong>Paired</strong></small>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-center p-2 border rounded">
-                                <div class="text-success">
-                                    <i class="fas fa-satellite-dish fs-4"></i>
-                                </div>
-                                <small>GPS<br><strong>Active</strong></small>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-center p-2 border rounded">
-                                <div class="text-warning">
-                                    <i class="fas fa-battery-half fs-4"></i>
-                                </div>
-                                <small>Battery<br><strong>65%</strong></small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Emergency Contacts -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-phone me-2"></i>Emergency Contacts
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item d-flex justify-content-between align-items-center p-2">
-                            <div>
-                                <strong>Dr. Sarah Johnson</strong><br>
-                                <small class="text-muted">Primary Physician</small>
-                            </div>
-                            <button class="btn btn-sm btn-success" onclick="callContact('dr-johnson')">
-                                <i class="fas fa-phone"></i>
-                            </button>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center p-2">
-                            <div>
-                                <strong>Emergency Services</strong><br>
-                                <small class="text-muted">911</small>
-                            </div>
-                            <button class="btn btn-sm btn-danger" onclick="callContact('emergency')">
-                                <i class="fas fa-phone"></i>
-                            </button>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center p-2">
-                            <div>
-                                <strong>Family Contact</strong><br>
-                                <small class="text-muted">John Doe</small>
-                            </div>
-                            <button class="btn btn-sm btn-primary" onclick="callContact('family')">
-                                <i class="fas fa-phone"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+  </div>
 </div>
 
 <!-- Seizure Event Modal -->
 <div class="modal fade" id="seizureEventModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Log Seizure Event</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="seizureEventForm">
-                    <div class="mb-3">
-                        <label for="eventSeverity" class="form-label">Severity</label>
-                        <select class="form-select" id="eventSeverity" required>
-                            <option value="">Select severity...</option>
-                            <option value="mild">Mild</option>
-                            <option value="moderate">Moderate</option>
-                            <option value="severe">Severe</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="eventLocation" class="form-label">Location</label>
-                        <input type="text" class="form-control" id="eventLocation" placeholder="Where did this occur?">
-                    </div>
-                    <div class="mb-3">
-                        <label for="eventTriggers" class="form-label">Possible Triggers</label>
-                        <textarea class="form-control" id="eventTriggers" rows="3" placeholder="Any potential triggers you observed..."></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="eventNotes" class="form-label">Additional Notes</label>
-                        <textarea class="form-control" id="eventNotes" rows="3" placeholder="Any additional observations..."></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="saveSeizureEvent()">Save Event</button>
-            </div>
-        </div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Log Seizure Event</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <form id="seizureEventForm">
+          <div class="mb-3">
+            <label for="eventSeverity" class="form-label">Severity</label>
+            <select class="form-select" id="eventSeverity" required>
+              <option value="">Select severity...</option>
+              <option value="mild">Mild</option>
+              <option value="moderate">Moderate</option>
+              <option value="severe">Severe</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="eventLocation" class="form-label">Location</label>
+            <input
+              type="text"
+              class="form-control"
+              id="eventLocation"
+              placeholder="Where did this occur?"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="eventTriggers" class="form-label"
+              >Possible Triggers</label
+            >
+            <textarea
+              class="form-control"
+              id="eventTriggers"
+              rows="3"
+              placeholder="Any potential triggers you observed..."
+            ></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="eventNotes" class="form-label">Additional Notes</label>
+            <textarea
+              class="form-control"
+              id="eventNotes"
+              rows="3"
+              placeholder="Any additional observations..."
+            ></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          onclick="saveSeizureEvent()"
+        >
+          Save Event
+        </button>
+      </div>
     </div>
+  </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
+{% endblock %} {% block extra_js %}
 <script>
-let monitoringActive = false;
-let monitoringStartTime = null;
-let monitoringInterval = null;
-let currentSessionId = null;
-let chart = null;
+  let monitoringActive = false;
+  let monitoringStartTime = null;
+  let monitoringInterval = null;
+  let currentSessionId = null;
+  let chart = null;
 
-// Initialize real-time chart
-document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('realTimeChart').getContext('2d');
+  // Initialize real-time chart
+  document.addEventListener("DOMContentLoaded", function () {
+    const ctx = document.getElementById("realTimeChart").getContext("2d");
     chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'Heart Rate',
-                data: [],
-                borderColor: 'rgb(255, 99, 132)',
-                backgroundColor: 'rgba(255, 99, 132, 0.1)',
-                tension: 0.1
-            }, {
-                label: 'Movement',
-                data: [],
-                borderColor: 'rgb(54, 162, 235)',
-                backgroundColor: 'rgba(54, 162, 235, 0.1)',
-                tension: 0.1
-            }]
+      type: "line",
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: "Heart Rate",
+            data: [],
+            borderColor: "rgb(255, 99, 132)",
+            backgroundColor: "rgba(255, 99, 132, 0.1)",
+            tension: 0.1,
+          },
+          {
+            label: "Movement",
+            data: [],
+            borderColor: "rgb(54, 162, 235)",
+            backgroundColor: "rgba(54, 162, 235, 0.1)",
+            tension: 0.1,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: {
+            type: "linear",
+            position: "bottom",
+          },
         },
-        options: {
-            responsive: true,
-            scales: {
-                x: {
-                    type: 'linear',
-                    position: 'bottom'
-                }
-            },
-            plugins: {
-                legend: {
-                    display: true
-                }
-            }
-        }
+        plugins: {
+          legend: {
+            display: true,
+          },
+        },
+      },
     });
-});
+  });
 
-function startMonitoring() {
+  function startMonitoring() {
+    // Hide header (h1 and subtitle) with visibility
+    const header = document.getElementById("monitoringHeader");
+    if (header) header.style.visibility = "hidden";
     // Show timer
-    document.getElementById('timerRow').style.display = '';
-    const durationElem = document.getElementById('monitoringDuration');
-    durationElem.textContent = '00:00';
-    durationElem.style.color = '';
+    document.getElementById("timerRow").style.display = "";
+    const durationElem = document.getElementById("monitoringDuration");
+    durationElem.textContent = "00:00";
+    durationElem.style.color = "";
     // Hide navbar and footer
-    const navbar = document.querySelector('nav.navbar');
-    if (navbar) navbar.style.display = 'none';
-    const footer = document.querySelector('footer');
-    if (footer) footer.style.display = 'none';
+    const navbar = document.querySelector("nav.navbar");
+    if (navbar) navbar.style.display = "none";
+    const footer = document.querySelector("footer");
+    if (footer) footer.style.display = "none";
     monitoringActive = true;
     monitoringStartTime = new Date();
-    
+
     // Update UI
-    document.getElementById('startMonitoringBtn').classList.add('d-none');
-    document.getElementById('stopMonitoringBtn').classList.remove('d-none');
-    document.getElementById('statusText').textContent = 'Monitoring Active';
-    document.getElementById('statusIndicator').className = 'fas fa-circle text-success me-2';
-    document.getElementById('statusCard').className = 'card border-success';
-    
+    document.getElementById("startMonitoringBtn").classList.add("d-none");
+    document.getElementById("stopMonitoringBtn").classList.remove("d-none");
+    document.getElementById("statusText").textContent = "Monitoring Active";
+    document.getElementById("statusIndicator").className = "fas fa-circle text-success me-2";
+    document.getElementById("statusCard").className = "card border-success";
+
     // Start monitoring interval
     monitoringInterval = setInterval(updateMonitoringData, 1000);
-    
-    // Create new session
-    fetch('/api/sessions', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            severity: 'monitoring',
-            location: 'Current Location',
-            notes: 'Monitoring session started'
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            currentSessionId = data.session_id;
-            document.getElementById('sessionId').textContent = `Session #${currentSessionId}`;
-            logEvent('Monitoring session started', 'success');
-        }
-    });
-    
-    logEvent('Monitoring started by user', 'info');
-}
 
-function stopMonitoring() {
+    logEvent("Monitoring started by user", "info");
+  }
+
+  function stopMonitoring() {
+    // Show header (h1 and subtitle) with visibility
+    const header = document.getElementById("monitoringHeader");
+    if (header) header.style.visibility = "visible";
     // Hide timer
-    document.getElementById('timerRow').style.display = 'none';
-    const durationElem = document.getElementById('monitoringDuration');
-    durationElem.textContent = '00:00';
-    durationElem.style.color = '';
+    document.getElementById("timerRow").style.display = "none";
+    const durationElem = document.getElementById("monitoringDuration");
+    durationElem.textContent = "00:00";
     // Show navbar and footer
-    const navbar = document.querySelector('nav.navbar');
-    if (navbar) navbar.style.display = '';
-    const footer = document.querySelector('footer');
-    if (footer) footer.style.display = '';
+    const navbar = document.querySelector("nav.navbar");
+    if (navbar) navbar.style.display = "";
+    const footer = document.querySelector("footer");
+    if (footer) footer.style.display = "";
     monitoringActive = false;
-    
+
     // Clear intervals
     if (monitoringInterval) {
-        clearInterval(monitoringInterval);
+      clearInterval(monitoringInterval);
     }
-    
-    // Update UI
-    document.getElementById('startMonitoringBtn').classList.remove('d-none');
-    document.getElementById('stopMonitoringBtn').classList.add('d-none');
-    document.getElementById('statusText').textContent = 'Monitoring Inactive';
-    document.getElementById('statusIndicator').className = 'fas fa-circle text-secondary me-2';
-    document.getElementById('statusCard').className = 'card border-secondary';
-    document.getElementById('sessionId').textContent = 'No Active Session';
-    
-    // End session
-    if (currentSessionId) {
-        fetch(`/api/sessions/${currentSessionId}/end`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                logEvent('Monitoring session ended', 'warning');
-            }
-        });
-    }
-    
-    // Reset values
-    document.getElementById('heartRate').textContent = '--';
-    document.getElementById('movementLevel').textContent = '--';
-    document.getElementById('riskLevel').textContent = '--';
-    document.getElementById('monitoringDuration').textContent = '00:00:00';
-    
-    logEvent('Monitoring stopped by user', 'info');
-    logSeizureEvent();
-}
 
-function updateMonitoringData() {
-    if (!monitoringActive) return;
-    
-    // Update duration
-    const duration = Math.floor((new Date() - monitoringStartTime) / 1000);
-    const minutes = Math.floor(duration / 60);
-    const seconds = duration % 60;
-    const durationElem = document.getElementById('monitoringDuration');
-    durationElem.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    // Change color to red after 10 minutes (600 seconds)
-    if (duration >= 600) {
-        durationElem.style.color = 'red';
-    } else {
-        durationElem.style.color = '';
+    // Update UI
+    document.getElementById("startMonitoringBtn").classList.remove("d-none");
+    document.getElementById("stopMonitoringBtn").classList.add("d-none");
+    document.getElementById("statusText").textContent = "Monitoring Inactive";
+    document.getElementById("statusIndicator").className =
+      "fas fa-circle text-secondary me-2";
+    document.getElementById("statusCard").className = "card border-secondary";
+
+    // Calculate end_time and save start_time for backend
+    let endTime = null;
+    let startTime = null;
+    if (monitoringStartTime) {
+      const duration = Math.floor((new Date() - monitoringStartTime) / 1000); // seconds
+      endTime = new Date(monitoringStartTime.getTime() + duration * 1000);
+      startTime = monitoringStartTime;
     }
-    
-    // Simulate sensor data
-    const heartRate = 70 + Math.floor(Math.random() * 20);
-    const movement = Math.floor(Math.random() * 100);
-    const riskLevel = Math.floor(Math.random() * 100);
-    const battery = Math.max(50, 100 - Math.floor(duration / 60)); // Decreases over time
-    
-    document.getElementById('heartRate').textContent = heartRate;
-    document.getElementById('movementLevel').textContent = movement + '%';
-    document.getElementById('riskLevel').textContent = riskLevel + '%';
-    document.getElementById('batteryLevel').textContent = battery + '%';
-    
-    // Update chart
-    chart.data.labels.push(duration);
-    chart.data.datasets[0].data.push(heartRate);
-    chart.data.datasets[1].data.push(movement);
-    
-    // Keep only last 60 data points
-    if (chart.data.labels.length > 60) {
+    // Save end_time and start_time for event modal
+    window._monitoringEndTime = endTime ? endTime.toISOString() : null;
+    window._monitoringStartTime = startTime ? startTime.toISOString() : null;
+
+    // Reset values
+    document.getElementById("heartRate").textContent = "--";
+    document.getElementById("movementLevel").textContent = "--";
+    document.getElementById("riskLevel").textContent = "--";
+    document.getElementById("monitoringDuration").textContent = "00:00:00";
+
+    logEvent("Monitoring stopped by user", "info");
+    const modal = new bootstrap.Modal(
+      document.getElementById("seizureEventModal")
+    );
+    modal.show();
+  }
+    function updateMonitoringData() {
+      if (!monitoringActive) return;
+
+      // Update duration
+      const duration = Math.floor((new Date() - monitoringStartTime) / 1000);
+      const minutes = Math.floor(duration / 60);
+      const seconds = duration % 60;
+      const durationElem = document.getElementById("monitoringDuration");
+      durationElem.textContent = `${minutes
+        .toString()
+        .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+      // Change color to red after 10 minutes (600 seconds)
+      if (duration >= 600) {
+        durationElem.style.color = "red";
+      } else {
+        durationElem.style.color = "black";
+      }
+
+      // Simulate sensor data
+      const heartRate = 70 + Math.floor(Math.random() * 20);
+      const movement = Math.floor(Math.random() * 100);
+      const riskLevel = Math.floor(Math.random() * 100);
+      const battery = Math.max(50, 100 - Math.floor(duration / 60)); // Decreases over time
+
+      document.getElementById("heartRate").textContent = heartRate;
+      document.getElementById("movementLevel").textContent = movement + "%";
+      document.getElementById("riskLevel").textContent = riskLevel + "%";
+      document.getElementById("batteryLevel").textContent = battery + "%";
+
+      // Update chart
+      chart.data.labels.push(duration);
+      chart.data.datasets[0].data.push(heartRate);
+      chart.data.datasets[1].data.push(movement);
+
+      // Keep only last 60 data points
+      if (chart.data.labels.length > 60) {
         chart.data.labels.shift();
         chart.data.datasets[0].data.shift();
         chart.data.datasets[1].data.shift();
+      }
+
+      chart.update("none");
+
+      // Check for alerts
+      if (heartRate > 100 || movement > 80) {
+        logEvent(
+          `Alert: High activity detected (HR: ${heartRate}, Movement: ${movement}%)`,
+          "warning"
+        );
+      }
     }
-    
-    chart.update('none');
-    
-    // Check for alerts
-    if (heartRate > 100 || movement > 80) {
-        logEvent(`Alert: High activity detected (HR: ${heartRate}, Movement: ${movement}%)`, 'warning');
+
+    function logEvent(message, type = "info") {
+      const timestamp = new Date().toLocaleTimeString();
+      const eventLog = document.getElementById("eventLog");
+      const color =
+        {
+          info: "text-info",
+          success: "text-success",
+          warning: "text-warning",
+          danger: "text-danger",
+        }[type] || "text-light";
+
+      const entry = document.createElement("div");
+      entry.className = color;
+      entry.innerHTML = `[${timestamp}] ${message}`;
+
+      eventLog.appendChild(entry);
+      eventLog.scrollTop = eventLog.scrollHeight;
     }
-}
 
-function logEvent(message, type = 'info') {
-    const timestamp = new Date().toLocaleTimeString();
-    const eventLog = document.getElementById('eventLog');
-    const color = {
-        'info': 'text-info',
-        'success': 'text-success',
-        'warning': 'text-warning',
-        'danger': 'text-danger'
-    }[type] || 'text-light';
-    
-    const entry = document.createElement('div');
-    entry.className = color;
-    entry.innerHTML = `[${timestamp}] ${message}`;
-    
-    eventLog.appendChild(entry);
-    eventLog.scrollTop = eventLog.scrollHeight;
-}
+    function clearEventLog() {
+      document.getElementById("eventLog").innerHTML =
+        '<div class="text-muted">Event log cleared...</div>';
+    }
 
-function clearEventLog() {
-    document.getElementById('eventLog').innerHTML = '<div class="text-muted">Event log cleared...</div>';
-}
-
-function triggerEmergencyAlert() {
-    if (confirm('This will send an emergency alert to all emergency contacts. Continue?')) {
-        logEvent('EMERGENCY ALERT TRIGGERED', 'danger');
+    function triggerEmergencyAlert() {
+      if (
+        confirm(
+          "This will send an emergency alert to all emergency contacts. Continue?"
+        )
+      ) {
+        logEvent("EMERGENCY ALERT TRIGGERED", "danger");
         // In a real app, this would send notifications
-        alert('Emergency alert sent to all contacts!');
+        alert("Emergency alert sent to all contacts!");
+      }
     }
-}
 
-function logSeizureEvent() {
-    const modal = new bootstrap.Modal(document.getElementById('seizureEventModal'));
-    modal.show();
-}
+    function saveSeizureEvent() {
+      const severity = document.getElementById("eventSeverity").value;
+      const location = document.getElementById("eventLocation").value;
+      const triggers = document.getElementById("eventTriggers").value;
+      const notes = document.getElementById("eventNotes").value;
+      const end_time = window._monitoringEndTime || null;
+      const start_time = window._monitoringStartTime || null;
 
-function saveSeizureEvent() {
-    const severity = document.getElementById('eventSeverity').value;
-    const location = document.getElementById('eventLocation').value;
-    const triggers = document.getElementById('eventTriggers').value;
-    const notes = document.getElementById('eventNotes').value;
-    
-    if (!severity) {
-        alert('Please select a severity level.');
+      if (!severity) {
+        alert("Please select a severity level.");
         return;
-    }
-    
-    fetch('/caregiver/monitoring', {
-        method: 'POST',
+      }
+
+      fetch("/caregiver/monitoring", {
+        method: "POST",
         headers: {
-            'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            severity: severity,
-            location: location,
-            triggers: triggers,
-            notes: notes
+          severity: severity,
+          location: location,
+          triggers: triggers,
+          notes: notes,
+          end_time: end_time,
+          start_time: start_time,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            logEvent(
+              `Seizure event logged: ${severity} severity at ${
+                location || "unknown location"
+              }`,
+              "warning"
+            );
+          } else {
+            logEvent(
+              "Failed to save seizure event: " +
+                (data.message || "Unknown error"),
+              "danger"
+            );
+          }
         })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            logEvent(`Seizure event logged: ${severity} severity at ${location || 'unknown location'}`, 'warning');
-        } else {
-            logEvent('Failed to save seizure event: ' + (data.message || 'Unknown error'), 'danger');
-        }
-    })
-    .catch(err => {
-        logEvent('Error saving seizure event: ' + err, 'danger');
-    });
-    
-    bootstrap.Modal.getInstance(document.getElementById('seizureEventModal')).hide();
-    
-    // Clear form
-    document.getElementById('seizureEventForm').reset();
-}
+        .catch((err) => {
+          logEvent("Error saving seizure event: " + err, "danger");
+        });
 
-function callContact(contactType) {
-    const contacts = {
-        'dr-johnson': '+1-555-0123',
-        'emergency': '911',
-        'family': '+1-555-0456'
-    };
-    
-    if (contacts[contactType]) {
-        if (confirm(`Call ${contacts[contactType]}?`)) {
-            logEvent(`Calling ${contactType}: ${contacts[contactType]}`, 'info');
-            // In a real app, this would initiate the call
-        }
+      bootstrap.Modal.getInstance(
+        document.getElementById("seizureEventModal")
+      ).hide();
+
+      // Clear form
+      document.getElementById("seizureEventForm").reset();
+      window._monitoringEndTime = null;
+      window._monitoringStartTime = null;
     }
-}
+
+    function callContact(contactType) {
+      const contacts = {
+        "dr-johnson": "+1-555-0123",
+        emergency: "911",
+        family: "+1-555-0456",
+      };
+
+      if (contacts[contactType]) {
+        if (confirm(`Call ${contacts[contactType]}?`)) {
+          logEvent(`Calling ${contactType}: ${contacts[contactType]}`, "info");
+          // In a real app, this would initiate the call
+        }
+      }
+    }
 </script>
 {% endblock %}
