@@ -124,7 +124,6 @@ class User(UserMixin, db.Model):
     
     # Relationships
     seizure_sessions = db.relationship('SeizureSession', backref='user', lazy=True)
-    safety_zones = db.relationship('SafetyZone', backref='user', lazy=True)
     training_progress = db.relationship('TrainingProgress', backref='user', lazy=True)
     support_tickets = db.relationship('SupportTicket', backref='user', lazy=True)
 
@@ -137,19 +136,6 @@ class SeizureSession(db.Model):
     notes = db.Column(db.Text)
     location = db.Column(db.String(100))
     triggers = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-class SafetyZone(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    name = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.Text)
-    zone_type = db.Column(db.String(20), default='safe')  # 'safe' or 'danger'
-    status = db.Column(db.String(20), default='approved')  # 'approved', 'pending', 'rejected'
-    latitude = db.Column(db.Float)
-    longitude = db.Column(db.Float)
-    radius = db.Column(db.Float)  # in meters
-    is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class TrainingModule(db.Model):
@@ -504,6 +490,68 @@ class DatasetReference(db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+# Supabase Zone Helper Functions
+def get_zones_for_user(user_id):
+    """Get all zones for a specific user from Supabase"""
+    try:
+        if supabase_available:
+            supabase = get_supabase_client()
+            response = supabase.table('zones').select('*').eq('user_id', user_id).execute()
+            return response.data
+        return []
+    except Exception as e:
+        print(f"Error getting zones for user: {e}")
+        return []
+
+def get_active_zones_count(user_id):
+    """Get count of active zones for a user"""
+    try:
+        if supabase_available:
+            supabase = get_supabase_client()
+            response = supabase.table('zones').select('id').eq('user_id', user_id).eq('is_active', True).execute()
+            return len(response.data)
+        return 0
+    except Exception as e:
+        print(f"Error getting active zones count: {e}")
+        return 0
+
+def create_zone_supabase(user_id, zone_data):
+    """Create a new zone in Supabase"""
+    try:
+        if supabase_available:
+            supabase = get_supabase_client()
+            zone_data['user_id'] = user_id
+            response = supabase.table('zones').insert(zone_data).execute()
+            return response.data[0] if response.data else None
+        return None
+    except Exception as e:
+        print(f"Error creating zone: {e}")
+        return None
+
+def get_all_zones_supabase():
+    """Get all zones from Supabase"""
+    try:
+        if supabase_available:
+            supabase = get_supabase_client()
+            response = supabase.table('zones').select('*').execute()
+            return response.data
+        return []
+    except Exception as e:
+        print(f"Error getting all zones: {e}")
+        return []
+
+def get_zones_by_status(status='approved'):
+    """Get zones by status from Supabase"""
+    try:
+        if supabase_available:
+            supabase = get_supabase_client()
+            response = supabase.table('zones').select('*').eq('status', status).eq('is_active', True).execute()
+            return response.data
+        return []
+    except Exception as e:
+        print(f"Error getting zones by status: {e}")
+        return []
 
 # Admin required decorator
 def admin_required(f):
@@ -883,7 +931,7 @@ def create_module():
 @login_required
 def caregiver_dashboard():
     recent_sessions = SeizureSession.query.filter_by(user_id=current_user.id).order_by(SeizureSession.created_at.desc()).limit(3).all()
-    active_zones = SafetyZone.query.filter_by(user_id=current_user.id, is_active=True).count()
+    active_zones = get_active_zones_count(current_user.id)
     completed_modules = TrainingProgress.query.filter_by(user_id=current_user.id, completed=True).count()
     
     return render_template('caregiver/Sai/dashboard.html', 
@@ -972,24 +1020,29 @@ def session_detail(session_id):
 @app.route('/caregiver/zones')
 @login_required
 def safety_zones():
-    zones = SafetyZone.query.filter_by(user_id=current_user.id).all()
+    zones = get_zones_for_user(current_user.id)
     return render_template('caregiver/Sai/zones.html', zones=zones)
 
 @app.route('/caregiver/zones/new', methods=['GET', 'POST'])
 @login_required
 def new_zone():
     if request.method == 'POST':
-        zone = SafetyZone(
-            user_id=current_user.id,
-            name=request.form['name'],
-            description=request.form['description'],
-            latitude=float(request.form['latitude']) if request.form['latitude'] else None,
-            longitude=float(request.form['longitude']) if request.form['longitude'] else None,
-            radius=float(request.form['radius']) if request.form['radius'] else None
-        )
-        db.session.add(zone)
-        db.session.commit()
-        flash('Safety zone created successfully!', 'success')
+        zone_data = {
+            'name': request.form['name'],
+            'description': request.form['description'],
+            'latitude': float(request.form['latitude']) if request.form['latitude'] else None,
+            'longitude': float(request.form['longitude']) if request.form['longitude'] else None,
+            'radius': float(request.form['radius']) if request.form['radius'] else None,
+            'zone_type': 'safe',
+            'status': 'approved',
+            'is_active': True
+        }
+        
+        zone = create_zone_supabase(current_user.id, zone_data)
+        if zone:
+            flash('Safety zone created successfully!', 'success')
+        else:
+            flash('Error creating safety zone. Please try again.', 'error')
         return redirect(url_for('safety_zones'))
     
     return render_template('caregiver/Sai/new_zone.html')
@@ -2393,32 +2446,10 @@ def get_zones():
             except Exception as e:
                 print(f"Supabase zones fetch failed: {e}")
         
-        # Fallback to SQLite zones
-        zones = SafetyZone.query.filter_by(is_active=True).all()
-        features = []
-        
-        for zone in zones:
-            feature = {
-                "type": "Feature",
-                "properties": {
-                    "id": zone.id,
-                    "name": zone.name,
-                    "description": zone.description or '',
-                    "zone_type": "safe",  # Default type
-                    "radius_m": zone.radius or 100,
-                    "status": "approved",
-                    "is_active": zone.is_active
-                },
-                "geometry": {
-                    "type": "Point",
-                    "coordinates": [zone.longitude or 103.8198, zone.latitude or 1.3521]
-                }
-            }
-            features.append(feature)
-        
+        # Return empty response if Supabase is not available
         return jsonify({
             "type": "FeatureCollection",
-            "features": features
+            "features": []
         })
         
     except Exception as e:
@@ -2492,11 +2523,39 @@ def get_admin_zones():
         else:
             print("🔍 Admin: Supabase not available")
         
-        # Fallback to SQLite
-        print("🔍 Admin: Using SQLite fallback")
-        zones = SafetyZone.query.all()
-        print(f"🔍 Admin: Found {len(zones)} zones in SQLite")
-        return jsonify(_format_zones_geojson(zones, 'sqlite'))
+        # Use Supabase zones helper function
+        print("🔍 Admin: Using Supabase zones")
+        zones = get_all_zones_supabase()
+        print(f"🔍 Admin: Found {len(zones)} zones in Supabase")
+        
+        # Convert to GeoJSON format manually since we're not using the old format function
+        features = []
+        for zone in zones:
+            lat = zone.get('latitude')
+            lng = zone.get('longitude')
+            if lat is not None and lng is not None:
+                feature = {
+                    "type": "Feature",
+                    "properties": {
+                        "id": zone['id'],
+                        "name": zone['name'],
+                        "description": zone.get('description', ''),
+                        "zone_type": zone.get('zone_type', 'safe'),
+                        "radius_m": zone.get('radius'),
+                        "status": zone.get('status', 'approved'),
+                        "is_active": zone.get('is_active', True)
+                    },
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [lng, lat]
+                    }
+                }
+                features.append(feature)
+        
+        return jsonify({
+            "type": "FeatureCollection", 
+            "features": features
+        })
         
     except Exception as e:
         print(f"Error fetching admin zones: {e}")
@@ -2527,8 +2586,8 @@ def create_admin_zone():
             except Exception as e:
                 print(f"Supabase zone creation failed: {e}")
         
-        # Fallback to SQLite
-        return jsonify(_create_zone_sqlite(data))
+        # Return error if Supabase is not available
+        return jsonify({'success': False, 'error': 'Zone creation service unavailable'}), 503
         
     except Exception as e:
         print(f"Error creating zone: {e}")
@@ -2553,8 +2612,8 @@ def update_admin_zone(zone_id):
             except Exception as e:
                 print(f"Supabase zone update failed: {e}")
         
-        # Fallback to SQLite
-        return jsonify(_update_zone_sqlite(zone_id, data))
+        # Return error if Supabase is not available
+        return jsonify({"error": "Zone update service unavailable"}), 503
         
     except Exception as e:
         print(f"Error updating zone: {e}")
@@ -2575,8 +2634,8 @@ def delete_admin_zone(zone_id):
             except Exception as e:
                 print(f"Supabase zone deletion failed: {e}")
         
-        # Fallback to SQLite
-        return jsonify(_delete_zone_sqlite(zone_id))
+        # Return error if Supabase is not available
+        return jsonify({"error": "Zone deletion service unavailable"}), 503
         
     except Exception as e:
         print(f"Error deleting zone: {e}")
@@ -2723,35 +2782,6 @@ def _create_zone_supabase(data):
         return {'success': True, 'message': 'Zone created successfully', 'zone_id': result.data[0]['id']}
     return None
 
-def _create_zone_sqlite(data):
-    """Create zone in SQLite"""
-    # Handle coordinates
-    lat = float(data.get('center_lat', 1.3521))
-    lng = float(data.get('center_lng', 103.8198))
-    radius = float(data.get('radius_m', 100))
-    
-    if data.get('geometry') and data['geometry']['type'] == 'Polygon':
-        coords = data['geometry']['coordinates'][0]
-        lat = sum(coord[1] for coord in coords) / len(coords)
-        lng = sum(coord[0] for coord in coords) / len(coords)
-    
-    zone = SafetyZone(
-        user_id=current_user.id,
-        name=data['name'],
-        description=data.get('description', ''),
-        zone_type=data.get('zone_type', 'safe'),
-        status=data.get('status', 'approved'),
-        latitude=lat,
-        longitude=lng,
-        radius=radius,
-        is_active=data.get('is_active', True)
-    )
-    
-    db.session.add(zone)
-    db.session.commit()
-    
-    return {'success': True, 'message': 'Zone created successfully', 'zone_id': zone.id}
-
 def _update_zone_supabase(zone_id, data):
     """Update zone in Supabase"""
     from supabase_integration import get_supabase_admin_client
@@ -2777,42 +2807,6 @@ def _update_zone_supabase(zone_id, data):
         return {"success": True, "message": "Zone updated successfully", "data": result.data[0]}
     return None
 
-def _update_zone_sqlite(zone_id, data):
-    """Update zone in SQLite"""
-    zone = SafetyZone.query.get(zone_id)
-    if not zone:
-        return {"error": "Zone not found"}, 404
-    
-    zone.name = data['name']
-    zone.description = data.get('description', zone.description)
-    zone.zone_type = data['zone_type']
-    zone.is_active = data.get('is_active', zone.is_active)
-    zone.status = data.get('status', zone.status)
-    
-    if 'center_lat' in data and 'center_lng' in data:
-        zone.latitude = data['center_lat']
-        zone.longitude = data['center_lng']
-        zone.radius = data.get('radius_m', zone.radius)
-    
-    db.session.commit()
-    
-    return {
-        "success": True,
-        "message": "Zone updated successfully",
-        "data": {
-            "id": zone.id,
-            "name": zone.name,
-            "description": zone.description,
-            "zone_type": zone.zone_type,
-            "center_lat": zone.latitude,
-            "center_lng": zone.longitude,
-            "radius_m": zone.radius,
-            "is_active": zone.is_active,
-            "status": zone.status,
-            "created_at": zone.created_at.isoformat() if zone.created_at else None
-        }
-    }
-
 def _delete_zone_supabase(zone_id):
     """Delete zone from Supabase"""
     from supabase_integration import get_supabase_admin_client
@@ -2822,18 +2816,6 @@ def _delete_zone_supabase(zone_id):
     if result.data:
         return {"success": True, "message": "Zone deleted successfully"}
     return {"error": "Zone not found"}, 404
-
-def _delete_zone_sqlite(zone_id):
-    """Delete zone from SQLite"""
-    zone = SafetyZone.query.get(zone_id)
-    if not zone:
-        return {"error": "Zone not found"}, 404
-    
-    db.session.delete(zone)
-    db.session.commit()
-    
-    return {"success": True, "message": "Zone deleted successfully"}
-
 
 @app.route('/api/admin/users')
 @login_required
