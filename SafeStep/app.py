@@ -961,10 +961,11 @@ def seizure_monitoring():
                     'notes': notes,
                     'created_at': start_time.isoformat()
                 }).execute()
-                if response and response.status_code in (200, 201):
+                if getattr(response, 'data', None):
                     return jsonify({'success': True, 'message': 'Seizure event saved to Supabase.'}), 201
                 else:
-                    return jsonify({'success': False, 'message': 'Failed to save to Supabase.'}), 500
+                    error_msg = getattr(response, 'error', 'Failed to save to Supabase.')
+                    return jsonify({'success': False, 'message': str(error_msg)}), 500
             except Exception as e:
                 return jsonify({'success': False, 'message': f'Supabase error: {str(e)}'}), 500
         else:

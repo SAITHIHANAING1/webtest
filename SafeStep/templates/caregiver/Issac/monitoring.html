@@ -26,8 +26,11 @@
         </div>
     </div>
 
-    <div class="d-flex justify-content-center align-items-center mb-5" style="height: 400px;">
-        <span id="monitoringDuration" style="font-size:3rem; font-weight:bold;">00:00</span>
+    <!-- Monitoring Timer (hidden by default) -->
+    <div class="row mb-2" id="timerRow" style="display:none;">
+        <div class="col-12 text-center">
+            <span id="monitoringDuration" style="font-size:3rem; font-weight:bold;">00:00</span>
+        </div>
     </div>
 
     <!-- Monitoring Status -->
@@ -35,7 +38,7 @@
         <div class="col-12">
             <div class="card border-success" id="statusCard">
                 <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 w-100 text-center">
+                    <h5 class="mb-0">
                         <i class="fas fa-circle text-success me-2" id="statusIndicator"></i>
                         <span id="statusText">Monitoring Inactive</span>
                     </h5>
@@ -106,7 +109,6 @@
 
         <!-- Right Column - Controls & Info -->
         <div class="col-lg-4">
-
             <!-- Device Status -->
             <div class="card mb-4">
                 <div class="card-header">
@@ -284,19 +286,29 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function startMonitoring() {
+    // Show timer
+    document.getElementById('timerRow').style.display = '';
+    const durationElem = document.getElementById('monitoringDuration');
+    durationElem.textContent = '00:00';
+    durationElem.style.color = '';
+    // Hide navbar and footer
+    const navbar = document.querySelector('nav.navbar');
+    if (navbar) navbar.style.display = 'none';
+    const footer = document.querySelector('footer');
+    if (footer) footer.style.display = 'none';
     monitoringActive = true;
     monitoringStartTime = new Date();
-
+    
     // Update UI
     document.getElementById('startMonitoringBtn').classList.add('d-none');
     document.getElementById('stopMonitoringBtn').classList.remove('d-none');
     document.getElementById('statusText').textContent = 'Monitoring Active';
     document.getElementById('statusIndicator').className = 'fas fa-circle text-success me-2';
     document.getElementById('statusCard').className = 'card border-success';
-
+    
     // Start monitoring interval
     monitoringInterval = setInterval(updateMonitoringData, 1000);
-
+    
     // Create new session
     fetch('/api/sessions', {
         method: 'POST',
@@ -322,6 +334,16 @@ function startMonitoring() {
 }
 
 function stopMonitoring() {
+    // Hide timer
+    document.getElementById('timerRow').style.display = 'none';
+    const durationElem = document.getElementById('monitoringDuration');
+    durationElem.textContent = '00:00';
+    durationElem.style.color = '';
+    // Show navbar and footer
+    const navbar = document.querySelector('nav.navbar');
+    if (navbar) navbar.style.display = '';
+    const footer = document.querySelector('footer');
+    if (footer) footer.style.display = '';
     monitoringActive = false;
     
     // Clear intervals
@@ -352,17 +374,15 @@ function stopMonitoring() {
             }
         });
     }
-
+    
     // Reset values
     document.getElementById('heartRate').textContent = '--';
     document.getElementById('movementLevel').textContent = '--';
     document.getElementById('riskLevel').textContent = '--';
-    document.getElementById('monitoringDuration').textContent = '00:00';
-
+    document.getElementById('monitoringDuration').textContent = '00:00:00';
+    
     logEvent('Monitoring stopped by user', 'info');
-
-    const modal = new bootstrap.Modal(document.getElementById('seizureEventModal'));
-    modal.show();
+    logSeizureEvent();
 }
 
 function updateMonitoringData() {
@@ -370,12 +390,16 @@ function updateMonitoringData() {
     
     // Update duration
     const duration = Math.floor((new Date() - monitoringStartTime) / 1000);
-    const hours = Math.floor(duration / 3600);
-    const minutes = Math.floor((duration % 3600) / 60);
+    const minutes = Math.floor(duration / 60);
     const seconds = duration % 60;
-    
-    document.getElementById('monitoringDuration').textContent = 
-        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    const durationElem = document.getElementById('monitoringDuration');
+    durationElem.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    // Change color to red after 10 minutes (600 seconds)
+    if (duration >= 600) {
+        durationElem.style.color = 'red';
+    } else {
+        durationElem.style.color = '';
+    }
     
     // Simulate sensor data
     const heartRate = 70 + Math.floor(Math.random() * 20);
@@ -448,13 +472,12 @@ function saveSeizureEvent() {
     const location = document.getElementById('eventLocation').value;
     const triggers = document.getElementById('eventTriggers').value;
     const notes = document.getElementById('eventNotes').value;
-
+    
     if (!severity) {
         alert('Please select a severity level.');
         return;
     }
-
-    // Send POST request to /caregiver/monitoring
+    
     fetch('/caregiver/monitoring', {
         method: 'POST',
         headers: {
@@ -478,25 +501,11 @@ function saveSeizureEvent() {
     .catch(err => {
         logEvent('Error saving seizure event: ' + err, 'danger');
     });
-
+    
     bootstrap.Modal.getInstance(document.getElementById('seizureEventModal')).hide();
-
+    
     // Clear form
     document.getElementById('seizureEventForm').reset();
-}
-
-function addNote() {
-    const note = prompt('Enter your note:');
-    if (note) {
-        logEvent(`Note: ${note}`, 'info');
-    }
-}
-
-function calibrateDevice() {
-    logEvent('Device calibration started...', 'info');
-    setTimeout(() => {
-        logEvent('Device calibration completed', 'success');
-    }, 3000);
 }
 
 function callContact(contactType) {
