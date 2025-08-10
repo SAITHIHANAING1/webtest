@@ -1,21 +1,25 @@
 <style>
-    /* Global dashboard dark mode: all boxes black, all text white, except landing, sign in, sign up */
+    /* Global dashboard dark mode: all boxes black, all text white, except landing, sign in, sign up, admin */
+    body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) {
+        background-color: #fdfafa;
+    }
+    
     body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .card,
     body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .modal-content,
     body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .dropdown-menu,
     body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .table,
     body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .progress,
     body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .input-group-text {
-        background: #18191a !important;
+        background: #f5f5f5 !important;
         color: #fff !important;
-        border-color: #232946 !important;
+        border-color: #e0e2e9 !important;
     }
 
     body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .card-header,
     body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .card-footer,
     body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .modal-header,
     body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .modal-footer {
-        background: #232946 !important;
+        background: #ffffff !important;
         color: #fff !important;
         border: none !important;
     }
@@ -25,8 +29,8 @@
     body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .form-control:focus,
     body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .form-select,
     body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.admin-page) .form-select:focus {
-        color: #fff !important;
-        background: #232946 !important;
+        color: #1a1818 !important;
+        background: #dfdfe7 !important;
         border-color: #444 !important;
     }
 
@@ -63,7 +67,7 @@
     body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page):not(.admin-page) label,
     body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page):not(.admin-page) small,
     body:not(.landing-page):not(.login-page):not(.sign-up-page):not(.analytics-page):not(.admin-page) a {
-        color: #fff !important;
+        color: #100e0e !important;
     }
 </style>
 </div>
@@ -90,7 +94,7 @@
 
     body:not(.landing-page) .navbar.dark-nav .dropdown-menu,
     body:not(.landing-page) .navbar.navbar-dark .dropdown-menu {
-        background: #232946;
+        background: #fafafb;
         color: #fff;
     }
 
@@ -123,7 +127,7 @@
 
     body:not(.landing-page) .modal-header,
     body:not(.landing-page) .modal-footer {
-        background: #232946;
+        background: #f3f3f8;
         color: #fff;
         border: none;
     }
@@ -131,9 +135,9 @@
     body:not(.landing-page) .modal .form-label,
     body:not(.landing-page) .modal .form-control,
     body:not(.landing-page) .modal .form-control:focus {
-        color: #fff;
-        background: #232946;
-        border-color: #444;
+        color: #faf1f1;
+        
+        border-color: #0b0a0a;
     }
 
     body:not(.landing-page) .modal .btn-primary {
@@ -142,7 +146,7 @@
     }
 
     body:not(.landing-page) .modal .btn-secondary {
-        background: #444;
+        background: #fdfbfb;
         border: none;
     }
 </style>
