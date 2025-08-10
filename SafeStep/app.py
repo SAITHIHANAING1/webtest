@@ -1280,6 +1280,16 @@ def training_management():
         }
     modules_dict = [module_to_dict(m) for m in modules]
     return render_template('admin/Ethan/admin_training.html', modules=modules_dict)
+
+# Delete module route
+@app.route('/admin/training/delete/<int:module_id>', methods=['POST'])
+@login_required
+@admin_required
+def delete_training_module(module_id):
+    module = TrainingModule.query.get_or_404(module_id)
+    db.session.delete(module)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Module deleted'})
     
 
 @app.route('/admin/analytics')
