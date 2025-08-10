@@ -1,3 +1,6 @@
+
+
+
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory, send_file, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -8,6 +11,21 @@ from functools import wraps
 import secrets
 import json
 from dotenv import load_dotenv
+
+# Import models
+print("✅ UserQuestionnaire model defined in app.py")
+
+
+# Import models
+print("✅ UserQuestionnaire model defined in app.py")
+
+
+# Import models
+print("✅ UserQuestionnaire model defined in app.py")
+
+app = Flask(__name__)
+
+
 
 # Load environment variables from config.env file
 load_dotenv('config.env')

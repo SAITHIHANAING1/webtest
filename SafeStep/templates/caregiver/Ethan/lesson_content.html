@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Lesson Content - Safe-Step{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-book-open me-2"></i>
+                        Lesson Content
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <h4>Key Points</h4>
+                    <ul>
+                        <li>Recognize the signs and triggers of a seizure.</li>
+                        <li>Follow step-by-step emergency response procedures.</li>
+                        <li>Understand the importance of medication management.</li>
+                    </ul>
+                    <div class="mt-4">
+                        <h5>Quick Quiz</h5>
+                        <form id="quizForm">
+                            <div class="mb-3">
+                                <label class="form-label">What is the first step when you see someone having a seizure?</label>
+                                <div>
+                                    <input type="radio" name="q1" value="a" id="q1a">
+                                    <label for="q1a">Call emergency services immediately</label><br>
+                                    <input type="radio" name="q1" value="b" id="q1b">
+                                    <label for="q1b">Move dangerous objects away and protect their head</label><br>
+                                    <input type="radio" name="q1" value="c" id="q1c">
+                                    <label for="q1c">Give them water</label>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="checkQuiz()">Submit Answer</button>
+                            <div id="quizResult" class="mt-2"></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function checkQuiz() {
+    var answer = document.querySelector('input[name="q1"]:checked');
+    var result = document.getElementById('quizResult');
+    if (!answer) {
+        result.innerHTML = '<span class="text-danger">Please select an answer.</span>';
+        return;
+    }
+    if (answer.value === 'b') {
+        result.innerHTML = '<span class="text-success">Correct! Move dangerous objects away and protect their head.</span>';
+    } else {
+        result.innerHTML = '<span class="text-danger">Incorrect. Try again!</span>';
+    }
+}
+</script>
+{% endblock %}
