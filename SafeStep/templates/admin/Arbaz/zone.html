@@ -43,7 +43,7 @@
             <p class="text-muted">Manage safety zones across all users</p>
         </div>
         <div class="header-buttons">
-            <button class="btn btn-primary" id="btnCreate">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createZoneModal">
                 <i class="fas fa-plus me-2"></i>Create Zone
             </button>
         </div>
@@ -209,24 +209,11 @@
 
   // ===== Init =====
   document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing zones page...');
-    
-    // Check if required elements exist
-    const requiredElements = ['#zoneMap', '#zonesList', '#btnRefresh'];
-    for (const selector of requiredElements) {
-      if (!document.querySelector(selector)) {
-        console.error(`Required element ${selector} not found`);
-        return;
-      }
-    }
-    
     bindUI();
     initMap();
     loadZones();
     loadEventsCount();
     getUserLocationMarker();
-    
-    console.log('Zones page initialized successfully');
   });
 
   function bindUI() {
@@ -239,37 +226,14 @@
     $('#filterType').addEventListener('change', applyFilters);
     $('#filterStatus').addEventListener('change', applyFilters);
     $('#confirmDelete').addEventListener('click', onConfirmDelete);
-    
-    // Fix modal button in Sai's version
-    const createBtn = document.querySelector('[data-bs-target="#createZoneModal"]');
-    if (createBtn) {
-      createBtn.addEventListener('click', () => openCreateModal());
-    }
   }
 
   // ===== Map =====
   function initMap() {
-    const mapElement = document.getElementById('zoneMap');
-    if (!mapElement) {
-      console.error('Map element #zoneMap not found');
-      return;
-    }
-    
-    try {
-      map = L.map('zoneMap', { zoomControl: true }).setView([1.3521,103.8198], 11);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
-        attribution:'© OpenStreetMap' 
-      }).addTo(map);
-      
-      map.setMaxBounds(SG_BOUNDS); 
-      map.options.minZoom = 10; 
-      map.on('drag', () => map.panInsideBounds(SG_BOUNDS, { animate: false }));
-      
-      zonesLayer = L.layerGroup().addTo(map);
-      console.log('Map initialized successfully');
-    } catch (error) {
-      console.error('Error initializing map:', error);
-    }
+    map = L.map('zoneMap', { zoomControl: true }).setView([1.3521,103.8198], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap' }).addTo(map);
+    map.setMaxBounds(SG_BOUNDS); map.options.minZoom = 10; map.on('drag', () => map.panInsideBounds(SG_BOUNDS, { animate: false }));
+    zonesLayer = L.layerGroup().addTo(map);
   }
 
   function initDrawMap() {
@@ -320,13 +284,9 @@
   async function loadZones() {
     setListLoading(true);
     try {
-      console.log('Loading zones from:', API.list);
       const res = await fetch(API.list);
-      console.log('Response status:', res.status);
-      
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      console.log('Zones data received:', data);
 
       // Accept FeatureCollection or legacy shapes
       let features = [];
@@ -342,20 +302,16 @@
       allZones = features.filter(f => (f.properties||{}).name);
       filteredZones = [...allZones];
 
-      console.log('Processed zones:', allZones.length);
       renderZones();
       renderList();
       updateStats();
     } catch (err) {
-      console.error('Error loading zones:', err);
       notify('Error loading zones', 'danger');
       allZones = filteredZones = [];
       renderZones();
       renderList();
       updateStats();
-    } finally { 
-      setListLoading(false); 
-    }
+    } finally { setListLoading(false); }
   }
 
   async function loadEventsCount() {
@@ -471,7 +427,6 @@
   }
 
   function refreshZones() { loadZones(); notify('Zones refreshed','success'); }
-  
   function centerOnSG() { map.setView([1.3521,103.8198], 11); }
   function fitAllZones() {
     const group = new L.featureGroup();
@@ -489,19 +444,10 @@
 
   // ===== Modals =====
   function openCreateModal() {
-    const modal = $('#zoneModal');
-    if (!modal) {
-      console.error('Zone modal not found');
-      return;
-    }
-    
     $('#zoneModalTitle').textContent = 'Create New Zone';
-    $('#zoneForm').reset(); 
-    $('#zoneId').value = ''; 
-    currentGeometry = null; 
-    $('#coordinateInputs').style.display = 'none';
+    $('#zoneForm').reset(); $('#zoneId').value = ''; currentGeometry = null; $('#coordinateInputs').style.display = 'none';
     $('#btnSaveZone').textContent = 'Save Zone';
-    new bootstrap.Modal(modal).show();
+    new bootstrap.Modal($('#zoneModal')).show();
     setTimeout(initDrawMap, 250);
   }
 
@@ -615,36 +561,13 @@
   }
 
   function getUserLocationMarker() {
-    if (!navigator.geolocation) {
-      console.log('Geolocation not supported');
-      return;
-    }
-    
+    if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(pos => {
       const { latitude:lat, longitude:lng } = pos.coords || {};
-      console.log('User location:', lat, lng);
-      
-      if (!SG_BOUNDS.contains([lat,lng])) {
-        console.log('User location outside Singapore bounds');
-        return; // only show if within SG
-      }
-      
-      const icon = L.divIcon({ 
-        className:'', 
-        html:'<i class="fas fa-user" style="color: blue;"></i>', 
-        iconSize:[16,16], 
-        iconAnchor:[8,8] 
-      });
-      
+      if (!SG_BOUNDS.contains([lat,lng])) return; // only show if within SG
+      const icon = L.divIcon({ className:'', html:'<i class="fas fa-user"></i>', iconSize:[16,16], iconAnchor:[8,8] });
       L.marker([lat,lng], { icon }).addTo(map).bindPopup('Your Location');
-      console.log('User location marker added');
-    }, (error) => {
-      console.log('Geolocation error:', error);
-    }, { 
-      enableHighAccuracy:false, 
-      timeout:8000, 
-      maximumAge:300000 
-    });
+    }, () => {}, { enableHighAccuracy:false, timeout:8000, maximumAge:300000 });
   }
 })();
 </script>

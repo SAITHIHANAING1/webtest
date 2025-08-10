@@ -9,11 +9,16 @@ from supabase import create_client, Client
 from datetime import datetime, timedelta
 import json
 
-# Load environment variables
+# Load environment variables from the current directory
 load_dotenv()
 
-# Global Supabase client
+# If not found, try loading from the parent directory (for imports from app.py)
+if not os.environ.get('SUPABASE_URL'):
+    load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+
+# Global Supabase client and availability flag
 supabase: Client = None
+supabase_available = False
 
 def init_supabase():
     """Initialize Supabase client"""
@@ -21,6 +26,9 @@ def init_supabase():
     
     url = os.environ.get('SUPABASE_URL')
     key = os.environ.get('SUPABASE_KEY')
+    
+    print(f"🔍 Supabase URL from env: {url}")
+    print(f"🔍 Supabase KEY from env: {'***' + key[-10:] if key else 'None'}")
     
     if url and key:
         try:
@@ -36,6 +44,11 @@ def init_supabase():
         supabase_available = False
         print("ℹ️ Supabase credentials not found, using SQLite fallback")
         return False
+
+def get_supabase_client():
+    """Get the Supabase client instance"""
+    global supabase
+    return supabase
 
 def get_supabase_client() -> Client:
     """Get the Supabase client instance"""

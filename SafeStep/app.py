@@ -1157,7 +1157,7 @@ def analytics():
 @admin_required
 def admin_zones():
     """Admin zones management page"""
-    return render_template('admin/Arbaz/zones.html')
+    return render_template('admin/Sai/zones.html')
 
 @app.route('/analytics')
 @login_required
@@ -2268,123 +2268,203 @@ def create_incident():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-# Admin Zones API Routes
-@app.route('/api/admin/zones')
+@app.route('/api/zones', methods=['GET'])
+@login_required
+def get_zones():
+    """Get zones for caregiver (read-only, approved zones only)"""
+    try:
+        # Try Supabase first
+        if supabase_available:
+            try:
+                from supabase_integration import get_supabase_client
+                supabase = get_supabase_client()
+                
+                if supabase:
+                    # Use anon client with RLS for caregivers
+                    response = supabase.table('zones').select('*').filter('is_active', 'eq', True).filter('status', 'eq', 'approved').execute()
+                    zones = response.data
+                    
+                    # Convert to GeoJSON format
+                    features = []
+                    for zone in zones:
+                        # Skip zones with invalid coordinates
+                        lat = zone.get('latitude')
+                        lng = zone.get('longitude')
+                        if lat is None or lng is None:
+                            continue
+                            
+                        geometry = zone.get('geometry')
+                        if geometry:
+                            if isinstance(geometry, str):
+                                geometry = json.loads(geometry)
+                        else:
+                            # Create Point geometry from center coordinates
+                            geometry = {
+                                "type": "Point",
+                                "coordinates": [lng, lat]
+                            }
+                        
+                        feature = {
+                            "type": "Feature",
+                            "properties": {
+                                "id": zone['id'],
+                                "name": zone['name'],
+                                "description": zone.get('description', ''),
+                                "zone_type": zone.get('zone_type', 'safe'),
+                                "radius_m": zone.get('radius'),
+                                "status": zone.get('status', 'approved'),
+                                "is_active": zone.get('is_active', True)
+                            },
+                            "geometry": geometry
+                        }
+                        features.append(feature)
+                    
+                    return jsonify({
+                        "type": "FeatureCollection",
+                        "features": features
+                    })
+            except Exception as e:
+                print(f"Supabase zones fetch failed: {e}")
+        
+        # Fallback to SQLite zones
+        zones = SafetyZone.query.filter_by(is_active=True).all()
+        features = []
+        
+        for zone in zones:
+            feature = {
+                "type": "Feature",
+                "properties": {
+                    "id": zone.id,
+                    "name": zone.name,
+                    "description": zone.description or '',
+                    "zone_type": "safe",  # Default type
+                    "radius_m": zone.radius or 100,
+                    "status": "approved",
+                    "is_active": zone.is_active
+                },
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [zone.longitude or 103.8198, zone.latitude or 1.3521]
+                }
+            }
+            features.append(feature)
+        
+        return jsonify({
+            "type": "FeatureCollection",
+            "features": features
+        })
+        
+    except Exception as e:
+        print(f"Error fetching zones: {e}")
+        return jsonify({"type": "FeatureCollection", "features": []}), 500
+
+# ===== ZONE MANAGEMENT API ENDPOINTS =====
+
+@app.route('/api/admin/geofence-events')
+@login_required
+@admin_required
+def get_geofence_events():
+    """Get geofence events for the zones dashboard"""
+    try:
+        limit = request.args.get('limit', 10, type=int)
+        
+        # For now, return mock data since we don't have geofence events table
+        events = []
+        for i in range(min(limit, 5)):  # Return up to 5 mock events
+            events.append({
+                'id': i + 1,
+                'zone_name': f'Zone {i + 1}',
+                'event_type': 'entry' if i % 2 == 0 else 'exit',
+                'user_id': 1,
+                'timestamp': (datetime.utcnow() - timedelta(hours=i)).isoformat(),
+                'location': f'Location {i + 1}'
+            })
+        
+        return jsonify({
+            'success': True,
+            'events': events
+        })
+        
+    except Exception as e:
+        print(f"Error getting geofence events: {e}")
+        return jsonify({
+            'success': True,
+            'events': []
+        })
+
+@app.route('/api/admin/zones', methods=['GET'])
 @login_required
 @admin_required
 def get_admin_zones():
-    """Get all zones with user information for admin management"""
+    """Get all zones in GeoJSON format"""
     try:
-        # Get filter parameters
-        user_id = request.args.get('user_id')
-        status = request.args.get('status')
-        
-        # Build query
-        query = db.session.query(SafetyZone, User).join(User, SafetyZone.user_id == User.id)
-        
-        if user_id:
-            query = query.filter(SafetyZone.user_id == user_id)
-        if status:
-            if status == 'active':
-                query = query.filter(SafetyZone.is_active == True)
-            elif status == 'inactive':
-                query = query.filter(SafetyZone.is_active == False)
-        
-        zones_data = query.all()
-        
         zones = []
-        for zone, user in zones_data:
-            zones.append({
-                'id': zone.id,
-                'name': zone.name,
-                'description': zone.description,
-                'latitude': zone.latitude,
-                'longitude': zone.longitude,
-                'radius': zone.radius,
-                'is_active': zone.is_active,
-                'created_at': zone.created_at.isoformat(),
-                'user_name': f"{user.first_name} {user.last_name}"
-            })
         
-        # Calculate metrics
-        total_zones = SafetyZone.query.count()
-        active_zones = SafetyZone.query.filter_by(is_active=True).count()
-        active_users = User.query.filter_by(role='caregiver', is_active=True).count()
-        avg_radius = db.session.query(db.func.avg(SafetyZone.radius)).scalar() or 0
+        # Try Supabase first
+        if supabase_available:
+            try:
+                # Use admin client for full access
+                from supabase_integration import get_supabase_admin_client
+                supabase = get_supabase_admin_client()
+                if supabase:
+                    print(f"🔍 Admin: Fetching zones from Supabase...")
+                    response = supabase.table('zones').select('*').execute()
+                    zones = response.data or []
+                    print(f"🔍 Admin: Found {len(zones)} zones in Supabase")
+                    if len(zones) > 0:
+                        print(f"🔍 Admin: Sample zone: {zones[0] if zones else 'None'}")
+                    result = _format_zones_geojson(zones, 'supabase')
+                    print(f"🔍 Admin: Returning {len(result.get('features', []))} formatted zones")
+                    return jsonify(result)
+                else:
+                    print("🔍 Admin: Supabase client is None")
+            except Exception as e:
+                print(f"🔍 Admin: Supabase zones fetch failed: {e}")
+                import traceback
+                traceback.print_exc()
+        else:
+            print("🔍 Admin: Supabase not available")
         
-        # Calculate distribution (simplified - you can enhance this)
-        distribution = {
-            'home': SafetyZone.query.filter(SafetyZone.name.ilike('%home%')).count(),
-            'work': SafetyZone.query.filter(SafetyZone.name.ilike('%work%')).count(),
-            'school': SafetyZone.query.filter(SafetyZone.name.ilike('%school%')).count(),
-            'other': total_zones - SafetyZone.query.filter(
-                SafetyZone.name.ilike('%home%') | 
-                SafetyZone.name.ilike('%work%') | 
-                SafetyZone.name.ilike('%school%')
-            ).count()
-        }
-        
-        return jsonify({
-            'success': True,
-            'zones': zones,
-            'metrics': {
-                'total_zones': total_zones,
-                'active_zones': active_zones,
-                'active_users': active_users,
-                'avg_radius': round(avg_radius, 1)
-            },
-            'distribution': distribution
-        })
+        # Fallback to SQLite
+        print("🔍 Admin: Using SQLite fallback")
+        zones = SafetyZone.query.all()
+        print(f"🔍 Admin: Found {len(zones)} zones in SQLite")
+        return jsonify(_format_zones_geojson(zones, 'sqlite'))
         
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@app.route('/api/admin/zones/<int:zone_id>', methods=['GET'])
-@login_required
-@admin_required
-def get_admin_zone(zone_id):
-    """Get specific zone details for editing"""
-    try:
-        zone = SafetyZone.query.get_or_404(zone_id)
-        return jsonify({
-            'success': True,
-            'zone': {
-                'id': zone.id,
-                'name': zone.name,
-                'description': zone.description,
-                'latitude': zone.latitude,
-                'longitude': zone.longitude,
-                'radius': zone.radius,
-                'is_active': zone.is_active
-            }
-        })
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"Error fetching admin zones: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"type": "FeatureCollection", "features": []}), 500
 
 @app.route('/api/admin/zones', methods=['POST'])
 @login_required
 @admin_required
 def create_admin_zone():
-    """Create a new zone for a user"""
+    """Create a new zone"""
     try:
-        data = request.form
+        data = request.get_json()
         
-        zone = SafetyZone(
-            user_id=data['user_id'],
-            name=data['name'],
-            description=data.get('description', ''),
-            latitude=float(data['latitude']),
-            longitude=float(data['longitude']),
-            radius=float(data['radius']),
-            is_active=True
-        )
+        # Validate required fields
+        if not data.get('name'):
+            return jsonify({'success': False, 'error': 'Zone name is required'}), 400
+        if data.get('zone_type') not in ['safe', 'danger']:
+            return jsonify({'success': False, 'error': 'Valid zone type required'}), 400
         
-        db.session.add(zone)
-        db.session.commit()
+        # Try Supabase first
+        if supabase_available:
+            try:
+                result = _create_zone_supabase(data)
+                if result:
+                    return jsonify(result)
+            except Exception as e:
+                print(f"Supabase zone creation failed: {e}")
         
-        return jsonify({'success': True, 'zone_id': zone.id})
+        # Fallback to SQLite
+        return jsonify(_create_zone_sqlite(data))
+        
     except Exception as e:
-        db.session.rollback()
+        print(f"Error creating zone: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/admin/zones/<int:zone_id>', methods=['PUT'])
@@ -2393,22 +2473,25 @@ def create_admin_zone():
 def update_admin_zone(zone_id):
     """Update an existing zone"""
     try:
-        zone = SafetyZone.query.get_or_404(zone_id)
-        data = request.form
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
         
-        zone.name = data['name']
-        zone.description = data.get('description', '')
-        zone.latitude = float(data['latitude'])
-        zone.longitude = float(data['longitude'])
-        zone.radius = float(data['radius'])
-        zone.is_active = data.get('is_active', 'true').lower() == 'true'
+        # Try Supabase first
+        if supabase_available:
+            try:
+                result = _update_zone_supabase(zone_id, data)
+                if result:
+                    return jsonify(result)
+            except Exception as e:
+                print(f"Supabase zone update failed: {e}")
         
-        db.session.commit()
+        # Fallback to SQLite
+        return jsonify(_update_zone_sqlite(zone_id, data))
         
-        return jsonify({'success': True})
     except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"Error updating zone: {e}")
+        return jsonify({"error": "Failed to update zone"}), 500
 
 @app.route('/api/admin/zones/<int:zone_id>', methods=['DELETE'])
 @login_required
@@ -2416,55 +2499,274 @@ def update_admin_zone(zone_id):
 def delete_admin_zone(zone_id):
     """Delete a zone"""
     try:
-        zone = SafetyZone.query.get_or_404(zone_id)
-        db.session.delete(zone)
-        db.session.commit()
+        # Try Supabase first
+        if supabase_available:
+            try:
+                result = _delete_zone_supabase(zone_id)
+                if result:
+                    return jsonify(result)
+            except Exception as e:
+                print(f"Supabase zone deletion failed: {e}")
         
-        return jsonify({'success': True})
+        # Fallback to SQLite
+        return jsonify(_delete_zone_sqlite(zone_id))
+        
     except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"Error deleting zone: {e}")
+        return jsonify({"error": "Failed to delete zone"}), 500
 
-@app.route('/api/admin/zones/export')
-@login_required
-@admin_required
-def export_zones_data():
-    """Export zones data as CSV"""
+# ===== HELPER FUNCTIONS =====
+
+def _format_zones_geojson(zones, source_type):
+    """Convert zones to GeoJSON FeatureCollection format"""
+    features = []
+    
+    for zone in zones:
+        try:
+            if source_type == 'supabase':
+                feature = _format_supabase_zone(zone)
+            else:  # sqlite
+                feature = _format_sqlite_zone(zone)
+            
+            if feature:
+                features.append(feature)
+        except Exception as e:
+            print(f"Error formatting zone: {e}")
+            continue
+    
+    return {"type": "FeatureCollection", "features": features}
+
+def _format_supabase_zone(zone):
+    """Format Supabase zone to GeoJSON Feature"""
+    # Skip zones with invalid coordinates
+    lat = zone.get('latitude')
+    lng = zone.get('longitude')
+    
+    # Skip if coordinates are None/null
+    if lat is None or lng is None:
+        print(f"🔍 Skipping zone '{zone.get('name')}' - missing coordinates (lat: {lat}, lng: {lng})")
+        return None
+    
+    # Handle polygon geometry stored in description
+    geometry = None
+    description = zone.get('description', '')
+    
     try:
-        zones_data = db.session.query(SafetyZone, User).join(User, SafetyZone.user_id == User.id).all()
-        
-        import csv
-        import io
-        
-        output = io.StringIO()
-        writer = csv.writer(output)
-        
-        # Write header
-        writer.writerow(['Zone Name', 'User', 'Latitude', 'Longitude', 'Radius', 'Status', 'Created'])
-        
-        # Write data
-        for zone, user in zones_data:
-            writer.writerow([
-                zone.name,
-                f"{user.first_name} {user.last_name}",
-                zone.latitude,
-                zone.longitude,
-                zone.radius,
-                'Active' if zone.is_active else 'Inactive',
-                zone.created_at.strftime('%Y-%m-%d %H:%M:%S')
-            ])
-        
-        output.seek(0)
-        
-        from flask import Response
-        return Response(
-            output.getvalue(),
-            mimetype='text/csv',
-            headers={'Content-Disposition': 'attachment; filename=zones_data.csv'}
-        )
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        if description.startswith('{') and 'polygon_geometry' in description:
+            polygon_data = json.loads(description)
+            if polygon_data.get('type') == 'polygon_geometry':
+                geometry = {
+                    "type": "Polygon",
+                    "coordinates": polygon_data['coordinates']
+                }
+                description = polygon_data.get('original_description', '')
+    except json.JSONDecodeError:
+        pass
+    
+    # Default to Point geometry with valid coordinates
+    if not geometry:
+        geometry = {
+            "type": "Point",
+            "coordinates": [lng, lat]
+        }
+    
+    return {
+        "type": "Feature",
+        "properties": {
+            "id": zone['id'],
+            "name": zone['name'],
+            "description": description,
+            "zone_type": zone.get('zone_type', 'safe'),
+            "radius_m": zone.get('radius'),
+            "radius": zone.get('radius'),
+            "latitude": lat,
+            "longitude": lng,
+            "status": zone.get('status', 'approved'),
+            "is_active": zone.get('is_active', True),
+            "created_by": zone.get('user_id'),
+            "created_at": zone.get('created_at')
+        },
+        "geometry": geometry
+    }
+
+def _format_sqlite_zone(zone):
+    """Format SQLite zone to GeoJSON Feature"""
+    return {
+        "type": "Feature",
+        "properties": {
+            "id": zone.id,
+            "name": zone.name,
+            "description": zone.description or '',
+            "zone_type": zone.zone_type or 'safe',
+            "radius_m": int(zone.radius or 100),
+            "status": zone.status or 'approved',
+            "is_active": zone.is_active,
+            "created_by": zone.user_id,
+            "created_at": zone.created_at.isoformat() if zone.created_at else None,
+            "center_lat": zone.latitude or 1.3521,
+            "center_lng": zone.longitude or 103.8198
+        },
+        "geometry": {
+            "type": "Point",
+            "coordinates": [zone.longitude or 103.8198, zone.latitude or 1.3521]
+        }
+    }
+
+def _create_zone_supabase(data):
+    """Create zone in Supabase"""
+    from supabase_integration import get_supabase_client
+    supabase = get_supabase_client()
+    
+    zone_data = {
+        'name': data['name'],
+        'description': data.get('description', ''),
+        'zone_type': data['zone_type'],
+        'is_active': data.get('is_active', True),
+        'status': data.get('status', 'approved'),
+        'user_id': current_user.id
+    }
+    
+    # Handle geometry
+    if data.get('center_lat') and data.get('center_lng'):
+        zone_data.update({
+            'latitude': float(data['center_lat']),
+            'longitude': float(data['center_lng']),
+            'radius': int(data.get('radius_m', 100))
+        })
+    elif data.get('geometry'):
+        geometry = data['geometry']
+        if geometry['type'] == 'Polygon':
+            coords = geometry['coordinates'][0]
+            # Store as center point + polygon in description
+            zone_data.update({
+                'latitude': sum(coord[1] for coord in coords) / len(coords),
+                'longitude': sum(coord[0] for coord in coords) / len(coords),
+                'radius': 100,
+                'description': json.dumps({
+                    'type': 'polygon_geometry',
+                    'coordinates': geometry['coordinates'],
+                    'original_description': data.get('description', '')
+                })
+            })
+    else:
+        zone_data.update({'latitude': 1.3521, 'longitude': 103.8198, 'radius': 100})
+    
+    result = supabase.table('zones').insert(zone_data).execute()
+    if result.data:
+        return {'success': True, 'message': 'Zone created successfully', 'zone_id': result.data[0]['id']}
+    return None
+
+def _create_zone_sqlite(data):
+    """Create zone in SQLite"""
+    # Handle coordinates
+    lat = float(data.get('center_lat', 1.3521))
+    lng = float(data.get('center_lng', 103.8198))
+    radius = float(data.get('radius_m', 100))
+    
+    if data.get('geometry') and data['geometry']['type'] == 'Polygon':
+        coords = data['geometry']['coordinates'][0]
+        lat = sum(coord[1] for coord in coords) / len(coords)
+        lng = sum(coord[0] for coord in coords) / len(coords)
+    
+    zone = SafetyZone(
+        user_id=current_user.id,
+        name=data['name'],
+        description=data.get('description', ''),
+        zone_type=data.get('zone_type', 'safe'),
+        status=data.get('status', 'approved'),
+        latitude=lat,
+        longitude=lng,
+        radius=radius,
+        is_active=data.get('is_active', True)
+    )
+    
+    db.session.add(zone)
+    db.session.commit()
+    
+    return {'success': True, 'message': 'Zone created successfully', 'zone_id': zone.id}
+
+def _update_zone_supabase(zone_id, data):
+    """Update zone in Supabase"""
+    from supabase_integration import get_supabase_admin_client
+    supabase = get_supabase_admin_client()
+    
+    update_data = {
+        'name': data['name'],
+        'description': data.get('description', ''),
+        'zone_type': data['zone_type'],
+        'is_active': data.get('is_active', True),
+        'status': data.get('status', 'approved')
+    }
+    
+    if 'center_lat' in data and 'center_lng' in data:
+        update_data.update({
+            'latitude': data['center_lat'],
+            'longitude': data['center_lng'],
+            'radius': data.get('radius_m', 100)
+        })
+    
+    result = supabase.table('zones').update(update_data).eq('id', zone_id).execute()
+    if result.data:
+        return {"success": True, "message": "Zone updated successfully", "data": result.data[0]}
+    return None
+
+def _update_zone_sqlite(zone_id, data):
+    """Update zone in SQLite"""
+    zone = SafetyZone.query.get(zone_id)
+    if not zone:
+        return {"error": "Zone not found"}, 404
+    
+    zone.name = data['name']
+    zone.description = data.get('description', zone.description)
+    zone.zone_type = data['zone_type']
+    zone.is_active = data.get('is_active', zone.is_active)
+    zone.status = data.get('status', zone.status)
+    
+    if 'center_lat' in data and 'center_lng' in data:
+        zone.latitude = data['center_lat']
+        zone.longitude = data['center_lng']
+        zone.radius = data.get('radius_m', zone.radius)
+    
+    db.session.commit()
+    
+    return {
+        "success": True,
+        "message": "Zone updated successfully",
+        "data": {
+            "id": zone.id,
+            "name": zone.name,
+            "description": zone.description,
+            "zone_type": zone.zone_type,
+            "center_lat": zone.latitude,
+            "center_lng": zone.longitude,
+            "radius_m": zone.radius,
+            "is_active": zone.is_active,
+            "status": zone.status,
+            "created_at": zone.created_at.isoformat() if zone.created_at else None
+        }
+    }
+
+def _delete_zone_supabase(zone_id):
+    """Delete zone from Supabase"""
+    from supabase_integration import get_supabase_admin_client
+    supabase = get_supabase_admin_client()
+    
+    result = supabase.table('zones').delete().eq('id', zone_id).execute()
+    if result.data:
+        return {"success": True, "message": "Zone deleted successfully"}
+    return {"error": "Zone not found"}, 404
+
+def _delete_zone_sqlite(zone_id):
+    """Delete zone from SQLite"""
+    zone = SafetyZone.query.get(zone_id)
+    if not zone:
+        return {"error": "Zone not found"}, 404
+    
+    db.session.delete(zone)
+    db.session.commit()
+    
+    return {"success": True, "message": "Zone deleted successfully"}
+
 
 @app.route('/api/admin/users')
 @login_required
