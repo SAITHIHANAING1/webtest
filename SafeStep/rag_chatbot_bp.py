@@ -4,13 +4,19 @@ Simple Gemini API-based chatbot with RAG capabilities
 """
 
 from flask import Blueprint, request, jsonify, current_app
+from flask_login import current_user
 import google.generativeai as genai
 import os
 import json
 import sqlite3
-from datetime import datetime
-from typing import Dict, List, Optional
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Tuple
 import logging
+import math
+
+# Lightweight semantic retrieval
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -25,11 +31,24 @@ class RAGChatbot:
         self.api_key = api_key
         genai.configure(api_key=api_key)
         
-        # Initialize Gemini model (updated model name)
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        # Initialize Gemini model (configurable)
+        self.model_primary_name = os.environ.get('GEMINI_MODEL', 'gemini-1.5-pro')
+        self.model_fallback_name = os.environ.get('GEMINI_FALLBACK_MODEL', 'gemini-1.5-flash')
+        self.model = genai.GenerativeModel(self.model_primary_name)
+        self.model_fallback = genai.GenerativeModel(self.model_fallback_name)
         
         # Knowledge base (simple in-memory storage)
         self.knowledge_base = []
+        self._kb_texts: List[str] = []
+        self._kb_vectorizer: Optional[TfidfVectorizer] = None
+        self._kb_matrix = None
+
+        # Short conversation memory (last N exchanges)
+        self.conversation_history: List[Tuple[str, str]] = []  # (user, assistant)
+        self.max_history = 6
+        # Lightweight response cache to reduce API calls
+        self.answer_cache: Dict[str, str] = {}
+        self.max_cache_entries = 100
         
     def load_knowledge_base(self):
         """Load knowledge base from application data"""
@@ -41,6 +60,12 @@ class RAGChatbot:
             self._load_safety_protocols()
             
             logger.info(f"Loaded {len(self.knowledge_base)} knowledge base entries")
+
+            # Build TF-IDF index for better retrieval
+            self._kb_texts = [entry['content'] for entry in self.knowledge_base]
+            if self._kb_texts:
+                self._kb_vectorizer = TfidfVectorizer(stop_words='english', max_features=5000)
+                self._kb_matrix = self._kb_vectorizer.fit_transform(self._kb_texts)
             
         except Exception as e:
             logger.error(f"Error loading knowledge base: {str(e)}")
@@ -168,18 +193,28 @@ class RAGChatbot:
     
     def search_knowledge_base(self, query: str, user_role: str = 'caregiver') -> List[str]:
         """Search knowledge base for relevant information"""
-        relevant_info = []
-        
-        # Simple keyword-based search
-        query_lower = query.lower()
-        
-        for entry in self.knowledge_base:
-            content_lower = entry['content'].lower()
-            
-            # Check if query keywords match content
-            if any(keyword in content_lower for keyword in query_lower.split()):
-                relevant_info.append(entry['content'])
-        
+        relevant_info: List[str] = []
+
+        # Prefer semantic TF-IDF retrieval; fallback to keyword
+        try:
+            if self._kb_vectorizer is not None and self._kb_matrix is not None and len(self._kb_texts) > 0:
+                q_vec = self._kb_vectorizer.transform([query])
+                sims = cosine_similarity(q_vec, self._kb_matrix).flatten()
+                top_idx = sims.argsort()[::-1][:5]
+                for idx in top_idx:
+                    if sims[idx] > 0:
+                        relevant_info.append(self._kb_texts[idx])
+        except Exception:
+            pass
+
+        if not relevant_info:
+            # Simple keyword fallback
+            ql = query.lower()
+            for entry in self.knowledge_base:
+                content = entry['content']
+                if any(k in content.lower() for k in ql.split()):
+                    relevant_info.append(content)
+
         # Add role-specific information
         if user_role == 'caregiver':
             relevant_info.append("As a caregiver, you have access to monitoring tools, safety zones, and training modules.")
@@ -187,41 +222,190 @@ class RAGChatbot:
             relevant_info.append("As an administrator, you have access to user management, analytics, and system monitoring tools.")
         
         return relevant_info[:5]  # Limit to 5 most relevant pieces
+
+    # --- Tooling for complex queries ---
+    def _supabase_client(self):
+        try:
+            from supabase_integration import get_supabase_client
+            return get_supabase_client()
+        except Exception:
+            return None
+
+    def tool_get_high_risk_patients(self, limit: int = 5) -> Dict:
+        client = self._supabase_client()
+        if not client:
+            return {'success': False, 'error': 'Supabase not available'}
+        try:
+            resp = client.table('pwids').select('patient_id,risk_status,risk_score,recent_seizure_count,last_risk_update') \
+                .in_('risk_status', ['High', 'Critical']).order('risk_score', desc=True).limit(limit).execute()
+            return {'success': True, 'data': resp.data}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    def tool_incident_stats(self, days: int = 30) -> Dict:
+        client = self._supabase_client()
+        if not client:
+            return {'success': False, 'error': 'Supabase not available'}
+        try:
+            since = (datetime.utcnow() - timedelta(days=days)).isoformat()
+            resp = client.table('incidents').select('incident_type,severity,environment,response_time_minutes,incident_date') \
+                .gte('incident_date', since).execute()
+            rows = resp.data or []
+            total = len(rows)
+            seizures = sum(1 for r in rows if (r.get('incident_type') or '').lower() == 'seizure')
+            avg_resp = None
+            rt = [r.get('response_time_minutes') for r in rows if r.get('response_time_minutes') is not None]
+            if rt:
+                avg_resp = round(sum(rt) / len(rt), 2)
+            env_counts: Dict[str, int] = {}
+            for r in rows:
+                env = (r.get('environment') or 'unknown').lower()
+                env_counts[env] = env_counts.get(env, 0) + 1
+            return {'success': True, 'data': {
+                'total_incidents': total,
+                'seizure_count': seizures,
+                'avg_response_time': avg_resp,
+                'by_environment': env_counts
+            }}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    def tool_predict_patient(self, patient_id: str) -> Dict:
+        try:
+            # Reuse prediction engine directly for best results
+            from prediction_model import prediction_engine
+            client = self._supabase_client()
+            if not client:
+                return {'success': False, 'error': 'Supabase not available'}
+            result = prediction_engine.predict_patient_risk(patient_id, client)
+            return result
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    def _detect_intents(self, query: str) -> Dict:
+        q = query.lower()
+        intents = {
+            'list_high_risk': any(k in q for k in ['high risk', 'critical patients', 'list high-risk', 'top risk']),
+            'incident_stats': any(k in q for k in ['incidents last', 'incident stats', 'how many incidents', 'seizures last']),
+            'predict_patient': any(k in q for k in ['predict', 'risk for patient'])
+        }
+        # Extract patient id for prediction
+        pid = None
+        if intents['predict_patient']:
+            for token in q.replace('#', ' ').replace('-', ' ').split():
+                if token.startswith('sub') or token.startswith('pwid'):
+                    pid = token
+                    break
+        return {'intents': intents, 'patient_id': pid}
     
     def generate_response(self, query: str, user_role: str = 'caregiver') -> str:
         """Generate response using Gemini API with RAG"""
         try:
+            # 1) Tool-augmented reasoning for complex queries
+            plan = self._detect_intents(query)
+            tool_context_parts: List[str] = []
+
+            # Only admins can access live data/tools
+            if user_role == 'admin':
+                if plan['intents'].get('list_high_risk'):
+                    res = self.tool_get_high_risk_patients(limit=5)
+                    if res.get('success'):
+                        pts = res['data']
+                        summary = '\n'.join([f"- {p.get('patient_id')}: {p.get('risk_status')} ({p.get('risk_score')}) seizures7d={p.get('recent_seizure_count')}" for p in pts])
+                        tool_context_parts.append(f"High-risk patients (top 5):\n{summary}")
+
+                if plan['intents'].get('incident_stats'):
+                    res = self.tool_incident_stats(days=30)
+                    if res.get('success'):
+                        d = res['data']
+                        envs = ', '.join([f"{k}:{v}" for k,v in d.get('by_environment', {}).items()])
+                        tool_context_parts.append(
+                            f"Incident stats (30d): total={d.get('total_incidents')}, seizures={d.get('seizure_count')}, avg_response={d.get('avg_response_time')} min, envs=[{envs}]"
+                        )
+
+                if plan['intents'].get('predict_patient') and plan.get('patient_id'):
+                    res = self.tool_predict_patient(plan['patient_id'])
+                    if res.get('success'):
+                        pred = res.get('prediction', {})
+                        tool_context_parts.append(
+                            f"Prediction for {plan['patient_id']}: level={pred.get('risk_level')}, score={pred.get('risk_score')}, confidence={pred.get('confidence')}%"
+                        )
+
             # Search knowledge base
             relevant_info = self.search_knowledge_base(query, user_role)
             
             # Build context
-            context = "\n".join(relevant_info) if relevant_info else "No specific information found in knowledge base."
+            context_sections = []
+            if relevant_info:
+                context_sections.append("Knowledge Base:\n" + "\n".join(relevant_info))
+            if tool_context_parts:
+                context_sections.append("Live Data:\n" + "\n".join(tool_context_parts))
+            context = "\n\n".join(context_sections) if context_sections else "No specific information found in knowledge base."
             
-            # Create prompt with context
+            # Create prompt with context (truncate to control tokens)
+            def _truncate(txt: str, max_chars: int = 6000) -> str:
+                return txt if len(txt) <= max_chars else (txt[:max_chars] + "\n...[truncated]")
+
             prompt = f"""
             You are a helpful AI assistant for the SafeStep application, which helps caregivers monitor people with intellectual disabilities.
             
             Context from knowledge base:
-            {context}
+            {_truncate(context, 6000)}
             
             User Role: {user_role}
             User Question: {query}
             
-            Please provide a helpful, accurate response based on the context and your knowledge of caregiving and safety protocols. 
+            Requirements:
+            - Provide a helpful, accurate response using the context and clinical best practices.
+            - If live data is provided, prioritize it and summarize concisely.
+            - If an action is requested but not available, describe exactly how to perform it in the UI.
+            - Keep responses structured with short bullets when listing items.
             Keep responses concise and practical. If you don't have specific information, say so and suggest contacting support.
             """
             
-            # Generate response using Gemini
-            response = self.model.generate_content(prompt)
-            
-            return response.text
+            # Cache lookup to avoid duplicate API calls
+            cache_key = f"{user_role}|{query.strip().lower()}"
+            if cache_key in self.answer_cache:
+                return self.answer_cache[cache_key]
+
+            # Generate response with automatic fallback on quota (429)
+            try:
+                response = self.model.generate_content(prompt)
+                text = response.text
+            except Exception as e:
+                emsg = str(e).lower()
+                if '429' in emsg or 'quota' in emsg or 'rate limit' in emsg:
+                    try:
+                        response = self.model_fallback.generate_content(prompt)
+                        text = response.text
+                    except Exception as e2:
+                        raise e2
+                else:
+                    raise
+
+            # Update short conversation memory
+            self.conversation_history.append((query, text))
+            if len(self.conversation_history) > self.max_history:
+                self.conversation_history = self.conversation_history[-self.max_history:]
+
+            # Update cache (simple size cap)
+            if len(self.answer_cache) >= self.max_cache_entries:
+                # Remove an arbitrary old item
+                self.answer_cache.pop(next(iter(self.answer_cache)))
+            self.answer_cache[cache_key] = text
+
+            return text
             
         except Exception as e:
             logger.error(f"Error generating response: {str(e)}")
             logger.error(f"Error type: {type(e)}")
             logger.error(f"API Key configured: {bool(self.api_key)}")
             # Return a more helpful error message with debugging info
-            return f"Chatbot Error: {str(e)}. Please check your GEMINI_API_KEY configuration."
+            return (
+                "Chatbot Error: "
+                + str(e)
+                + ". Tip: reduce request rate/size, or set GEMINI_MODEL=gemini-1.5-flash for lower quota usage."
+            )
 
 # Global chatbot instance
 chatbot = None

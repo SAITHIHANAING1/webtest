@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Health & Safety Questionnaire - SAFE-Step{% endblock %}
+{% block title %}Health & Safety Assessment - SAFE-Step{% endblock %}
 
 {% block body_class %}admin-page questionnaire-page{% endblock %}
 
@@ -16,8 +16,8 @@
                                 <i class="fas fa-clipboard-list me-2"></i>SAFE-Step
                             </div>
                             <h2 class="questionnaire-title">Health & Safety Assessment</h2>
-                            <p class="questionnaire-subtitle">Help us personalize your experience and provide better
-                                support</p>
+                            <p class="questionnaire-subtitle">Help us personalize the patient's experience and provide
+                                better support</p>
                         </div>
 
                         <!-- Progress Bar -->
@@ -47,17 +47,19 @@
                         <!-- Section 1: Personal Information -->
                         <div class="questionnaire-section" id="section1">
                             <h3 class="section-title">
-                                <i class="fas fa-user me-2"></i>Personal Information
+                                <i class="fas fa-user me-2"></i>Patient Personal Information
                             </h3>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label for="age" class="form-label">Age</label>
+                                    <label for="age" class="form-label">Patient's Age <span
+                                            class="text-danger">*</span></label>
                                     <input type="number" class="form-control" id="age" name="age" min="1" max="120"
-                                        required>
-                                    <div class="invalid-feedback">Please enter your age.</div>
+                                        required oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                    <div class="invalid-feedback">Please enter the patient's age (numbers only).</div>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="gender" class="form-label">Gender</label>
+                                    <label for="gender" class="form-label">Patient's Gender <span
+                                            class="text-danger">*</span></label>
                                     <select class="form-select" id="gender" name="gender" required>
                                         <option value="">Select gender...</option>
                                         <option value="M">Male</option>
@@ -65,20 +67,20 @@
                                         <option value="Other">Other</option>
                                         <option value="Prefer not to say">Prefer not to say</option>
                                     </select>
-                                    <div class="invalid-feedback">Please select your gender.</div>
+                                    <div class="invalid-feedback">Please select the patient's gender.</div>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label for="height_cm" class="form-label">Height (cm)</label>
+                                    <label for="height_cm" class="form-label">Patient's Height (cm)</label>
                                     <input type="number" class="form-control" id="height_cm" name="height_cm" min="50"
-                                        max="250" step="0.1">
+                                        max="250" step="0.1" oninput="this.value = this.value.replace(/[^0-9.]/g, '')">
                                     <div class="form-text">Optional - for health monitoring</div>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="weight_kg" class="form-label">Weight (kg)</label>
+                                    <label for="weight_kg" class="form-label">Patient's Weight (kg)</label>
                                     <input type="number" class="form-control" id="weight_kg" name="weight_kg" min="10"
-                                        max="300" step="0.1">
+                                        max="300" step="0.1" oninput="this.value = this.value.replace(/[^0-9.]/g, '')">
                                     <div class="form-text">Optional - for health monitoring</div>
                                 </div>
                             </div>
@@ -87,20 +89,22 @@
                         <!-- Section 2: Medical History -->
                         <div class="questionnaire-section" id="section2" style="display: none;">
                             <h3 class="section-title">
-                                <i class="fas fa-heartbeat me-2"></i>Medical History
+                                <i class="fas fa-heartbeat me-2"></i>Patient Medical History
                             </h3>
                             <div class="mb-3">
-                                <label class="form-label">Do you have epilepsy?</label>
+                                <label class="form-label">Does the patient have epilepsy? <span
+                                        class="text-danger">*</span></label>
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="has_epilepsy" id="epilepsy_yes"
-                                        value="true">
+                                        value="true" required>
                                     <label class="form-check-label" for="epilepsy_yes">Yes</label>
                                 </div>
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="has_epilepsy" id="epilepsy_no"
-                                        value="false" checked>
+                                        value="false" required>
                                     <label class="form-check-label" for="epilepsy_no">No</label>
                                 </div>
+                                <div class="invalid-feedback">Please select whether the patient has epilepsy.</div>
                             </div>
 
                             <div id="epilepsy_details" style="display: none;">
@@ -108,7 +112,8 @@
                                     <div class="col-md-6 mb-3">
                                         <label for="epilepsy_diagnosis_age" class="form-label">Age at diagnosis</label>
                                         <input type="number" class="form-control" id="epilepsy_diagnosis_age"
-                                            name="epilepsy_diagnosis_age" min="0" max="100">
+                                            name="epilepsy_diagnosis_age" min="0" max="100"
+                                            oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label for="epilepsy_type" class="form-label">Type of epilepsy</label>
@@ -145,18 +150,21 @@
                         <!-- Section 3: Medication & Treatment -->
                         <div class="questionnaire-section" id="section3" style="display: none;">
                             <h3 class="section-title">
-                                <i class="fas fa-pills me-2"></i>Medication & Treatment
+                                <i class="fas fa-pills me-2"></i>Patient Medication & Treatment
                             </h3>
                             <div class="mb-3">
-                                <label for="current_medications" class="form-label">Current medications
+                                <label for="current_medications" class="form-label">Patient's current medications
                                     (optional)</label>
                                 <textarea class="form-control" id="current_medications" name="current_medications"
-                                    rows="3" placeholder="List any medications you're currently taking..."></textarea>
+                                    rows="3"
+                                    placeholder="List any medications the patient is currently taking..."></textarea>
                             </div>
                             <div class="mb-3">
-                                <label for="medication_compliance" class="form-label">How well do you follow your
-                                    medication schedule?</label>
-                                <select class="form-select" id="medication_compliance" name="medication_compliance">
+                                <label for="medication_compliance" class="form-label">How well does the patient follow
+                                    their
+                                    medication schedule? <span class="text-danger">*</span></label>
+                                <select class="form-select" id="medication_compliance" name="medication_compliance"
+                                    required>
                                     <option value="">Select compliance level...</option>
                                     <option value="excellent">Excellent - Never miss doses</option>
                                     <option value="good">Good - Rarely miss doses</option>
@@ -164,26 +172,28 @@
                                     <option value="poor">Poor - Often miss doses</option>
                                     <option value="not_applicable">Not applicable</option>
                                 </select>
+                                <div class="invalid-feedback">Please select the patient's medication compliance level.
+                                </div>
                             </div>
                             <div class="mb-3">
                                 <label for="medication_side_effects" class="form-label">Medication side effects
                                     (optional)</label>
                                 <textarea class="form-control" id="medication_side_effects"
                                     name="medication_side_effects" rows="2"
-                                    placeholder="Any side effects you experience..."></textarea>
+                                    placeholder="Any side effects the patient experiences..."></textarea>
                             </div>
                         </div>
 
                         <!-- Section 4: Lifestyle Factors -->
                         <div class="questionnaire-section" id="section4" style="display: none;">
                             <h3 class="section-title">
-                                <i class="fas fa-running me-2"></i>Lifestyle Factors
+                                <i class="fas fa-running me-2"></i>Patient Lifestyle Factors
                             </h3>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label for="sleep_hours_avg" class="form-label">Average hours of sleep per
-                                        night</label>
-                                    <select class="form-select" id="sleep_hours_avg" name="sleep_hours_avg">
+                                    <label for="sleep_hours_avg" class="form-label">Patient's average hours of sleep per
+                                        night <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="sleep_hours_avg" name="sleep_hours_avg" required>
                                         <option value="">Select hours...</option>
                                         <option value="4">Less than 5 hours</option>
                                         <option value="5">5-6 hours</option>
@@ -191,37 +201,47 @@
                                         <option value="9">8-10 hours</option>
                                         <option value="11">More than 10 hours</option>
                                     </select>
+                                    <div class="invalid-feedback">Please select the patient's average sleep hours.</div>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="stress_level" class="form-label">Stress level</label>
-                                    <select class="form-select" id="stress_level" name="stress_level">
+                                    <label for="stress_level" class="form-label">Patient's stress level <span
+                                            class="text-danger">*</span></label>
+                                    <select class="form-select" id="stress_level" name="stress_level" required>
                                         <option value="">Select stress level...</option>
                                         <option value="low">Low</option>
                                         <option value="moderate">Moderate</option>
                                         <option value="high">High</option>
                                     </select>
+                                    <div class="invalid-feedback">Please select the patient's stress level.</div>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label for="exercise_frequency" class="form-label">Exercise frequency</label>
-                                    <select class="form-select" id="exercise_frequency" name="exercise_frequency">
+                                    <label for="exercise_frequency" class="form-label">Patient's exercise frequency
+                                        <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="exercise_frequency" name="exercise_frequency"
+                                        required>
                                         <option value="">Select frequency...</option>
                                         <option value="never">Never</option>
                                         <option value="rarely">Rarely</option>
                                         <option value="weekly">1-3 times per week</option>
                                         <option value="daily">Daily or almost daily</option>
                                     </select>
+                                    <div class="invalid-feedback">Please select the patient's exercise frequency.</div>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="alcohol_consumption" class="form-label">Alcohol consumption</label>
-                                    <select class="form-select" id="alcohol_consumption" name="alcohol_consumption">
+                                    <label for="alcohol_consumption" class="form-label">Patient's alcohol consumption
+                                        <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="alcohol_consumption" name="alcohol_consumption"
+                                        required>
                                         <option value="">Select consumption...</option>
                                         <option value="none">None</option>
                                         <option value="occasional">Occasional</option>
                                         <option value="moderate">Moderate</option>
                                         <option value="heavy">Heavy</option>
                                     </select>
+                                    <div class="invalid-feedback">Please select the patient's alcohol consumption level.
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -229,20 +249,22 @@
                         <!-- Section 5: Safety & Support -->
                         <div class="questionnaire-section" id="section5" style="display: none;">
                             <h3 class="section-title">
-                                <i class="fas fa-shield-alt me-2"></i>Safety & Support
+                                <i class="fas fa-shield-alt me-2"></i>Patient Safety & Support
                             </h3>
                             <div class="mb-3">
-                                <label class="form-label">Do you live alone?</label>
+                                <label class="form-label">Does the patient live alone? <span
+                                        class="text-danger">*</span></label>
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="lives_alone" id="lives_alone_yes"
-                                        value="true">
+                                        value="true" required>
                                     <label class="form-check-label" for="lives_alone_yes">Yes</label>
                                 </div>
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="lives_alone" id="lives_alone_no"
-                                        value="false" checked>
+                                        value="false" required>
                                     <label class="form-check-label" for="lives_alone_no">No</label>
                                 </div>
+                                <div class="invalid-feedback">Please select whether the patient lives alone.</div>
                             </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
@@ -259,7 +281,7 @@
                             </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Do you have a medical alert device?</label>
+                                    <label class="form-label">Does the patient have a medical alert device?</label>
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="has_medical_alert"
                                             id="medical_alert_yes" value="true">
@@ -272,7 +294,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Do you wear a helmet for safety?</label>
+                                    <label class="form-label">Does the patient wear a helmet for safety?</label>
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="wears_helmet" id="helmet_yes"
                                             value="true">
@@ -290,20 +312,23 @@
                         <!-- Section 6: Technology & Monitoring -->
                         <div class="questionnaire-section" id="section6" style="display: none;">
                             <h3 class="section-title">
-                                <i class="fas fa-mobile-alt me-2"></i>Technology & Monitoring
+                                <i class="fas fa-mobile-alt me-2"></i>Patient Technology & Monitoring
                             </h3>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label for="smartphone_usage" class="form-label">Smartphone usage</label>
-                                    <select class="form-select" id="smartphone_usage" name="smartphone_usage">
+                                    <label for="smartphone_usage" class="form-label">Patient's smartphone usage <span
+                                            class="text-danger">*</span></label>
+                                    <select class="form-select" id="smartphone_usage" name="smartphone_usage" required>
                                         <option value="">Select usage level...</option>
                                         <option value="none">Don't use smartphone</option>
                                         <option value="basic">Basic usage (calls, texts)</option>
                                         <option value="advanced">Advanced usage (apps, internet)</option>
                                     </select>
+                                    <div class="invalid-feedback">Please select the patient's smartphone usage level.
+                                    </div>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Do you use wearable devices?</label>
+                                    <label class="form-label">Does the patient use wearable devices?</label>
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="wearable_device"
                                             id="wearable_yes" value="true">
@@ -318,14 +343,16 @@
                             </div>
                             <div class="mb-3">
                                 <label for="monitoring_preference" class="form-label">Preferred monitoring
-                                    approach</label>
-                                <select class="form-select" id="monitoring_preference" name="monitoring_preference">
+                                    approach <span class="text-danger">*</span></label>
+                                <select class="form-select" id="monitoring_preference" name="monitoring_preference"
+                                    required>
                                     <option value="">Select preference...</option>
                                     <option value="continuous">Continuous monitoring</option>
                                     <option value="periodic">Periodic check-ins</option>
                                     <option value="manual">Manual logging only</option>
                                     <option value="none">No monitoring preferred</option>
                                 </select>
+                                <div class="invalid-feedback">Please select the preferred monitoring approach.</div>
                             </div>
                         </div>
 
@@ -491,6 +518,10 @@
         border: none;
     }
 
+    .text-danger {
+        color: #dc3545 !important;
+    }
+
     @media (max-width: 768px) {
         .questionnaire-card {
             padding: 1.5rem;
@@ -540,6 +571,20 @@
                 e.preventDefault();
                 return false;
             }
+        });
+
+        // Number-only validation for number inputs
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener('input', function () {
+                // Remove any non-numeric characters except decimal point
+                this.value = this.value.replace(/[^0-9.]/g, '');
+
+                // Ensure only one decimal point
+                const parts = this.value.split('.');
+                if (parts.length > 2) {
+                    this.value = parts[0] + '.' + parts.slice(1).join('');
+                }
+            });
         });
     });
 
@@ -597,19 +642,55 @@
         let isValid = true;
 
         requiredFields.forEach(field => {
-            if (!field.value.trim()) {
-                field.classList.add('is-invalid');
-                isValid = false;
+            if (field.type === 'radio') {
+                // For radio buttons, check if any in the group is selected
+                const radioGroup = currentSectionElement.querySelectorAll(`input[name="${field.name}"]`);
+                const isSelected = Array.from(radioGroup).some(radio => radio.checked);
+                if (!isSelected) {
+                    radioGroup.forEach(radio => {
+                        radio.classList.add('is-invalid');
+                    });
+                    isValid = false;
+                } else {
+                    radioGroup.forEach(radio => {
+                        radio.classList.remove('is-invalid');
+                    });
+                }
             } else {
-                field.classList.remove('is-invalid');
+                // For other field types
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                }
             }
         });
 
         if (!isValid) {
+            // Show error message
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger mt-3';
+            errorDiv.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Please complete all required fields marked with <span class="text-danger">*</span> before proceeding.';
+
+            // Remove any existing error messages
+            const existingError = currentSectionElement.querySelector('.alert-danger');
+            if (existingError) {
+                existingError.remove();
+            }
+
+            currentSectionElement.appendChild(errorDiv);
+
             // Scroll to first invalid field
             const firstInvalid = currentSectionElement.querySelector('.is-invalid');
             if (firstInvalid) {
                 firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        } else {
+            // Remove error message if validation passes
+            const existingError = currentSectionElement.querySelector('.alert-danger');
+            if (existingError) {
+                existingError.remove();
             }
         }
 
