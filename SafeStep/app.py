@@ -1168,7 +1168,10 @@ def seizure_history():
             return jsonify({'success': False, 'message': 'Invalid request'}), 400
     # GET: show history page
     sessions = SeizureSession.query.filter_by(user_id=current_user.id).order_by(SeizureSession.created_at.desc()).all()
-    return render_template('caregiver/Issac/history.html', sessions=sessions)
+    patients = PwidProfile.query.all()
+    # Build a dict for fast lookup by patient_id
+    patients_dict = {p.id: p for p in patients}
+    return render_template('caregiver/Issac/history.html', sessions=sessions, patients=patients, patients_dict=patients_dict)
 
 @app.route('/caregiver/session/<int:session_id>')
 @login_required
