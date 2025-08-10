@@ -99,7 +99,7 @@
                                         <td>{{ session.start_time.strftime('%m/%d/%Y %H:%M') }}</td>
                                         <td>
                                             {% if session.end_time %}
-                                                {{ ((session.end_time - session.start_time).seconds // 60) }} min
+                                                {{ (session.end_time - session.start_time).total_seconds()|int }} sec
                                             {% else %}
                                                 <span class="badge bg-danger">Ongoing</span>
                                             {% endif %}
