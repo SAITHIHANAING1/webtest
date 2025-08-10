@@ -676,14 +676,12 @@
 <script>
     // Training Management JavaScript
     document.addEventListener('DOMContentLoaded', function () {
-        initializeChart();
-
-        // Create module form
-        document.getElementById('createModuleForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-            showNotification('Training module created successfully!', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('createModuleModal')).hide();
-        });
+  const form = document.getElementById('createModuleForm');
+  form.addEventListener('submit', function (e) {
+    // DO NOT preventDefault here. Let it post to /admin/training.
+    // Optional: show a quick toast if you want.
+    // showNotification('Creating module...', 'info');
+    });
     });
 
     function initializeChart() {

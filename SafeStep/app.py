@@ -1149,14 +1149,15 @@ def ticket_management():
 @admin_required
 def training_management():
     if request.method == 'POST':
-        title = request.form.get('title')
-        description = request.form.get('description')
-        duration = request.form.get('duration', 30)
+        title = request.form.get('title', '').strip()
+        description = request.form.get('description', '').strip()
+        duration = int(request.form.get('duration', 30) or 30)
         difficulty = request.form.get('difficulty', 'beginner')
-        icon = request.form.get('icon', 'book')
+        icon = request.form.get('icon', 'book')  # UI only; not stored unless you add a column
         content = request.form.get('content', '')
         video_url = request.form.get('video_url', '')
-        # Quiz and image handling can be added here if needed
+
+        # 1) save locally (keeps your page working regardless of Supabase)
         module = TrainingModule(
             title=title,
             description=description,
@@ -1169,11 +1170,46 @@ def training_management():
         )
         db.session.add(module)
         db.session.commit()
-        print("[DEBUG] Modules after insert:", TrainingModule.query.all())
+
+        # 2) save to Supabase (server-side; service key recommended)
+        if supabase_available:
+            try:
+                # Prefer admin client (service key) so RLS doesn’t block inserts
+                from supabase_integration import get_supabase_admin_client, get_supabase_client
+                supa = None
+                try:
+                    supa = get_supabase_admin_client()  # uses SUPABASE_SERVICE_KEY
+                except Exception:
+                    # fallback to anon client if no service key is set
+                    supa = get_supabase_client()
+
+                if supa:
+                    payload = {
+                        "title": title,
+                        "description": description,
+                        "content": content,
+                        "video_url": video_url,
+                        "quiz_questions": None,         # wire this up later if you like
+                        "duration_minutes": duration,
+                        "difficulty_level": difficulty,
+                        "module_type": "video",
+                        "is_active": True,
+                        "created_at": datetime.utcnow().isoformat()
+                    }
+                    resp = supa.table("training_modules").insert(payload).execute()
+                    # supabase-py v2 returns object with .data; no reliable .status_code
+                    if not getattr(resp, "data", None):
+                        print(f"[Supabase] insert returned no data: {resp}")
+                else:
+                    print("[Supabase] client not available")
+            except Exception as e:
+                # Non-fatal: local DB already has it
+                print(f"[Supabase] insert failed: {e}")
+
         flash('Training module created successfully!', 'success')
         return redirect(url_for('training_management'))
-    modules = TrainingModule.query.all()
-    print("[DEBUG] Modules on GET:", modules)
+
+    modules = TrainingModule.query.order_by(TrainingModule.created_at.desc()).all()
     return render_template('admin/Ethan/admin_training.html', modules=modules)
     
 
