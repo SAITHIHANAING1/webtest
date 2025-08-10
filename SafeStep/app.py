@@ -1259,7 +1259,33 @@ def training_management():
         return redirect(url_for('training_management'))
 
     modules = TrainingModule.query.order_by(TrainingModule.created_at.desc()).all()
-    return render_template('admin/Ethan/admin_training.html', modules=modules)
+    # Convert SQLAlchemy objects to dicts for JSON serialization in template
+    def module_to_dict(module):
+        return {
+            'id': module.id,
+            'title': module.title,
+            'description': module.description,
+            'content': module.content,
+            'video_url': module.video_url,
+            'quiz_questions': module.quiz_questions,
+            'duration_minutes': module.duration_minutes,
+            'difficulty_level': module.difficulty_level,
+            'module_type': module.module_type,
+            'created_at': module.created_at.isoformat() if module.created_at else None,
+            'is_active': module.is_active,
+        }
+    modules_dict = [module_to_dict(m) for m in modules]
+    return render_template('admin/Ethan/admin_training.html', modules=modules_dict)
+
+# Delete module route
+@app.route('/admin/training/delete/<int:module_id>', methods=['POST'])
+@login_required
+@admin_required
+def delete_training_module(module_id):
+    module = TrainingModule.query.get_or_404(module_id)
+    db.session.delete(module)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Module deleted'})
     
 
 @app.route('/admin/analytics')
