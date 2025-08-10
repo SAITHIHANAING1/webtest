@@ -9,8 +9,8 @@ from supabase import create_client, Client
 from datetime import datetime, timedelta
 import json
 
-# Load environment variables from the current directory
-load_dotenv()
+# Load environment variables from config.env
+load_dotenv('config.env')
 
 # If not found, try loading from the parent directory (for imports from app.py)
 if not os.environ.get('SUPABASE_URL'):
