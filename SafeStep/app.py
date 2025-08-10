@@ -505,6 +505,41 @@ class DatasetReference(db.Model):
     generation_date = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+class LocationTracking(db.Model):
+    """
+    Store location data for real-time tracking and zone detection
+    """
+    __tablename__ = 'location_tracking'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.String(50), nullable=False, index=True)  # Can be user ID or custom patient ID
+    latitude = db.Column(db.Float, nullable=False)
+    longitude = db.Column(db.Float, nullable=False)
+    accuracy = db.Column(db.Float)  # GPS accuracy in meters
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    zone_status = db.Column(db.String(20))  # 'safe', 'danger', 'outside'
+    zone_id = db.Column(db.Integer)  # Which zone they're in (if any)
+    
+    # Add indexes for performance
+    __table_args__ = (
+        db.Index('idx_patient_timestamp', 'patient_id', 'timestamp'),
+        db.Index('idx_timestamp', 'timestamp'),
+    )
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'patient_id': self.patient_id,
+            'lat': self.latitude,
+            'lng': self.longitude,
+            'accuracy': self.accuracy,
+            'timestamp': self.timestamp.isoformat() if self.timestamp else None,
+            'ts': int(self.timestamp.timestamp()) if self.timestamp else None,
+            'zone_status': self.zone_status,
+            'zone_id': self.zone_id
+        }
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -570,6 +605,53 @@ def get_zones_by_status(status='approved'):
     except Exception as e:
         print(f"Error getting zones by status: {e}")
         return []
+
+def calculate_zone_status(latitude, longitude):
+    """Calculate if a point is in a safety zone or danger zone"""
+    try:
+        import math
+        
+        # Get all active zones
+        zones = get_zones_by_status('approved')
+        
+        zone_status = 'outside'
+        zone_id = None
+        
+        for zone in zones:
+            if not zone.get('latitude') or not zone.get('longitude') or not zone.get('radius'):
+                continue
+                
+            zone_lat = float(zone['latitude'])
+            zone_lng = float(zone['longitude'])
+            radius_m = float(zone['radius'])
+            
+            # Calculate distance using Haversine formula
+            lat1, lon1 = math.radians(latitude), math.radians(longitude)
+            lat2, lon2 = math.radians(zone_lat), math.radians(zone_lng)
+            
+            dlat = lat2 - lat1
+            dlon = lon2 - lon1
+            
+            a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+            c = 2 * math.asin(math.sqrt(a))
+            distance_m = 6371000 * c  # Earth's radius in meters
+            
+            # Check if point is within zone
+            if distance_m <= radius_m:
+                zone_type = zone.get('zone_type', 'safe').lower()
+                if zone_type == 'danger':
+                    # Danger zones take priority
+                    return 'danger', zone['id']
+                elif zone_type == 'safe' and zone_status != 'danger':
+                    zone_status = 'safe'
+                    zone_id = zone['id']
+        
+        return zone_status, zone_id
+        
+    except Exception as e:
+        print(f"Error calculating zone status: {e}")
+        return 'outside', None
+
 
 # Admin required decorator
 def admin_required(f):
@@ -1053,7 +1135,7 @@ def session_detail(session_id):
 @login_required
 def safety_zones():
     zones = get_zones_for_user(current_user.id)
-    return render_template('caregiver/Sai/zones.html', zones=zones)
+    return render_template('caregiver/Sai/safety_zones.html', zones=zones)
 
 @app.route('/caregiver/zones/new', methods=['GET', 'POST'])
 @login_required
@@ -1115,6 +1197,68 @@ def support_ticket():
         return redirect(url_for('caregiver_dashboard'))
     
     return render_template('caregiver/Issac/support.html')
+# Location Tracking API Endpoints for Caregivers
+@app.route('/caregiver/api/location/<patient_id>', methods=['GET'])
+@login_required
+def get_patient_location(patient_id):
+    """Get the latest location for a patient"""
+    try:
+        # Get the most recent location for this patient
+        location = LocationTracking.query.filter_by(patient_id=patient_id).order_by(LocationTracking.timestamp.desc()).first()
+        
+        if not location:
+            return jsonify({'ok': False, 'error': 'No location data found'})
+        
+        return jsonify({
+            'ok': True,
+            'data': location.to_dict()
+        })
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)})
+
+@app.route('/caregiver/api/location', methods=['POST'])
+def update_location():
+    """Update location for a patient (public endpoint for location sharing)"""
+    try:
+        data = request.get_json()
+        patient_id = data.get('patient_id', 'demo')
+        latitude = data.get('latitude')
+        longitude = data.get('longitude')
+        accuracy = data.get('accuracy')
+        
+        if not latitude or not longitude:
+            return jsonify({'ok': False, 'error': 'Latitude and longitude required'})
+        
+        # Calculate zone status
+        zone_status, zone_id = calculate_zone_status(latitude, longitude)
+        
+        # Create new location record
+        location = LocationTracking(
+            patient_id=patient_id,
+            latitude=float(latitude),
+            longitude=float(longitude),
+            accuracy=float(accuracy) if accuracy else None,
+            zone_status=zone_status,
+            zone_id=zone_id
+        )
+        
+        db.session.add(location)
+        db.session.commit()
+        
+        return jsonify({
+            'ok': True,
+            'data': location.to_dict()
+        })
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)})
+
+# Removed test and debug endpoints for cleaner code
+
+@app.route('/caregiver/zones/share')
+def location_share():
+    """Public page for patients to share their location"""
+    patient_id = request.args.get('pid', 'demo')
+    return render_template('caregiver/location_share.html', patient_id=patient_id)
 
 # Admin Routes
 @app.route('/admin')
@@ -2875,6 +3019,7 @@ def create_incident():
 @login_required
 def get_zones():
     """Get zones for caregiver (read-only, approved zones only)"""
+    print(f"🔍 API /api/zones called by user {current_user.id}")
     try:
         # Try Supabase first
         if supabase_available:
@@ -2883,62 +3028,49 @@ def get_zones():
                 supabase = get_supabase_client()
                 
                 if supabase:
-                    # Use anon client with RLS for caregivers
+                    print("🔍 Querying Supabase for approved zones...")
+                    # Get active, approved zones (same query as page route)
                     response = supabase.table('zones').select('*').filter('is_active', 'eq', True).filter('status', 'eq', 'approved').execute()
                     zones = response.data
+                    print(f"🔍 Found {len(zones)} approved zones in API")
                     
-                    # Convert to GeoJSON format
-                    features = []
+                    # Convert to simple format expected by frontend
+                    zone_list = []
                     for zone in zones:
-                        # Skip zones with invalid coordinates
                         lat = zone.get('latitude')
                         lng = zone.get('longitude')
                         if lat is None or lng is None:
+                            print(f"⚠️ Skipping zone {zone.get('name')} - missing coordinates")
                             continue
                             
-                        geometry = zone.get('geometry')
-                        if geometry:
-                            if isinstance(geometry, str):
-                                geometry = json.loads(geometry)
-                        else:
-                            # Create Point geometry from center coordinates
-                            geometry = {
-                                "type": "Point",
-                                "coordinates": [lng, lat]
-                            }
-                        
-                        feature = {
-                            "type": "Feature",
-                            "properties": {
-                                "id": zone['id'],
-                                "name": zone['name'],
-                                "description": zone.get('description', ''),
-                                "zone_type": zone.get('zone_type', 'safe'),
-                                "radius_m": zone.get('radius'),
-                                "status": zone.get('status', 'approved'),
-                                "is_active": zone.get('is_active', True)
-                            },
-                            "geometry": geometry
-                        }
-                        features.append(feature)
+                        zone_list.append({
+                            "id": zone['id'],
+                            "name": zone.get('name', 'Unknown Zone'),
+                            "description": zone.get('description', ''),
+                            "latitude": float(lat),
+                            "longitude": float(lng),
+                            "radius": zone.get('radius', 100),  # Default 100m radius
+                            "zone_type": zone.get('zone_type', 'safe'),
+                            "is_active": zone.get('is_active', True)
+                        })
                     
+                    print(f"🔍 Returning {len(zone_list)} valid zones to frontend")
                     return jsonify({
-                        "type": "FeatureCollection",
-                        "features": features
+                        "ok": True,
+                        "data": zone_list
                     })
             except Exception as e:
                 print(f"Supabase zones fetch failed: {e}")
         
         # Return empty response if Supabase is not available
         return jsonify({
-            "type": "FeatureCollection",
-            "features": []
+            "ok": True,
+            "data": []
         })
         
     except Exception as e:
         print(f"Error fetching zones: {e}")
-        return jsonify({"type": "FeatureCollection", "features": []}), 500
-
+        return jsonify({"ok": False, "error": str(e)}), 500
 # ===== ZONE MANAGEMENT API ENDPOINTS =====
 
 @app.route('/api/admin/geofence-events')

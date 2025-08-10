@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+{% block title %}Safety Zones{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  .map-container { height: 70vh; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+  .control-panel { background: white; border-radius: 12px; padding: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 1rem; }
+  .patient-card { background: white; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; border: 2px solid #e2e8f0; transition: all 0.2s; cursor: pointer; }
+  .patient-card:hover, .patient-card.selected { border-color: #667eea; transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+  .patient-card.selected { background: #f7fafc; }
+  .zone-item { background: #f8f9fa; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; border-left: 4px solid #667eea; }
+  .status-badge { padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.8rem; font-weight: 600; }
+  .status-safe { background: #d4edda; color: #155724; }
+  .status-danger { background: #f8d7da; color: #721c24; }
+  .status-outside { background: #e2e3e5; color: #383d41; }
+  .floating-controls { position: absolute; top: 10px; right: 10px; z-index: 1000; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+  <div class="row mb-3">
+    <div class="col">
+      <h3><i class="fas fa-shield-alt me-2 text-primary"></i>Safety Zones Monitor</h3>
+      <p class="text-muted mb-0">Real-time patient location tracking</p>
+    </div>
+  </div>
+
+  <!-- Patient Status -->
+  <div id="locationStatus" class="alert alert-info control-panel" style="display: none;">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h6 class="mb-1"><i class="fas fa-user-circle me-2"></i>Patient Status</h6>
+        <div id="statusDetails">Select a patient to monitor...</div>
+      </div>
+      <span id="statusBadge" class="status-badge status-outside">No Patient</span>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <!-- Map -->
+    <div class="col-lg-8">
+      <div class="position-relative">
+        <div id="map" class="map-container"></div>
+        <div class="floating-controls">
+          <button id="btnFit" class="btn btn-outline-primary btn-sm me-2"><i class="fas fa-expand"></i></button>
+          <button id="btnCenter" class="btn btn-outline-primary btn-sm me-2"><i class="fas fa-crosshairs"></i></button>
+          <button id="btnMyLocation" class="btn btn-success btn-sm"><i class="fas fa-location-arrow"></i> Track Me</button>
+        </div>
+      </div>
+      <small id="status" class="text-muted mt-2 d-block">Loading zones...</small>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <!-- Patient Tracker -->
+      <div class="control-panel">
+        <h6 class="mb-3"><i class="fas fa-users me-2"></i>Patient Tracker</h6>
+        <div class="input-group mb-3">
+          <input id="pidInput" class="form-control" placeholder="Patient ID (e.g., demo)">
+          <button id="startTrack" class="btn btn-primary">Track</button>
+        </div>
+        <div class="alert alert-light border-0 p-2 mb-3">
+          <small><strong>Share:</strong> <code>/caregiver/zones/share?pid=PATIENT_ID</code></small>
+        </div>
+        <div id="patientList"></div>
+      </div>
+
+      <!-- Zones -->
+      <div class="control-panel">
+        <h6 class="mb-3"><i class="fas fa-map-marked-alt me-2"></i>Active Zones</h6>
+        <div id="zoneList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const SG_BOUNDS = L.latLngBounds(L.latLng(1.16,103.6), L.latLng(1.47,104.0));
+let map, zones = [], zoneLayers = [], patientMarkers = new Map();
+let myLocationMarker = null, locationWatchId = null, isTrackingMyLocation = false, currentTrackedPatient = null;
+
+function setStatus(msg){ document.getElementById('status').textContent = msg; }
+
+function initMap(){
+  map = L.map('map', { maxBounds: SG_BOUNDS.pad(0.2) }).setView([1.3521, 103.8198], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution:'&copy; OpenStreetMap'}).addTo(map);
+}
+
+function loadZones(){
+  return fetch('/api/zones').then(r=>r.json()).then(data=>{
+    if(!data.ok) throw new Error(data.error || 'Failed to load zones');
+    zones = (data.data||[]).filter(z=>z.is_active !== false);
+    drawZones();
+    populateZoneList();
+    setStatus(`Loaded ${zones.length} zone(s).`);
+  }).catch(e=>{
+    setStatus('Error loading zones: ' + e.message);
+  });
+}
+
+function drawZones(){
+  zoneLayers.forEach(l=>map.removeLayer(l));
+  zoneLayers = [];
+  for(const z of zones){
+    if(z.latitude == null || z.longitude == null || !z.radius) continue;
+    const c = L.circle([z.latitude, z.longitude], {radius: Number(z.radius), color: z.zone_type==='danger'?'#e53e3e':'#38a169', weight:2, fillOpacity:0.08});
+    c.addTo(map); zoneLayers.push(c);
+  }
+}
+
+function populateZoneList(){
+  const box = document.getElementById('zoneList'); 
+  box.innerHTML = '';
+  
+  if (zones.length === 0) {
+    box.innerHTML = '<div class="text-muted text-center py-2"><small>No zones configured</small></div>';
+    return;
+  }
+  
+  zones.forEach(z=>{
+    const zoneType = (z.zone_type || 'safe').toLowerCase();
+    const el = document.createElement('div');
+    el.className='zone-item';
+    el.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="fw-semibold">${z.name || 'Unnamed Zone'}</div>
+          <small class="text-muted">${z.description || 'No description'}</small>
+          <div class="small text-muted mt-1">
+            <i class="fas fa-map-marker-alt me-1"></i>${z.latitude?.toFixed(4) || 'N/A'}, ${z.longitude?.toFixed(4) || 'N/A'}
+            <span class="ms-2"><i class="fas fa-circle-radius me-1"></i>${z.radius || 'N/A'}m</span>
+          </div>
+        </div>
+        <span class="badge ${zoneType === 'danger' ? 'bg-danger' : 'bg-success'}">${zoneType.toUpperCase()}</span>
+      </div>`;
+    box.appendChild(el);
+  });
+}
+
+function toggleMyLocationTracking() {
+  const btn = document.getElementById('btnMyLocation');
+  if (isTrackingMyLocation) {
+    stopMyLocationTracking();
+    btn.innerHTML = '<i class="fas fa-location-arrow"></i> Track Me';
+    btn.className = 'btn btn-success btn-sm';
+  } else {
+    startMyLocationTracking();
+    btn.innerHTML = '<i class="fas fa-stop"></i> Stop';
+    btn.className = 'btn btn-danger btn-sm';
+  }
+}
+
+function startMyLocationTracking() {
+  if (!navigator.geolocation) {
+    alert('Geolocation not supported');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(updateMyLocation, handleLocationError);
+  locationWatchId = navigator.geolocation.watchPosition(updateMyLocation, handleLocationError);
+  isTrackingMyLocation = true;
+}
+
+function stopMyLocationTracking() {
+  if (locationWatchId !== null) {
+    navigator.geolocation.clearWatch(locationWatchId);
+    locationWatchId = null;
+  }
+  if (myLocationMarker) {
+    map.removeLayer(myLocationMarker);
+    myLocationMarker = null;
+  }
+  isTrackingMyLocation = false;
+}
+
+function updateMyLocation(position) {
+  const { latitude, longitude } = position.coords;
+  if (myLocationMarker) {
+    myLocationMarker.setLatLng([latitude, longitude]);
+  } else {
+    myLocationMarker = L.marker([latitude, longitude], {
+      icon: L.divIcon({
+        className: 'my-location-marker',
+        html: '<i class="fas fa-user-circle" style="color: blue; font-size: 20px;"></i>',
+        iconSize: [20, 20], iconAnchor: [10, 10]
+      })
+    }).addTo(map);
+    myLocationMarker.bindPopup('Your Location');
+  }
+}
+
+function handleLocationError(error) {
+  console.error('Location error:', error);
+  alert('Unable to get location');
+  stopMyLocationTracking();
+}
+
+function addPatient(pid){
+  if(!pid || patientMarkers.has(pid)) return;
+  const m = L.marker([1.3521,103.8198]).addTo(map).bindPopup(`Patient: ${pid}`);
+  patientMarkers.set(pid, m);
+  renderPatientList();
+  if (!currentTrackedPatient) {
+    currentTrackedPatient = pid;
+    updateLocationStatus('info', `Now tracking patient: ${pid}`, null, null, null, pid);
+  }
+}
+
+async function pollPatient(pid){
+  try{
+    const r = await fetch(`/caregiver/api/location/${encodeURIComponent(pid)}`);
+    const {ok, data} = await r.json();
+    if(!ok || !data) return;
+    const {lat, lng, ts} = data;
+    const m = patientMarkers.get(pid);
+    if(!m) return;
+    m.setLatLng([lat,lng]);
+    const s = pointStatus(lat,lng);
+    const color = s==='danger' ? 'red' : (s==='safe' ? 'green' : 'gray');
+    m.setIcon(L.divIcon({className:'', html:`<i class="fas fa-user" style="color:${color}"></i>`, iconSize:[16,16], iconAnchor:[8,8]}));
+    const time = ts ? new Date(ts*1000).toLocaleTimeString() : '—';
+    m.getPopup().setContent(`Patient: ${pid}<br>Status: <strong>${s}</strong><br>Updated: ${time}`);
+    updatePatientRow(pid, s, time, lat, lng);
+    
+    if (currentTrackedPatient === pid) {
+      const statusMessages = {
+        'safe': `✅ ${pid} is in a SAFE zone`,
+        'danger': `⚠️ ${pid} is in a DANGER zone`,
+        'outside': `📍 ${pid} is outside all safety zones`
+      };
+      updateLocationStatus(s, statusMessages[s] || `📍 ${pid} location updated`, lat, lng, null, pid);
+    }
+  }catch(e){ /* ignore */ }
+}
+
+function pointStatus(lat, lng){
+  const pt = L.latLng(lat, lng);
+  let inDanger = false, inSafe = false;
+  for(const z of zones){
+    if(z.latitude==null || z.longitude==null || !z.radius) continue;
+    const center = L.latLng(z.latitude, z.longitude);
+    const d = map.distance(pt, center);
+    if(d <= Number(z.radius)){
+      if((z.zone_type||'safe').toLowerCase()==='danger') inDanger = true;
+      else inSafe = true;
+    }
+  }
+  return inDanger ? 'danger' : (inSafe ? 'safe' : 'outside');
+}
+
+function renderPatientList(){
+  const box = document.getElementById('patientList'); 
+  box.innerHTML='';
+  
+  for(const pid of patientMarkers.keys()){
+    const row = document.createElement('div');
+    row.className = `patient-card ${currentTrackedPatient === pid ? 'selected' : ''}`;
+    row.onclick = () => selectPatientForTracking(pid);
+    row.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="fw-semibold">${pid} ${currentTrackedPatient === pid ? '(Monitoring)' : ''}</div>
+          <div class="small text-muted" id="meta-${pid}">Waiting...</div>
+        </div>
+        <span id="badge-${pid}" class="status-badge status-outside">OUTSIDE</span>
+      </div>`;
+    box.appendChild(row);
+  }
+  
+  if (patientMarkers.size === 0) {
+    box.innerHTML = '<div class="text-muted text-center py-2"><small>No patients tracked</small></div>';
+  }
+}
+
+function selectPatientForTracking(pid) {
+  currentTrackedPatient = pid;
+  renderPatientList();
+  updateLocationStatus('info', `Now tracking patient: ${pid}`, null, null, null, pid);
+  pollPatient(pid);
+}
+
+function updatePatientRow(pid, status, time, lat, lng){
+  const badge = document.getElementById(`badge-${pid}`);
+  const meta = document.getElementById(`meta-${pid}`);
+  if(!badge || !meta) return;
+  
+  const statusConfigs = {
+    'safe': { class: 'status-safe', text: 'SAFE' },
+    'danger': { class: 'status-danger', text: 'DANGER' },
+    'outside': { class: 'status-outside', text: 'OUTSIDE' }
+  };
+  
+  const config = statusConfigs[status] || statusConfigs['outside'];
+  badge.className = `status-badge ${config.class}`;
+  badge.textContent = config.text;
+  meta.innerHTML = `<div>Last: ${time}</div><div class="text-muted" style="font-size: 0.7rem;">${(+lat).toFixed(4)}, ${(+lng).toFixed(4)}</div>`;
+}
+
+function updateLocationStatus(status, message, lat = null, lng = null, accuracy = null, patientId = null) {
+  const statusDiv = document.getElementById('locationStatus');
+  const statusDetails = document.getElementById('statusDetails');
+  const statusBadge = document.getElementById('statusBadge');
+  
+  statusDiv.style.display = 'block';
+  statusDetails.innerHTML = message;
+  
+  const statusConfigs = {
+    'safe': { alertClass: 'alert-success', badgeClass: 'status-safe', text: 'SAFE' },
+    'danger': { alertClass: 'alert-danger', badgeClass: 'status-danger', text: 'DANGER' },
+    'outside': { alertClass: 'alert-warning', badgeClass: 'status-outside', text: 'OUTSIDE' },
+    'info': { alertClass: 'alert-info', badgeClass: 'status-outside', text: 'TRACKING' }
+  };
+  
+  const config = statusConfigs[status] || statusConfigs['info'];
+  statusDiv.className = `alert ${config.alertClass} control-panel`;
+  statusBadge.className = `status-badge ${config.badgeClass}`;
+  statusBadge.textContent = config.text;
+}
+
+function fitAll(){
+  const allMarkers = [...zoneLayers, ...patientMarkers.values()];
+  if (myLocationMarker) allMarkers.push(myLocationMarker);
+  const g = L.featureGroup(allMarkers);
+  if(g.getLayers().length){ map.fitBounds(g.getBounds().pad(0.2)); }
+}
+
+function centerSG(){ map.fitBounds(SG_BOUNDS); }
+
+function startPolling(){
+  setInterval(()=>{
+    for(const pid of patientMarkers.keys()){
+      pollPatient(pid);
+    }
+  }, 3000);
+}
+
+// Event listeners
+document.getElementById('btnFit').addEventListener('click', fitAll);
+document.getElementById('btnCenter').addEventListener('click', centerSG);
+document.getElementById('btnMyLocation').addEventListener('click', toggleMyLocationTracking);
+document.getElementById('startTrack').addEventListener('click', ()=>{
+  const pid = document.getElementById('pidInput').value.trim();
+  if(!pid) return;
+  addPatient(pid);
+  pollPatient(pid);
+});
+
+// Initialize
+initMap();
+loadZones().then(() => {
+  startPolling();
+});
+</script>
+{% endblock %}
