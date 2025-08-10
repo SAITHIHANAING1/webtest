@@ -1143,11 +1143,37 @@ def ticket_management():
     tickets = SupportTicket.query.order_by(SupportTicket.created_at.desc()).all()
     return render_template('admin/Sai/ticket_management.html', tickets=tickets)
 
-@app.route('/admin/training')
+
+@app.route('/admin/training', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def training_management():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        description = request.form.get('description')
+        duration = request.form.get('duration', 30)
+        difficulty = request.form.get('difficulty', 'beginner')
+        icon = request.form.get('icon', 'book')
+        content = request.form.get('content', '')
+        video_url = request.form.get('video_url', '')
+        # Quiz and image handling can be added here if needed
+        module = TrainingModule(
+            title=title,
+            description=description,
+            duration_minutes=duration,
+            difficulty_level=difficulty,
+            module_type='video',
+            content=content,
+            video_url=video_url,
+            is_active=True
+        )
+        db.session.add(module)
+        db.session.commit()
+        print("[DEBUG] Modules after insert:", TrainingModule.query.all())
+        flash('Training module created successfully!', 'success')
+        return redirect(url_for('training_management'))
     modules = TrainingModule.query.all()
+    print("[DEBUG] Modules on GET:", modules)
     return render_template('admin/Ethan/admin_training.html', modules=modules)
     
 

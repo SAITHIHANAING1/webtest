@@ -563,7 +563,7 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="createModuleForm">
+            <form id="createModuleForm" method="post" enctype="multipart/form-data" action="{{ url_for('training_management') }}">
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-8">
