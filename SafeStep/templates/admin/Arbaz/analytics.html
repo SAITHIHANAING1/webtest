@@ -6,8 +6,6 @@
 
 {% block extra_css %}
 <style>
-    /* Use unified theme variables; keep custom layout only */
-    /* Enhanced Analytics Dashboard Styles */
     .analytics-container {
         padding: 20px 30px;
         background-color: #f8f9fa;
@@ -37,9 +35,12 @@
     }
 
     .btn-primary {
-        background: var(--gradient-primary);
+        background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
         color: #fff;
         border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
     }
 
     .btn-primary:hover {
@@ -47,18 +48,13 @@
         color: #fff;
     }
 
-    .btn-success {
-        background: var(--gradient-success);
-        border: none;
-    }
-
-    .btn-success:hover {
-        filter: brightness(0.95);
-    }
-
     .data-source-badge {
-        background: var(--gradient-success);
+        background: linear-gradient(135deg, #34a853 0%, #4285f4 100%);
         color: #fff;
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 12px;
+        font-weight: 600;
     }
 
     .filters-section {
@@ -100,8 +96,7 @@
         letter-spacing: 0.5px;
     }
 
-    .filter-select,
-    .filter-input {
+    .filter-select {
         padding: 12px 16px;
         border: 2px solid #e1e5e9;
         border-radius: 8px;
@@ -110,8 +105,7 @@
         transition: border-color 0.2s;
     }
 
-    .filter-select:focus,
-    .filter-input:focus {
+    .filter-select:focus {
         outline: none;
         border-color: #4285f4;
     }
@@ -200,23 +194,23 @@
     }
 
     .metric-change.positive {
-        background: #e8f5e8;
-        color: #0f9d58;
+        background-color: #e8f5e8;
+        color: #2e7d32;
     }
 
     .metric-change.negative {
-        background: #ffebee;
-        color: #d32f2f;
+        background-color: #ffebee;
+        color: #c62828;
     }
 
     .metric-change.neutral {
-        background: #f5f5f5;
-        color: #666;
+        background-color: #f3f4f6;
+        color: #6b7280;
     }
 
-    .charts-section {
+    .charts-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
         gap: 25px;
         margin-bottom: 30px;
     }
@@ -226,459 +220,424 @@
         border-radius: 15px;
         padding: 25px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        position: relative;
+        transition: transform 0.2s;
+    }
+
+    .chart-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .chart-card-large {
+        grid-column: 1 / -1;
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        margin-bottom: 25px;
     }
 
     .chart-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .chart-title>div:first-child>div:first-child {
         font-size: 18px;
         font-weight: 600;
         color: #333;
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
     }
 
     .chart-subtitle {
-        font-size: 13px;
+        font-size: 12px;
         color: #666;
         margin-top: 4px;
+    }
+
+    .real-time-indicator {
+        background: #34a853;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 600;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.7;
+        }
     }
 
     .chart-container {
         position: relative;
         height: 300px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #f8f9fa;
-        border-radius: 8px;
-    }
-
-    .chart-placeholder {
-        text-align: center;
-        color: #666;
-        font-size: 14px;
-    }
-
-    .chart-placeholder i {
-        font-size: 48px;
-        margin-bottom: 15px;
-        opacity: 0.3;
-    }
-
-    .prediction-section {
-        background: white;
-        border-radius: 15px;
-        padding: 25px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        margin-bottom: 30px;
-    }
-
-    .prediction-title {
-        font-size: 20px;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .prediction-filters {
-        display: flex;
-        gap: 15px;
-        margin-bottom: 20px;
-        align-items: end;
-    }
-
-    .date-input {
-        padding: 10px 14px;
-        border: 2px solid #e1e5e9;
-        border-radius: 8px;
-        font-size: 14px;
-    }
-
-    .prediction-table {
         width: 100%;
-        border-collapse: collapse;
-        margin-top: 15px;
-    }
-
-    .prediction-table th {
-        background: #f8f9fa;
-        padding: 15px 12px;
-        text-align: left;
-        font-size: 13px;
-        font-weight: 600;
-        color: #666;
-        border-bottom: 2px solid #eee;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .prediction-table td {
-        padding: 15px 12px;
-        border-bottom: 1px solid #eee;
-        font-size: 14px;
-        color: #000 !important;
-        font-weight: 500;
-    }
-
-    .prediction-table tr:hover {
-        background: #f8f9fa;
-    }
-
-    .risk-score {
-        font-weight: 700;
-        color: #000 !important;
-    }
-
-    .risk-high {
-        color: #d32f2f;
-    }
-
-    .risk-medium {
-        color: #f57c00;
-    }
-
-    .risk-low {
-        color: #388e3c;
-    }
-
-    .status-badge {
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        border: 1px solid transparent;
-    }
-
-    .status-completed {
-        background: #e8f5e8;
-        color: #0f9d58;
-        border-color: #0f9d58;
-    }
-
-    .status-pending {
-        background: #fff3e0;
-        color: #f57c00;
-        border-color: #f57c00;
-    }
-
-    .status-running {
-        background: #e3f2fd;
-        color: #1976d2;
-        border-color: #1976d2;
-    }
-
-    .table-actions {
-        display: flex;
-        gap: 15px;
-        align-items: center;
-        margin-bottom: 15px;
-    }
-
-    .filter-btn,
-    .export-table-btn {
-        background: #f8f9fa;
-        border: 2px solid #e1e5e9;
-        padding: 8px 16px;
-        border-radius: 8px;
-        font-size: 13px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        transition: background-color 0.2s;
-    }
-
-    .filter-btn:hover,
-    .export-table-btn:hover {
-        background: #e9ecef;
-    }
-
-    .loading-spinner {
-        display: none;
-        text-align: center;
-        padding: 40px;
-        color: #666;
-    }
-
-    .loading-spinner.active {
-        display: block;
-    }
-
-    .data-sources {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 15px;
-        padding: 20px;
-        margin-bottom: 25px;
-    }
-
-    .data-sources h3 {
-        margin: 0 0 15px 0;
-        font-size: 18px;
-        font-weight: 600;
-    }
-
-    .data-sources-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 15px;
-        font-size: 13px;
-        opacity: 0.9;
-    }
-
-    .data-source-item {
-        background: rgba(255, 255, 255, 0.1);
-        padding: 12px;
-        border-radius: 8px;
-        backdrop-filter: blur(10px);
-    }
-
-    .data-source-item strong {
-        display: block;
-        margin-bottom: 5px;
-    }
-
-    .filter-status {
-        font-size: 12px;
-        color: #4285f4;
-        font-weight: 500;
-        margin-left: auto;
-        padding: 4px 12px;
-        background: rgba(66, 133, 244, 0.1);
-        border-radius: 12px;
-        border: 1px solid rgba(66, 133, 244, 0.2);
-    }
-
-    .filter-status:empty {
-        display: none;
-    }
-
-    .real-time-indicator {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 12px;
-        color: #0f9d58;
-        font-weight: 600;
-    }
-
-    .real-time-indicator::before {
-        content: '';
-        width: 8px;
-        height: 8px;
-        background: #0f9d58;
-        border-radius: 50%;
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0% {
-            opacity: 1;
-        }
-
-        50% {
-            opacity: 0.5;
-        }
-
-        100% {
-            opacity: 1;
-        }
-    }
-
-    /* Additional Chart Styles */
-    .charts-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-        gap: 25px;
-        margin-bottom: 30px;
-    }
-
-    .chart-card-large {
-        background: white;
-        border-radius: 15px;
-        padding: 25px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        position: relative;
-        grid-column: span 2;
-    }
-
-    .chart-card-medium {
-        background: white;
-        border-radius: 15px;
-        padding: 25px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        position: relative;
     }
 
     .chart-container-large {
         position: relative;
         height: 400px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #f8f9fa;
-        border-radius: 8px;
+        width: 100%;
     }
 
-    .chart-container-medium {
+    .loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 200px;
+        color: #666;
+        font-style: italic;
+    }
+
+    .error {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 200px;
+        color: #ea4335;
+        font-style: italic;
+    }
+
+    /* Patient Management Section */
+    .patient-management-section {
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 24px;
+        margin: 20px 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e5e7eb;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .section-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .section-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn-success {
+        background: #059669;
+        border: 1px solid #059669;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-success:hover {
+        background: #047857;
+        border-color: #047857;
+        transform: none;
+    }
+
+    .patient-table-container {
+        background: #f9fafb;
+        border-radius: 6px;
+        padding: 16px;
+        border: 1px solid #e5e7eb;
+    }
+
+    .table-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        gap: 16px;
+    }
+
+    .search-box {
         position: relative;
-        height: 300px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #f8f9fa;
-        border-radius: 8px;
+        flex: 1;
+        max-width: 320px;
     }
 
+    .search-box input {
+        width: 100%;
+        padding: 10px 36px 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.2s ease;
+        background: #ffffff;
+    }
+
+    .search-box input:focus {
+        outline: none;
+        border-color: #059669;
+        box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+    }
+
+    .search-box i {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6b7280;
+    }
+
+    .table-filters select {
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background: #ffffff;
+        min-width: 160px;
+        font-size: 14px;
+    }
+
+    .patient-table {
+        width: 100%;
+        background: #ffffff;
+        border-radius: 6px;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e5e7eb;
+    }
+
+    .patient-table th {
+        background: #f3f4f6;
+        color: #374151;
+        padding: 12px;
+        font-weight: 600;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+        font-size: 14px;
+    }
+
+    .patient-table td {
+        padding: 12px;
+        border-bottom: 1px solid #f3f4f6;
+        vertical-align: middle;
+        font-size: 14px;
+        color: #374151;
+    }
+
+    .patient-table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    .risk-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .risk-low { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .risk-medium { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .risk-high { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .risk-critical { background: #fecaca; color: #7f1d1d; border: 1px solid #f87171; }
+
+    .action-buttons {
+        display: flex;
+        gap: 5px;
+    }
+
+    .btn-sm {
+        padding: 5px 10px;
+        font-size: 12px;
+        border-radius: 4px;
+    }
+
+    .btn-outline-primary {
+        border: 1px solid #4285f4;
+        color: #4285f4;
+        background: transparent;
+    }
+
+    .btn-outline-primary:hover {
+        background: #4285f4;
+        color: white;
+    }
+
+    .btn-outline-danger {
+        border: 1px solid #dc3545;
+        color: #dc3545;
+        background: transparent;
+    }
+
+    .btn-outline-danger:hover {
+        background: #dc3545;
+        color: white;
+    }
+
+    /* Prediction Results Section */
+    .prediction-results-section {
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 24px;
+        margin: 20px 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e5e7eb;
+    }
+
+    .prediction-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        background: #f3f4f6;
+        border-radius: 6px;
+        border: 1px solid #e5e7eb;
+    }
+
+    .status-indicator {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #059669;
+        animation: pulse 2s infinite;
+    }
+
+    .status-indicator.running {
+        background: #d97706;
+    }
+
+    .status-indicator.error {
+        background: #dc2626;
+    }
+
+    .prediction-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+    }
+
+    .prediction-card {
+        background: #f9fafb;
+        border-radius: 6px;
+        padding: 16px;
+        border-left: 3px solid #6b7280;
+        border: 1px solid #e5e7eb;
+    }
+
+    .prediction-card.high-risk {
+        border-left-color: #dc2626;
+        background: #fef2f2;
+    }
+
+    .prediction-card.medium-risk {
+        border-left-color: #d97706;
+        background: #fffbeb;
+    }
+
+    .prediction-card.low-risk {
+        border-left-color: #059669;
+        background: #f0fdf4;
+    }
+
+    /* Modal Styles */
+    .modal-content {
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+        background: #f9fafb;
+        color: #1f2937;
+        border-radius: 8px 8px 0 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .modal-title {
+        font-weight: 600;
+        font-size: 18px;
+    }
+
+    .btn-close {
+        filter: none;
+        opacity: 0.6;
+    }
+
+    .btn-close:hover {
+        opacity: 1;
+    }
+
+    /* Responsive Adjustments */
     @media (max-width: 768px) {
         .charts-grid {
             grid-template-columns: 1fr;
-        }
-
-        .chart-card-large {
-            grid-column: span 1;
         }
 
         .filters-row {
             grid-template-columns: 1fr;
         }
 
-        .metrics-grid {
-            grid-template-columns: 1fr;
+        .metric-card {
+            text-align: center;
         }
 
-        .header-buttons {
+        .section-header {
             flex-direction: column;
+            gap: 15px;
             align-items: stretch;
         }
-    }
 
-    /* Force dark text visibility regardless of system color scheme */
-    @media (prefers-color-scheme: dark) {
-        .analytics-container {
-            background-color: #f8f9fa !important;
+        .section-actions {
+            justify-content: center;
         }
 
-        .analytics-container * {
-            color: #000 !important;
+        .table-controls {
+            flex-direction: column;
+            gap: 15px;
         }
 
-        .page-title,
-        .metric-value,
-        .metric-label,
-        .prediction-table td,
-        .risk-score,
-        .chart-title,
-        .filters-title,
-        .prediction-title {
-            color: #000 !important;
+        .search-box {
+            max-width: none;
         }
 
-        .metric-card,
-        .chart-card,
-        .chart-card-large,
-        .chart-card-medium,
-        .prediction-section {
-            background: white !important;
-            color: #000 !important;
+        .patient-table {
+            font-size: 14px;
         }
 
-        .prediction-table th {
-            background: #f8f9fa !important;
-            color: #666 !important;
+        .patient-table th,
+        .patient-table td {
+            padding: 8px 6px;
         }
-
-        .status-badge {
-            color: inherit !important;
-        }
-
-        .status-completed {
-            color: #0f9d58 !important;
-        }
-
-        .status-pending {
-            color: #f57c00 !important;
-        }
-
-        .status-running {
-            color: #1976d2 !important;
-        }
-
-        .risk-high {
-            color: #d32f2f !important;
-        }
-
-        .risk-medium {
-            color: #f57c00 !important;
-        }
-
-        .risk-low {
-            color: #388e3c !important;
-        }
-    }
-
-    /* Override navigation dark mode for analytics page */
-    .analytics-page .analytics-container,
-    .analytics-page .analytics-container *,
-    .analytics-page .page-title,
-    .analytics-page .metric-value,
-    .analytics-page .metric-label,
-    .analytics-page .prediction-table td,
-    .analytics-page .risk-score,
-    .analytics-page .chart-title,
-    .analytics-page .filters-title,
-    .analytics-page .prediction-title {
-        color: #000 !important;
-    }
-
-    .analytics-page .metric-card,
-    .analytics-page .chart-card,
-    .analytics-page .chart-card-large,
-    .analytics-page .chart-card-medium,
-    .analytics-page .prediction-section {
-        background: white !important;
-        color: #000 !important;
-    }
-
-    .analytics-page .prediction-table th {
-        background: #f8f9fa !important;
-        color: #666 !important;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="analytics-container analytics-page">
+<div class="analytics-container">
     <!-- Page Header -->
     <div class="page-header">
-        <div>
-            <h1 class="page-title">Analytics & Reports</h1>
-            <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
-                <span class="data-source-badge">Real Supabase Data</span>
-                <span class="data-source-badge"
-                    style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);">ML Prediction Engine</span>
-            </div>
-        </div>
+        <h1 class="page-title">Analytics & Reports</h1>
         <div class="header-buttons">
-            <button class="export-btn" onclick="showExportModal()">
-                <i class="fas fa-download"></i>
-                Export Data
-            </button>
-            <button class="btn-primary btn-success" onclick="runMLAnalysis()">
-                <i class="fas fa-brain"></i>
-                🤖 Run AI Analysis
-            </button>
-            <button class="btn-primary" onclick="showSystemInfo()"
-                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <i class="fas fa-info-circle"></i>
-                System Info
+            <span class="data-source-badge">Live Data</span>
+            <button class="btn btn-primary" onclick="refreshAllData()">
+                <i class="fas fa-sync-alt"></i> Refresh
             </button>
         </div>
     </div>
@@ -687,8 +646,7 @@
     <div class="filters-section">
         <div class="filters-title">
             <i class="fas fa-filter"></i>
-            Advanced Analytics Filters
-            <div id="filterStatus" class="filter-status"></div>
+            Analytics Filters
         </div>
         <div class="filters-row">
             <div class="filter-group">
@@ -703,15 +661,15 @@
             <div class="filter-group">
                 <label class="filter-label">Patient Filter</label>
                 <select id="pwidFilter" class="filter-select">
-                    <option value="">All Patients</option>
-                    <option value="high-risk">High Risk Only</option>
-                    <option value="recent-incidents">Recent Incidents</option>
+                    <option value="">All patients</option>
+                    <option value="high-risk">High-risk only</option>
+                    <option value="recent-incidents">Recent incidents</option>
                 </select>
             </div>
             <div class="filter-group">
                 <label class="filter-label">Location</label>
                 <select id="locationFilter" class="filter-select">
-                    <option value="">All Locations</option>
+                    <option value="">All locations</option>
                     <option value="home">Home</option>
                     <option value="hospital">Hospital</option>
                     <option value="public">Public</option>
@@ -721,133 +679,73 @@
             <div class="filter-group">
                 <label class="filter-label">Incident Type</label>
                 <select id="incidentType" class="filter-select">
-                    <option value="">All Incidents</option>
-                    <option value="seizure">Seizures Only</option>
-                    <option value="fall">Falls</option>
-                    <option value="medication">Medication Issues</option>
+                    <option value="">All incidents</option>
+                    <option value="seizure">Seizures only</option>
+                    <option value="fall">Falls only</option>
+                    <option value="medication">Medication events</option>
                 </select>
             </div>
-        </div>
-    </div>
-
-    <!-- Loading Spinner -->
-    <div class="loading-spinner" id="loadingSpinner">
-        <i class="fas fa-spinner fa-spin fa-2x"></i>
-        <p>Analyzing data...</p>
-    </div>
-
-    <!-- Export Modal -->
-    <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exportModalLabel">Export Analytics Data</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="exportForm">
-                        <div class="form-group">
-                            <label for="exportType" class="form-label">Export Format</label>
-                            <select class="form-select" id="exportType" required>
-                                <option value="pdf">PDF Report</option>
-                                <option value="csv">CSV Data</option>
-                                <option value="json">JSON Data</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="exportDateRange" class="form-label">Date Range</label>
-                            <select class="form-select" id="exportDateRange">
-                                <option value="7">Last 7 days</option>
-                                <option value="30" selected>Last 30 days</option>
-                                <option value="90">Last 90 days</option>
-                                <option value="365">Last year</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Include Data</label>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="includeMetrics" checked>
-                                <label class="form-check-label" for="includeMetrics">
-                                    Summary Metrics
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="includePredictions" checked>
-                                <label class="form-check-label" for="includePredictions">
-                                    Prediction Results
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="includeTrends" checked>
-                                <label class="form-check-label" for="includeTrends">
-                                    Trend Data
-                                </label>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="exportData()">
-                        <i class="fas fa-download"></i>
-                        Export
-                    </button>
-                </div>
+            <div class="filter-group">
+                <button class="analyze-btn" onclick="applyFilters()">
+                    <i class="fas fa-chart-line"></i>
+                    Apply Filters
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- KPI Metrics -->
-    <div class="metrics-grid" id="metricsGrid">
+    <!-- Metrics Cards -->
+    <div class="metrics-grid">
         <div class="metric-card">
             <div class="metric-value">
-                <span class="metric-icon">🏥</span>
-                <span id="totalIncidents">247</span>
+                <span class="metric-icon">📊</span>
+                <span id="totalIncidents">0</span>
             </div>
             <div class="metric-label">Total Incidents</div>
-            <div class="metric-change positive" id="incidentsChange">+15 from last month</div>
+            <div class="metric-change neutral" id="incidentsChange">Loading...</div>
         </div>
         <div class="metric-card">
             <div class="metric-value">
                 <span class="metric-icon">⚡</span>
-                <span id="seizureCount">89</span>
+                <span id="seizureCount">0</span>
             </div>
             <div class="metric-label">Seizure Events</div>
-            <div class="metric-change positive" id="seizureChange">+8 from last month</div>
+            <div class="metric-change neutral" id="seizureChange">Loading...</div>
         </div>
         <div class="metric-card">
             <div class="metric-value">
                 <span class="metric-icon">⏱️</span>
-                <span id="avgResponseTime">2.3m</span>
+                <span id="avgResponseTime">0m</span>
             </div>
             <div class="metric-label">Avg. Response Time</div>
-            <div class="metric-change positive" id="responseTimeChange">-0.2m improvement</div>
+            <div class="metric-change neutral" id="responseTimeChange">Loading...</div>
         </div>
         <div class="metric-card">
             <div class="metric-value">
                 <span class="metric-icon">⚠️</span>
-                <span id="highRiskCases">12</span>
+                <span id="highRiskCases">0</span>
             </div>
             <div class="metric-label">High-Risk Cases</div>
-            <div class="metric-change neutral" id="riskCasesChange">+1 new case</div>
+            <div class="metric-change neutral" id="riskCasesChange">Loading...</div>
         </div>
     </div>
 
     <!-- Charts Section -->
-    <div class="charts-grid">
-        <div class="chart-card-large">
-            <div class="chart-title">
-                <div>
-                    <div>Seizure Risk Trends</div>
-                    <div class="chart-subtitle">AI-powered risk analysis over time</div>
-                </div>
-                <div class="real-time-indicator">LIVE</div>
+    <div class="chart-card-large">
+        <div class="chart-title">
+            <div>
+                <div>Seizure Risk Trends</div>
+                <div class="chart-subtitle">AI-powered risk analysis over time</div>
             </div>
-            <div class="chart-container-large" id="riskTrendChart">
-                <canvas id="riskCanvas" width="400" height="250"></canvas>
-            </div>
+            <div class="real-time-indicator">LIVE</div>
         </div>
-        <div class="chart-card-medium">
+        <div class="chart-container-large">
+            <canvas id="riskTrendChart"></canvas>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-card">
             <div class="chart-title">
                 <div>
                     <div>Incidents by Location</div>
@@ -855,11 +753,12 @@
                 </div>
                 <i class="fas fa-map-marker-alt"></i>
             </div>
-            <div class="chart-container-medium" id="locationChart">
-                <canvas id="locationCanvas" width="400" height="250"></canvas>
+            <div class="chart-container">
+                <canvas id="locationChart"></canvas>
             </div>
         </div>
-        <div class="chart-card-medium">
+
+        <div class="chart-card">
             <div class="chart-title">
                 <div>
                     <div>Seizure Frequency by Time</div>
@@ -867,11 +766,12 @@
                 </div>
                 <i class="fas fa-clock"></i>
             </div>
-            <div class="chart-container-medium" id="timeChart">
-                <canvas id="timeCanvas" width="400" height="250"></canvas>
+            <div class="chart-container">
+                <canvas id="timeChart"></canvas>
             </div>
         </div>
-        <div class="chart-card-medium">
+
+        <div class="chart-card">
             <div class="chart-title">
                 <div>
                     <div>Risk Factors Radar</div>
@@ -879,11 +779,12 @@
                 </div>
                 <i class="fas fa-chart-radar"></i>
             </div>
-            <div class="chart-container-medium" id="radarChart">
-                <canvas id="radarCanvas" width="400" height="250"></canvas>
+            <div class="chart-container">
+                <canvas id="radarChart"></canvas>
             </div>
         </div>
-        <div class="chart-card-medium">
+
+        <div class="chart-card">
             <div class="chart-title">
                 <div>
                     <div>Response Time Analysis</div>
@@ -891,11 +792,12 @@
                 </div>
                 <i class="fas fa-tachometer-alt"></i>
             </div>
-            <div class="chart-container-medium" id="responseChart">
-                <canvas id="responseCanvas" width="400" height="250"></canvas>
+            <div class="chart-container">
+                <canvas id="responseChart"></canvas>
             </div>
         </div>
-        <div class="chart-card-medium">
+
+        <div class="chart-card">
             <div class="chart-title">
                 <div>
                     <div>Medication Compliance</div>
@@ -903,490 +805,285 @@
                 </div>
                 <i class="fas fa-pills"></i>
             </div>
-            <div class="chart-container-medium" id="medicationChart">
-                <canvas id="medicationCanvas" width="400" height="250"></canvas>
+            <div class="chart-container">
+                <canvas id="medicationChart"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- AI Prediction Results -->
-    <div class="prediction-section">
-        <div class="prediction-title">
-            <i class="fas fa-robot"></i>
-            AI Prediction Engine Results
-        </div>
 
-        <div class="prediction-filters">
-            <div class="filter-group">
-                <label class="filter-label">Analysis Date</label>
-                <input type="date" id="analysisDate" class="date-input" value="">
-            </div>
-            <div class="table-actions">
-                <button class="filter-btn" onclick="refreshPredictions()">
-                    <i class="fas fa-sync"></i>
-                    Refresh
-                </button>
-                <button class="export-table-btn" onclick="exportPredictions()">
-                    <i class="fas fa-file-excel"></i>
-                    Export
-                </button>
-                <button class="btn btn-primary" onclick="addNewPatient()">
-                    <i class="fas fa-plus"></i>
-                    Add Patient
-                </button>
-                <button class="btn btn-success" onclick="addNewIncident()">
-                    <i class="fas fa-plus"></i>
-                    Add Incident
-                </button>
+
+    <!-- AI Prediction Results Section -->
+    <div class="prediction-results-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="fas fa-brain"></i>
+                AI Prediction Results
+            </h2>
+            <div class="prediction-status" id="predictionStatus">
+                <span class="status-indicator"></span>
+                <span class="status-text">Ready</span>
             </div>
         </div>
-
-        <table class="prediction-table" id="predictionTable">
-            <thead>
-                <tr>
-                    <th>Patient ID</th>
-                    <th>Risk Level</th>
-                    <th>Risk Score</th>
-                    <th>Recent Seizures</th>
-                    <th>Last Update</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="predictionTableBody">
-                <!-- Will be populated by JavaScript -->
-            </tbody>
-        </table>
+        
+        <div class="prediction-grid" id="predictionResults">
+            <!-- Prediction results will be loaded here -->
+        </div>
     </div>
 </div>
 
-<!-- Add Patient Modal -->
-<div class="modal fade" id="addPatientModal" tabindex="-1">
+<!-- Seizure Predictions Database Section -->
+<div class="patient-management-section">
+    <div class="section-header">
+        <h2 class="section-title">
+            <i class="fas fa-brain"></i>
+            Seizure Predictions Database
+        </h2>
+        <div class="section-actions">
+            <button class="btn btn-success" onclick="openPredictionModal()">
+                <i class="fas fa-plus"></i> Add Prediction
+            </button>
+            <button class="btn btn-outline-primary" onclick="refreshPredictions()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <button class="btn btn-primary" onclick="runPredictionAnalysis()">
+                <i class="fas fa-brain"></i> Run AI Analysis
+            </button>
+        </div>
+    </div>
+    
+    <div class="patient-table-container">
+        <div class="table-controls">
+            <div class="search-box">
+                <input type="text" id="predictionSearch" placeholder="Search predictions..." onkeyup="searchPredictions()">
+                <i class="fas fa-search"></i>
+            </div>
+            <div class="table-filters">
+                <select id="predictionRiskFilter" onchange="searchPredictions()">
+                    <option value="">All Risk Levels</option>
+                    <option value="Low">Low Risk</option>
+                    <option value="Medium">Medium Risk</option>
+                    <option value="High">High Risk</option>
+                    <option value="Critical">Critical Risk</option>
+                </select>
+                <select id="predictionTimeFilter" onchange="searchPredictions()">
+                    <option value="">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="week">Last 7 Days</option>
+                    <option value="month">Last 30 Days</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="patient-table" id="seizurePredictionsTable">
+                <thead>
+                    <tr>
+                        <th>Patient ID</th>
+                        <th>Prediction Date</th>
+                        <th>Risk Level</th>
+                        <th>Risk Score</th>
+                        <th>Next Seizure</th>
+                        <th>Confidence</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="seizurePredictionsTableBody">
+                     <!-- Predictions will be loaded here -->
+                 </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Patient Modal -->
+<div class="modal fade" id="patientModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-user-plus me-2"></i>Add New Patient
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="addPatientForm">
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Patient ID</label>
-                                <input type="text" class="form-control" name="patient_id" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Age</label>
-                                <input type="number" class="form-control" name="age" min="1" max="120" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Gender</label>
-                                <select class="form-select" name="gender" required>
-                                    <option value="">Select Gender</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Epilepsy Type</label>
-                                <select class="form-select" name="epilepsy_type" required>
-                                    <option value="">Select Type</option>
-                                    <option value="Focal">Focal</option>
-                                    <option value="Generalized">Generalized</option>
-                                    <option value="Unknown">Unknown</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Recent Seizures (Last 30 days)</label>
-                                <input type="number" class="form-control" name="recent_seizures" min="0" value="0">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Risk Level</label>
-                                <select class="form-select" name="risk_level" required>
-                                    <option value="">Select Risk Level</option>
-                                    <option value="Low">Low</option>
-                                    <option value="Medium">Medium</option>
-                                    <option value="High">High</option>
-                                    <option value="Critical">Critical</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Notes</label>
-                        <textarea class="form-control" name="notes" rows="3"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-2"></i>Add Patient
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Add Incident Modal -->
-<div class="modal fade" id="addIncidentModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-exclamation-triangle me-2"></i>Add New Incident
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="addIncidentForm">
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Patient ID</label>
-                                <input type="text" class="form-control" name="patient_id" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Incident Type</label>
-                                <select class="form-select" name="incident_type" required>
-                                    <option value="">Select Type</option>
-                                    <option value="seizure">Seizure</option>
-                                    <option value="fall">Fall</option>
-                                    <option value="zone_breach">Zone Breach</option>
-                                    <option value="device_offline">Device Offline</option>
-                                    <option value="low_battery">Low Battery</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Location</label>
-                                <select class="form-select" name="location" required>
-                                    <option value="">Select Location</option>
-                                    <option value="Home">Home</option>
-                                    <option value="Hospital">Hospital</option>
-                                    <option value="Public">Public</option>
-                                    <option value="Work">Work</option>
-                                    <option value="Transport">Transport</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Severity</label>
-                                <select class="form-select" name="severity" required>
-                                    <option value="">Select Severity</option>
-                                    <option value="Low">Low</option>
-                                    <option value="Medium">Medium</option>
-                                    <option value="High">High</option>
-                                    <option value="Critical">Critical</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Incident Date</label>
-                                <input type="datetime-local" class="form-control" name="incident_date" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Response Time (minutes)</label>
-                                <input type="number" class="form-control" name="response_time" min="0" step="0.1">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control" name="description" rows="3"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-2"></i>Add Incident
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Patient Modal -->
-<div class="modal fade" id="editPatientModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-edit me-2"></i>Edit Patient
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="editPatientForm">
-                <input type="hidden" name="patient_id" id="editPatientId">
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Patient ID</label>
-                                <input type="text" class="form-control" name="patient_id_display"
-                                    id="editPatientIdDisplay" readonly>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Age</label>
-                                <input type="number" class="form-control" name="age" id="editPatientAge" min="1"
-                                    max="120" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Gender</label>
-                                <select class="form-select" name="gender" id="editPatientGender" required>
-                                    <option value="">Select Gender</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Epilepsy Type</label>
-                                <select class="form-select" name="epilepsy_type" id="editPatientEpilepsyType" required>
-                                    <option value="">Select Type</option>
-                                    <option value="Focal">Focal</option>
-                                    <option value="Generalized">Generalized</option>
-                                    <option value="Unknown">Unknown</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Recent Seizures (Last 30 days)</label>
-                                <input type="number" class="form-control" name="recent_seizures"
-                                    id="editPatientSeizures" min="0">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Risk Level</label>
-                                <select class="form-select" name="risk_level" id="editPatientRiskLevel" required>
-                                    <option value="">Select Risk Level</option>
-                                    <option value="Low">Low</option>
-                                    <option value="Medium">Medium</option>
-                                    <option value="High">High</option>
-                                    <option value="Critical">Critical</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Notes</label>
-                        <textarea class="form-control" name="notes" id="editPatientNotes" rows="3"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-2"></i>Update Patient
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-exclamation-triangle me-2 text-danger"></i>Confirm Delete
-                </h5>
+                <h5 class="modal-title" id="patientModalTitle">Add New Patient</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to delete <strong id="deletePatientName"></strong>?</p>
-                <p class="text-muted">This action cannot be undone and will remove all associated data.</p>
+                <form id="patientForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="patientId" class="form-label">Patient ID *</label>
+                                <input type="text" class="form-control" id="patientId" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="patientAge" class="form-label">Age *</label>
+                                <input type="number" class="form-control" id="patientAge" min="1" max="120" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="patientGender" class="form-label">Gender *</label>
+                                <select class="form-select" id="patientGender" required>
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="epilepsyType" class="form-label">Epilepsy Type *</label>
+                                <select class="form-select" id="epilepsyType" required>
+                                    <option value="">Select Type</option>
+                                    <option value="Focal">Focal Epilepsy</option>
+                                    <option value="Generalized">Generalized Epilepsy</option>
+                                    <option value="Unknown">Unknown Onset</option>
+                                    <option value="Combined">Combined</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="riskLevel" class="form-label">Risk Level *</label>
+                                <select class="form-select" id="riskLevel" required>
+                                    <option value="">Select Risk Level</option>
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                    <option value="Critical">Critical</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="recentSeizures" class="form-label">Recent Seizures (Last 30 days)</label>
+                                <input type="number" class="form-control" id="recentSeizures" min="0" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="patientNotes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="patientNotes" rows="3" placeholder="Additional notes about the patient..."></textarea>
+                    </div>
+                </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" onclick="confirmDelete()">
-                    <i class="fas fa-trash me-2"></i>Delete
-                </button>
+                <button type="button" class="btn btn-primary" onclick="savePatient()">Save Patient</button>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Seizure Prediction Modal -->
+<div class="modal fade" id="predictionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="predictionModalTitle">Add New Seizure Prediction</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="predictionForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="predictionPatientId" class="form-label">Patient ID *</label>
+                                <input type="text" class="form-control" id="predictionPatientId" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="predictionRiskScore" class="form-label">Risk Score (0-100) *</label>
+                                <input type="number" class="form-control" id="predictionRiskScore" min="0" max="100" step="0.1" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="predictionRiskLevel" class="form-label">Risk Level *</label>
+                                <select class="form-select" id="predictionRiskLevel" required>
+                                    <option value="">Select Risk Level</option>
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                    <option value="Critical">Critical</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="nextSeizurePrediction" class="form-label">Next Seizure Prediction</label>
+                                <input type="text" class="form-control" id="nextSeizurePrediction" placeholder="e.g., 24 hours, 3 days">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="confidenceScore" class="form-label">Confidence Score (0-1)</label>
+                                <input type="number" class="form-control" id="confidenceScore" min="0" max="1" step="0.01" placeholder="0.85">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="modelVersion" class="form-label">Model Version</label>
+                                <input type="text" class="form-control" id="modelVersion" value="1.0" placeholder="1.0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="riskFactors" class="form-label">Risk Factors</label>
+                        <textarea class="form-control" id="riskFactors" rows="2" placeholder="Enter risk factors separated by commas..."></textarea>
+                        <small class="form-text text-muted">Separate multiple factors with commas</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="predictionRecommendations" class="form-label">Recommendations</label>
+                        <textarea class="form-control" id="predictionRecommendations" rows="3" placeholder="Enter recommendations separated by commas..."></textarea>
+                        <small class="form-text text-muted">Separate multiple recommendations with commas</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="savePrediction()">Save Prediction</button>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Real epilepsy data for demonstration
-    const epilepsyData = {
-        riskTrends: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
-            datasets: [{
-                label: 'High Risk',
-                data: [15, 18, 22, 19, 25, 28, 32, 35],
-                borderColor: '#d32f2f',
-                backgroundColor: 'rgba(211, 47, 47, 0.1)',
-                fill: true
-            }, {
-                label: 'Medium Risk',
-                data: [25, 28, 30, 35, 32, 38, 42, 45],
-                borderColor: '#f57c00',
-                backgroundColor: 'rgba(245, 124, 0, 0.1)',
-                fill: true
-            }, {
-                label: 'Low Risk',
-                data: [60, 55, 48, 46, 43, 34, 26, 20],
-                borderColor: '#388e3c',
-                backgroundColor: 'rgba(56, 142, 60, 0.1)',
-                fill: true
-            }]
-        },
-        locationData: {
-            labels: ['Home', 'Hospital', 'Public', 'Work', 'Transport'],
-            datasets: [{
-                data: [45, 25, 15, 10, 5],
-                backgroundColor: [
-                    '#4285f4',
-                    '#34a853',
-                    '#ea4335',
-                    '#fbbc04',
-                    '#9aa0a6'
-                ]
-            }]
-        },
-        timeData: {
-            labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
-            datasets: [{
-                label: 'Seizure Frequency',
-                data: [8, 12, 15, 22, 18, 14],
-                backgroundColor: 'rgba(66, 133, 244, 0.2)',
-                borderColor: '#4285f4',
-                borderWidth: 2,
-                fill: true
-            }]
-        },
-        radarData: {
-            labels: ['Age Factor', 'Seizure Frequency', 'Medication Compliance', 'Response Time', 'Environmental Risk', 'Genetic Factors'],
-            datasets: [{
-                label: 'Risk Assessment',
-                data: [65, 80, 45, 70, 55, 60],
-                backgroundColor: 'rgba(66, 133, 244, 0.2)',
-                borderColor: '#4285f4',
-                borderWidth: 2,
-                pointBackgroundColor: '#4285f4'
-            }]
-        },
-        responseData: {
-            labels: ['0-2 min', '2-5 min', '5-10 min', '10-15 min', '15+ min'],
-            datasets: [{
-                label: 'Response Time Distribution',
-                data: [35, 45, 15, 3, 2],
-                backgroundColor: [
-                    '#34a853',
-                    '#4285f4',
-                    '#fbbc04',
-                    '#ea4335',
-                    '#9aa0a6'
-                ]
-            }]
-        },
-        medicationData: {
-            labels: ['Excellent', 'Good', 'Fair', 'Poor', 'Non-compliant'],
-            datasets: [{
-                label: 'Compliance Rate',
-                data: [40, 35, 15, 8, 2],
-                backgroundColor: [
-                    '#34a853',
-                    '#4285f4',
-                    '#fbbc04',
-                    '#ea4335',
-                    '#9aa0a6'
-                ]
-            }]
-        },
-        predictions: [
-            { patient_id: 'sub-001', risk_level: 'High', risk_score: 85.2, recent_seizures: 3, last_update: '2025-08-08T04:04:00', status: 'COMPLETED' },
-            { patient_id: 'sub-002', risk_level: 'Medium', risk_score: 63.0, recent_seizures: 0, last_update: '2025-08-08T08:04:00', status: 'COMPLETED' },
-            { patient_id: 'sub-003', risk_level: 'High', risk_score: 92.1, recent_seizures: 6, last_update: '2025-08-08T07:04:00', status: 'COMPLETED' },
-            { patient_id: 'sub-004', risk_level: 'Low', risk_score: 23.5, recent_seizures: 1, last_update: '2025-08-08T01:04:00', status: 'COMPLETED' },
-            { patient_id: 'sub-005', risk_level: 'High', risk_score: 78.9, recent_seizures: 8, last_update: '2025-08-08T10:04:00', status: 'COMPLETED' },
-            { patient_id: 'sub-006', risk_level: 'Medium', risk_score: 55.3, recent_seizures: 2, last_update: '2025-08-08T11:04:00', status: 'COMPLETED' },
-            { patient_id: 'sub-007', risk_level: 'Low', risk_score: 18.7, recent_seizures: 0, last_update: '2025-08-08T06:04:00', status: 'COMPLETED' },
-            { patient_id: 'sub-008', risk_level: 'Medium', risk_score: 67.4, recent_seizures: 4, last_update: '2025-08-08T07:04:00', status: 'COMPLETED' }
-        ]
+    // Global chart instances
+    let charts = {
+        riskTrend: null,
+        location: null,
+        time: null,
+        radar: null,
+        response: null,
+        medication: null
     };
 
-    let riskChart = null;
-    let locationChart = null;
-    let timeChart = null;
-    let radarChart = null;
-    let responseChart = null;
-    let medicationChart = null;
-
+    // Initialize on page load
     document.addEventListener('DOMContentLoaded', function () {
-        initializeAnalytics();
         loadMetrics();
-        createRiskTrendChart();
-        createLocationChart();
-        createTimeChart();
-        createRadarChart();
-        createResponseChart();
-        createMedicationChart();
+        loadAllCharts();
         loadPredictionResults();
-        setDefaultDate();
-        startRealTimeUpdates();
-    });
+        loadSeizurePredictions();
 
-    function setDefaultDate() {
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('analysisDate').value = today;
-    }
-
-    function initializeAnalytics() {
-        // Set up event listeners
+        // Set up filter event listeners
         document.getElementById('dateRange').addEventListener('change', applyFilters);
         document.getElementById('pwidFilter').addEventListener('change', applyFilters);
         document.getElementById('locationFilter').addEventListener('change', applyFilters);
         document.getElementById('incidentType').addEventListener('change', applyFilters);
-    }
+    });
 
     function getCurrentFilters() {
         return {
@@ -1420,22 +1117,14 @@
                 updateChangeIndicator('seizureChange', data.seizure_change || '0%');
                 updateChangeIndicator('responseTimeChange', data.response_time_change || '0%');
                 updateChangeIndicator('riskCasesChange', data.risk_cases_change || '0%');
-            } else {
-                throw new Error(data.error || 'Failed to load metrics');
             }
         } catch (error) {
             console.error('Error loading metrics:', error);
-            // Fallback to static data if API fails
-            document.getElementById('totalIncidents').textContent = '247';
-            document.getElementById('seizureCount').textContent = '89';
-            document.getElementById('avgResponseTime').textContent = '2.3m';
-            document.getElementById('highRiskCases').textContent = '12';
-
-            // Set fallback change indicators
-            updateChangeIndicator('incidentsChange', '+15 from last month');
-            updateChangeIndicator('seizureChange', '+8 from last month');
-            updateChangeIndicator('responseTimeChange', '-0.2m improvement');
-            updateChangeIndicator('riskCasesChange', '+1 new case');
+            // Set fallback values
+            document.getElementById('totalIncidents').textContent = '24';
+            document.getElementById('seizureCount').textContent = '19';
+            document.getElementById('avgResponseTime').textContent = '13.3m';
+            document.getElementById('highRiskCases').textContent = '0';
         }
     }
 
@@ -1454,8 +1143,19 @@
         }
     }
 
-    async function createRiskTrendChart() {
-        const ctx = document.getElementById('riskCanvas').getContext('2d');
+    async function loadAllCharts() {
+        await Promise.all([
+            loadRiskTrendChart(),
+            loadLocationChart(),
+            loadTimeChart(),
+            loadRadarChart(),
+            loadResponseChart(),
+            loadMedicationChart()
+        ]);
+    }
+
+    async function loadRiskTrendChart() {
+        const ctx = document.getElementById('riskTrendChart').getContext('2d');
 
         try {
             const filters = getCurrentFilters();
@@ -1464,150 +1164,47 @@
             const data = await response.json();
 
             if (data.success) {
-                // Destroy existing chart if it exists
-                if (riskChart) {
-                    riskChart.destroy();
+                if (charts.riskTrend) {
+                    charts.riskTrend.destroy();
                 }
 
-                riskChart = new Chart(ctx, {
+                charts.riskTrend = new Chart(ctx, {
                     type: 'line',
-                    data: data,
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'Risk Score',
+                            data: data.risk_scores,
+                            borderColor: '#4285f4',
+                            backgroundColor: 'rgba(66, 133, 244, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
                             legend: {
-                                position: 'top',
-                                labels: {
-                                    usePointStyle: true,
-                                    padding: 20,
-                                    font: {
-                                        size: 12
-                                    }
-                                }
+                                position: 'top'
                             }
                         },
                         scales: {
                             y: {
                                 beginAtZero: true,
-                                max: 100,
-                                grid: {
-                                    color: '#f0f0f0'
-                                },
-                                ticks: {
-                                    color: '#666',
-                                    font: {
-                                        size: 12
-                                    }
-                                }
-                            },
-                            x: {
-                                grid: {
-                                    display: false
-                                },
-                                ticks: {
-                                    color: '#666',
-                                    font: {
-                                        size: 12
-                                    }
-                                }
-                            }
-                        },
-                        interaction: {
-                            intersect: false,
-                            mode: 'index'
-                        },
-                        plugins: {
-                            tooltip: {
-                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                                titleColor: '#fff',
-                                bodyColor: '#fff',
-                                borderColor: '#4285f4',
-                                borderWidth: 1
+                                max: 100
                             }
                         }
                     }
                 });
-            } else {
-                // Fallback to static data
-                createStaticRiskChart(ctx);
             }
         } catch (error) {
-            console.error('Error loading risk trends:', error);
-            // Fallback to static data
-            createStaticRiskChart(ctx);
+            console.error('Error loading risk trend chart:', error);
         }
     }
 
-    function createStaticRiskChart(ctx) {
-        // Destroy existing chart if it exists
-        if (riskChart) {
-            riskChart.destroy();
-        }
-
-        riskChart = new Chart(ctx, {
-            type: 'line',
-            data: epilepsyData.riskTrends,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 20,
-                            font: {
-                                size: 12
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        grid: {
-                            color: '#f0f0f0'
-                        },
-                        ticks: {
-                            color: '#666',
-                            font: {
-                                size: 12
-                            }
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            color: '#666',
-                            font: {
-                                size: 12
-                            }
-                        }
-                    }
-                },
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                },
-                plugins: {
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        borderColor: '#4285f4',
-                        borderWidth: 1
-                    }
-                }
-            }
-        });
-    }
-
-    async function createLocationChart() {
-        const ctx = document.getElementById('locationCanvas').getContext('2d');
+    async function loadLocationChart() {
+        const ctx = document.getElementById('locationChart').getContext('2d');
 
         try {
             const filters = getCurrentFilters();
@@ -1616,112 +1213,43 @@
             const data = await response.json();
 
             if (data.success) {
-                // Destroy existing chart if it exists
-                if (locationChart) {
-                    locationChart.destroy();
+                if (charts.location) {
+                    charts.location.destroy();
                 }
 
-                const chartData = {
-                    labels: data.locations || [],
-                    datasets: [{
-                        data: data.counts || [],
-                        backgroundColor: [
-                            '#4285f4',
-                            '#34a853',
-                            '#ea4335',
-                            '#fbbc04',
-                            '#9aa0a6',
-                            '#ff6d01'
-                        ],
-                        borderWidth: 0
-                    }]
-                };
-
-                locationChart = new Chart(ctx, {
+                charts.location = new Chart(ctx, {
                     type: 'doughnut',
-                    data: chartData,
+                    data: {
+                        labels: data.locations,
+                        datasets: [{
+                            data: data.counts,
+                            backgroundColor: [
+                                '#4285f4',
+                                '#34a853',
+                                '#ea4335',
+                                '#fbbc04',
+                                '#9aa0a6'
+                            ]
+                        }]
+                    },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
                             legend: {
-                                position: 'bottom',
-                                labels: {
-                                    padding: 20,
-                                    usePointStyle: true,
-                                    font: {
-                                        size: 12
-                                    }
-                                }
-                            },
-                            tooltip: {
-                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                                titleColor: '#fff',
-                                bodyColor: '#fff',
-                                callbacks: {
-                                    label: function (context) {
-                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                        const percentage = ((context.parsed / total) * 100).toFixed(1);
-                                        return `${context.label}: ${context.parsed} (${percentage}%)`;
-                                    }
-                                }
+                                position: 'bottom'
                             }
                         }
                     }
                 });
-            } else {
-                // Fallback to static data
-                createStaticLocationChart(ctx);
             }
         } catch (error) {
-            console.error('Error loading location distribution:', error);
-            // Fallback to static data
-            createStaticLocationChart(ctx);
+            console.error('Error loading location chart:', error);
         }
     }
 
-    function createStaticLocationChart(ctx) {
-        // Destroy existing chart if it exists
-        if (locationChart) {
-            locationChart.destroy();
-        }
-
-        locationChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: epilepsyData.locationData,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 20,
-                            usePointStyle: true,
-                            font: {
-                                size: 12
-                            }
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        callbacks: {
-                            label: function (context) {
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = ((context.parsed / total) * 100).toFixed(1);
-                                return `${context.label}: ${context.parsed} (${percentage}%)`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    async function createTimeChart() {
-        const ctx = document.getElementById('timeCanvas').getContext('2d');
+    async function loadTimeChart() {
+        const ctx = document.getElementById('timeChart').getContext('2d');
 
         try {
             const filters = getCurrentFilters();
@@ -1730,150 +1258,39 @@
             const data = await response.json();
 
             if (data.success) {
-                // Destroy existing chart if it exists
-                if (timeChart) {
-                    timeChart.destroy();
+                if (charts.time) {
+                    charts.time.destroy();
                 }
 
-                timeChart = new Chart(ctx, {
+                charts.time = new Chart(ctx, {
                     type: 'bar',
-                    data: data,
+                    data: {
+                        labels: data.labels,
+                        datasets: data.datasets
+                    },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
                             legend: {
-                                position: 'top',
-                                labels: {
-                                    usePointStyle: true,
-                                    padding: 20,
-                                    font: {
-                                        size: 12
-                                    }
-                                }
+                                position: 'top'
                             }
                         },
                         scales: {
                             y: {
-                                beginAtZero: true,
-                                max: 30, // Adjust max based on data
-                                grid: {
-                                    color: '#f0f0f0'
-                                },
-                                ticks: {
-                                    color: '#666',
-                                    font: {
-                                        size: 12
-                                    }
-                                }
-                            },
-                            x: {
-                                grid: {
-                                    display: false
-                                },
-                                ticks: {
-                                    color: '#666',
-                                    font: {
-                                        size: 12
-                                    }
-                                }
-                            }
-                        },
-                        interaction: {
-                            intersect: false,
-                            mode: 'index'
-                        },
-                        plugins: {
-                            tooltip: {
-                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                                titleColor: '#fff',
-                                bodyColor: '#fff',
-                                borderColor: '#4285f4',
-                                borderWidth: 1
+                                beginAtZero: true
                             }
                         }
                     }
                 });
-            } else {
-                // Fallback to static data
-                createStaticTimeChart(ctx);
             }
         } catch (error) {
-            console.error('Error loading seizure frequency:', error);
-            // Fallback to static data
-            createStaticTimeChart(ctx);
+            console.error('Error loading time chart:', error);
         }
     }
 
-    function createStaticTimeChart(ctx) {
-        // Destroy existing chart if it exists
-        if (timeChart) {
-            timeChart.destroy();
-        }
-
-        timeChart = new Chart(ctx, {
-            type: 'bar',
-            data: epilepsyData.timeData,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 20,
-                            font: {
-                                size: 12
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 30, // Adjust max based on data
-                        grid: {
-                            color: '#f0f0f0'
-                        },
-                        ticks: {
-                            color: '#666',
-                            font: {
-                                size: 12
-                            }
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            color: '#666',
-                            font: {
-                                size: 12
-                            }
-                        }
-                    }
-                },
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                },
-                plugins: {
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        borderColor: '#4285f4',
-                        borderWidth: 1
-                    }
-                }
-            }
-        });
-    }
-
-    async function createRadarChart() {
-        const ctx = document.getElementById('radarCanvas').getContext('2d');
+    async function loadRadarChart() {
+        const ctx = document.getElementById('radarChart').getContext('2d');
 
         try {
             const filters = getCurrentFilters();
@@ -1882,128 +1299,40 @@
             const data = await response.json();
 
             if (data.success) {
-                // Destroy existing chart if it exists
-                if (radarChart) {
-                    radarChart.destroy();
+                if (charts.radar) {
+                    charts.radar.destroy();
                 }
 
-                radarChart = new Chart(ctx, {
+                charts.radar = new Chart(ctx, {
                     type: 'radar',
-                    data: data,
+                    data: {
+                        labels: data.labels,
+                        datasets: data.datasets
+                    },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
                             legend: {
-                                position: 'top',
-                                labels: {
-                                    usePointStyle: true,
-                                    padding: 20,
-                                    font: {
-                                        size: 12
-                                    }
-                                }
+                                position: 'top'
                             }
                         },
                         scales: {
                             r: {
                                 beginAtZero: true,
-                                max: 100,
-                                grid: {
-                                    color: '#f0f0f0'
-                                },
-                                ticks: {
-                                    color: '#666',
-                                    font: {
-                                        size: 12
-                                    }
-                                }
-                            }
-                        },
-                        interaction: {
-                            intersect: false,
-                            mode: 'index'
-                        },
-                        plugins: {
-                            tooltip: {
-                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                                titleColor: '#fff',
-                                bodyColor: '#fff',
-                                borderColor: '#4285f4',
-                                borderWidth: 1
+                                max: 100
                             }
                         }
                     }
                 });
-            } else {
-                // Fallback to static data
-                createStaticRadarChart(ctx);
             }
         } catch (error) {
-            console.error('Error loading risk factors:', error);
-            // Fallback to static data
-            createStaticRadarChart(ctx);
+            console.error('Error loading radar chart:', error);
         }
     }
 
-    function createStaticRadarChart(ctx) {
-        // Destroy existing chart if it exists
-        if (radarChart) {
-            radarChart.destroy();
-        }
-
-        radarChart = new Chart(ctx, {
-            type: 'radar',
-            data: epilepsyData.radarData,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 20,
-                            font: {
-                                size: 12
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    r: {
-                        beginAtZero: true,
-                        max: 100,
-                        grid: {
-                            color: '#f0f0f0'
-                        },
-                        ticks: {
-                            color: '#666',
-                            font: {
-                                size: 12
-                            }
-                        }
-                    }
-                },
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                },
-                plugins: {
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        borderColor: '#4285f4',
-                        borderWidth: 1
-                    }
-                }
-            }
-        });
-    }
-
-    async function createResponseChart() {
-        const ctx = document.getElementById('responseCanvas').getContext('2d');
+    async function loadResponseChart() {
+        const ctx = document.getElementById('responseChart').getContext('2d');
 
         try {
             const filters = getCurrentFilters();
@@ -2012,150 +1341,64 @@
             const data = await response.json();
 
             if (data.success) {
-                // Destroy existing chart if it exists
-                if (responseChart) {
-                    responseChart.destroy();
+                if (charts.response) {
+                    charts.response.destroy();
                 }
 
-                responseChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: data,
+                // Update datasets to handle null values properly
+                const updatedDatasets = data.datasets.map(dataset => ({
+                    ...dataset,
+                    spanGaps: false,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    borderWidth: 2,
+                    fill: false
+                }));
+                
+                charts.response = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.labels,
+                        datasets: updatedDatasets
+                    },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
                             legend: {
-                                position: 'top',
-                                labels: {
-                                    usePointStyle: true,
-                                    padding: 20,
-                                    font: {
-                                        size: 12
-                                    }
+                                position: 'top'
+                            },
+                            tooltip: {
+                                filter: function(tooltipItem) {
+                                    return tooltipItem.parsed.y !== null;
                                 }
                             }
                         },
                         scales: {
                             y: {
                                 beginAtZero: true,
-                                max: 50, // Adjust max based on data
-                                grid: {
-                                    color: '#f0f0f0'
-                                },
-                                ticks: {
-                                    color: '#666',
-                                    font: {
-                                        size: 12
-                                    }
+                                title: {
+                                    display: true,
+                                    text: 'Response Time (minutes)'
                                 }
                             },
                             x: {
-                                grid: {
-                                    display: false
-                                },
-                                ticks: {
-                                    color: '#666',
-                                    font: {
-                                        size: 12
-                                    }
+                                title: {
+                                    display: true,
+                                    text: 'Date'
                                 }
-                            }
-                        },
-                        interaction: {
-                            intersect: false,
-                            mode: 'index'
-                        },
-                        plugins: {
-                            tooltip: {
-                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                                titleColor: '#fff',
-                                bodyColor: '#fff',
-                                borderColor: '#4285f4',
-                                borderWidth: 1
                             }
                         }
                     }
                 });
-            } else {
-                // Fallback to static data
-                createStaticResponseChart(ctx);
             }
         } catch (error) {
-            console.error('Error loading response time:', error);
-            // Fallback to static data
-            createStaticResponseChart(ctx);
+            console.error('Error loading response chart:', error);
         }
     }
 
-    function createStaticResponseChart(ctx) {
-        // Destroy existing chart if it exists
-        if (responseChart) {
-            responseChart.destroy();
-        }
-
-        responseChart = new Chart(ctx, {
-            type: 'bar',
-            data: epilepsyData.responseData,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 20,
-                            font: {
-                                size: 12
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 50, // Adjust max based on data
-                        grid: {
-                            color: '#f0f0f0'
-                        },
-                        ticks: {
-                            color: '#666',
-                            font: {
-                                size: 12
-                            }
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            color: '#666',
-                            font: {
-                                size: 12
-                            }
-                        }
-                    }
-                },
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                },
-                plugins: {
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        borderColor: '#4285f4',
-                        borderWidth: 1
-                    }
-                }
-            }
-        });
-    }
-
-    async function createMedicationChart() {
-        const ctx = document.getElementById('medicationCanvas').getContext('2d');
+    async function loadMedicationChart() {
+        const ctx = document.getElementById('medicationChart').getContext('2d');
 
         try {
             const filters = getCurrentFilters();
@@ -2164,924 +1407,41 @@
             const data = await response.json();
 
             if (data.success) {
-                // Destroy existing chart if it exists
-                if (medicationChart) {
-                    medicationChart.destroy();
+                if (charts.medication) {
+                    charts.medication.destroy();
                 }
 
-                medicationChart = new Chart(ctx, {
+                charts.medication = new Chart(ctx, {
                     type: 'doughnut',
-                    data: data,
+                    data: {
+                        labels: data.labels,
+                        datasets: data.datasets
+                    },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
                             legend: {
-                                position: 'bottom',
-                                labels: {
-                                    padding: 20,
-                                    usePointStyle: true,
-                                    font: {
-                                        size: 12
-                                    }
-                                }
-                            },
-                            tooltip: {
-                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                                titleColor: '#fff',
-                                bodyColor: '#fff',
-                                callbacks: {
-                                    label: function (context) {
-                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                        const percentage = ((context.parsed / total) * 100).toFixed(1);
-                                        return `${context.label}: ${context.parsed} (${percentage}%)`;
-                                    }
-                                }
+                                position: 'bottom'
                             }
                         }
                     }
                 });
-            } else {
-                // Fallback to static data
-                createStaticMedicationChart(ctx);
             }
         } catch (error) {
-            console.error('Error loading medication compliance:', error);
-            // Fallback to static data
-            createStaticMedicationChart(ctx);
+            console.error('Error loading medication chart:', error);
         }
     }
 
-    function createStaticMedicationChart(ctx) {
-        // Destroy existing chart if it exists
-        if (medicationChart) {
-            medicationChart.destroy();
-        }
-
-        medicationChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: epilepsyData.medicationData,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 20,
-                            usePointStyle: true,
-                            font: {
-                                size: 12
-                            }
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        callbacks: {
-                            label: function (context) {
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = ((context.parsed / total) * 100).toFixed(1);
-                                return `${context.label}: ${context.parsed} (${percentage}%)`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
+    function applyFilters() {
+        loadMetrics();
+        loadAllCharts();
     }
 
-    async function loadPredictionResults() {
-        try {
-            const response = await fetch('/api/analytics/prediction-results');
-            const data = await response.json();
-
-            if (data.success) {
-                updatePredictionTable(data.predictions || []);
-            } else {
-                // Fallback to static data
-                updatePredictionTable(epilepsyData.predictions);
-            }
-        } catch (error) {
-            console.error('Error loading prediction results:', error);
-            // Fallback to static data
-            updatePredictionTable(epilepsyData.predictions);
-        }
+    function refreshAllData() {
+        loadMetrics();
+        loadAllCharts();
     }
-
-    function updatePredictionTable(predictions) {
-        const tbody = document.getElementById('predictionTableBody');
-
-        if (predictions.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="7" style="text-align: center; padding: 40px; color: #000; font-weight: 500;">
-                        <i class="fas fa-robot fa-3x" style="margin-bottom: 15px; opacity: 0.3;"></i><br>
-                        No prediction results available. Run AI analysis to generate predictions.
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        tbody.innerHTML = predictions.map(pred => `
-            <tr>
-                <td style="color: #000; font-weight: 600;"><strong>${pred.patient_id}</strong></td>
-                <td><span class="risk-score risk-${pred.risk_level.toLowerCase()}" style="color: #000; font-weight: 700; font-size: 14px;">${pred.risk_level}</span></td>
-                <td style="color: #000; font-weight: 600;"><strong>${pred.risk_score}</strong></td>
-                <td style="color: #000; font-weight: 500;">${pred.recent_seizures}</td>
-                <td style="color: #000; font-weight: 500;">${formatDate(pred.last_update)}</td>
-                <td><span class="status-badge status-${pred.status.toLowerCase()}">${pred.status}</span></td>
-                <td>
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-sm btn-outline-primary" onclick="predictPatientRisk('${pred.patient_id}')" title="Run ML Prediction">
-                            <i class="fas fa-brain"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-info" onclick="viewPatientDetails('${pred.patient_id}')" title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-warning" onclick="editPatient('${pred.patient_id}')" title="Edit Patient">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deletePatient('${pred.patient_id}')" title="Delete Patient">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
-    }
-
-    async function runPredictionEngine() {
-        const btn = event.target;
-        const originalText = btn.innerHTML;
-
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running ML Analysis...';
-        btn.disabled = true;
-
-        try {
-            const response = await fetch('/api/analytics/run-prediction', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                // Reload prediction results
-                await loadPredictionResults();
-                showNotification('ML analysis completed successfully! Using real scikit-learn models with Supabase data.', 'success');
-            } else {
-                showNotification('ML analysis failed: ' + (data.error || 'Unknown error'), 'error');
-            }
-        } catch (error) {
-            console.error('Error running prediction engine:', error);
-            showNotification('Error running ML analysis', 'error');
-        } finally {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        }
-    }
-
-    function generateNewPredictions() {
-        const riskLevels = ['Low', 'Medium', 'High'];
-        const newPredictions = [];
-
-        for (let i = 1; i <= 10; i++) {
-            const riskLevel = riskLevels[Math.floor(Math.random() * 3)];
-            const riskScore = Math.floor(Math.random() * 100);
-            const recentSeizures = Math.floor(Math.random() * 10);
-
-            newPredictions.push({
-                patient_id: `sub-${String(i).padStart(3, '0')}`,
-                risk_level: riskLevel,
-                risk_score: riskScore.toFixed(1),
-                recent_seizures: recentSeizures,
-                last_update: new Date().toISOString(),
-                status: 'COMPLETED'
-            });
-        }
-
-        return newPredictions;
-    }
-
-    async function applyFilters() {
-        showLoading();
-        showFilteringFeedback();
-
-        try {
-            // Reload all data with new filters
-            await Promise.all([
-                loadMetrics(),
-                createRiskTrendChart(),
-                createLocationChart(),
-                createTimeChart(),
-                createRadarChart(),
-                createResponseChart(),
-                createMedicationChart(),
-                loadPredictionResults()
-            ]);
-
-            showNotification('Filters applied successfully!', 'success');
-        } catch (error) {
-            console.error('Error applying filters:', error);
-            showNotification('Error applying filters', 'error');
-        } finally {
-            hideLoading();
-            hideFilteringFeedback();
-        }
-    }
-
-    function updateChartsWithFilters() {
-        // Update risk trend chart with filtered data
-        const filteredRiskData = {
-            ...epilepsyData.riskTrends,
-            datasets: epilepsyData.riskTrends.datasets.map(dataset => ({
-                ...dataset,
-                data: dataset.data.map(value => value + (Math.random() - 0.5) * 10)
-            }))
-        };
-
-        if (riskChart) {
-            riskChart.data = filteredRiskData;
-            riskChart.update();
-        }
-
-        // Update location chart with filtered data
-        const filteredLocationData = {
-            ...epilepsyData.locationData,
-            datasets: [{
-                ...epilepsyData.locationData.datasets[0],
-                data: epilepsyData.locationData.datasets[0].data.map(value =>
-                    Math.max(0, value + (Math.random() - 0.5) * 5)
-                )
-            }]
-        };
-
-        if (locationChart) {
-            locationChart.data = filteredLocationData;
-            locationChart.update();
-        }
-
-        // Update time chart with filtered data
-        const filteredTimeData = {
-            ...epilepsyData.timeData,
-            datasets: [{
-                ...epilepsyData.timeData.datasets[0],
-                data: epilepsyData.timeData.datasets[0].data.map(value =>
-                    Math.max(0, value + (Math.random() - 0.5) * 3)
-                )
-            }]
-        };
-
-        if (timeChart) {
-            timeChart.data = filteredTimeData;
-            timeChart.update();
-        }
-
-        // Update radar chart with filtered data
-        const filteredRadarData = {
-            ...epilepsyData.radarData,
-            datasets: [{
-                ...epilepsyData.radarData.datasets[0],
-                data: epilepsyData.radarData.datasets[0].data.map(value =>
-                    Math.max(0, Math.min(100, value + (Math.random() - 0.5) * 10))
-                )
-            }]
-        };
-
-        if (radarChart) {
-            radarChart.data = filteredRadarData;
-            radarChart.update();
-        }
-
-        // Update response chart with filtered data
-        const filteredResponseData = {
-            ...epilepsyData.responseData,
-            datasets: [{
-                ...epilepsyData.responseData.datasets[0],
-                data: epilepsyData.responseData.datasets[0].data.map(value =>
-                    Math.max(0, value + (Math.random() - 0.5) * 2)
-                )
-            }]
-        };
-
-        if (responseChart) {
-            responseChart.data = filteredResponseData;
-            responseChart.update();
-        }
-
-        // Update medication chart with filtered data
-        const filteredMedicationData = {
-            ...epilepsyData.medicationData,
-            datasets: [{
-                ...epilepsyData.medicationData.datasets[0],
-                data: epilepsyData.medicationData.datasets[0].data.map(value =>
-                    Math.max(0, value + (Math.random() - 0.5) * 2)
-                )
-            }]
-        };
-
-        if (medicationChart) {
-            medicationChart.data = filteredMedicationData;
-            medicationChart.update();
-        }
-    }
-
-    function showFilteringFeedback() {
-        document.querySelectorAll('.chart-card').forEach(card => {
-            card.style.opacity = '0.7';
-            card.style.transition = 'opacity 0.3s ease';
-        });
-
-        document.querySelectorAll('.metric-card').forEach(card => {
-            card.style.opacity = '0.7';
-            card.style.transition = 'opacity 0.3s ease';
-        });
-    }
-
-    function hideFilteringFeedback() {
-        document.querySelectorAll('.chart-card, .metric-card').forEach(card => {
-            card.style.opacity = '1';
-        });
-    }
-
-    function showLoading() {
-        document.getElementById('loadingSpinner').classList.add('active');
-    }
-
-    function hideLoading() {
-        document.getElementById('loadingSpinner').classList.remove('active');
-    }
-
-
-
-
-
-
-
-    async function refreshPredictions() {
-        try {
-            showLoading();
-            await loadPredictionResults();
-            showNotification('Prediction data refreshed!', 'success');
-        } catch (error) {
-            console.error('Error refreshing predictions:', error);
-            showNotification('Error refreshing predictions', 'error');
-        } finally {
-            hideLoading();
-        }
-    }
-
-    async function predictPatientRisk(patientId) {
-        try {
-            const response = await fetch(`/api/analytics/predict-patient/${patientId}`);
-            const data = await response.json();
-
-            if (data.success) {
-                const prediction = data.prediction;
-                showPredictionModal(patientId, prediction);
-            } else {
-                showNotification('Prediction failed: ' + (data.error || 'Unknown error'), 'error');
-            }
-        } catch (error) {
-            console.error('Error predicting patient risk:', error);
-            showNotification('Error predicting patient risk', 'error');
-        }
-    }
-
-    function showPredictionModal(patientId, prediction) {
-        const modal = document.createElement('div');
-        modal.className = 'modal fade';
-        modal.id = 'predictionModal';
-        modal.innerHTML = `
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Risk Prediction - Patient ${patientId}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h6 class="card-title">Risk Assessment</h6>
-                                        <div class="mb-3">
-                                            <strong>Risk Level:</strong> 
-                                            <span class="badge bg-${getRiskColor(prediction.risk_level)}">${prediction.risk_level}</span>
-                                        </div>
-                                        <div class="mb-3">
-                                            <strong>Risk Score:</strong> ${prediction.risk_score}/100
-                                            <div class="progress mt-1">
-                                                <div class="progress-bar bg-${getRiskColor(prediction.risk_level)}" 
-                                                     style="width: ${prediction.risk_score}%"></div>
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <strong>Confidence:</strong> ${prediction.confidence}%
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h6 class="card-title">Risk Factors</h6>
-                                        <ul class="list-unstyled">
-                                            ${prediction.risk_factors.map(factor => `<li><i class="fas fa-exclamation-triangle text-warning"></i> ${factor}</li>`).join('')}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row mt-3">
-                            <div class="col-12">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h6 class="card-title">Recommendations</h6>
-                                        <ul class="list-unstyled">
-                                            ${prediction.recommendations.map(rec => `<li><i class="fas fa-lightbulb text-info"></i> ${rec}</li>`).join('')}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-        const modalInstance = new bootstrap.Modal(modal);
-        modalInstance.show();
-
-        modal.addEventListener('hidden.bs.modal', () => {
-            modal.remove();
-        });
-    }
-
-    function getRiskColor(riskLevel) {
-        switch (riskLevel.toLowerCase()) {
-            case 'low': return 'success';
-            case 'medium': return 'warning';
-            case 'high': return 'danger';
-            case 'critical': return 'dark';
-            default: return 'secondary';
-        }
-    }
-
-
-
-    function showSystemInfo() {
-        const info = `
-            <div style="text-align: left; padding: 20px;">
-                <h4 style="color: #000; margin-bottom: 15px;">System Information</h4>
-                <div style="margin-bottom: 10px;">
-                    <strong>Database:</strong> Real Supabase integration with live data
-                </div>
-                <div style="margin-bottom: 10px;">
-                    <strong>ML Engine:</strong> scikit-learn RandomForest & GradientBoosting models
-                </div>
-                <div style="margin-bottom: 10px;">
-                    <strong>Features:</strong> 20+ engineered features from patient & incident data
-                </div>
-                <div style="margin-bottom: 10px;">
-                    <strong>Training:</strong> Real-time model training from Supabase data
-                </div>
-                <div style="margin-bottom: 10px;">
-                    <strong>Prediction:</strong> Risk classification + regression scoring
-                </div>
-            </div>
-        `;
-        showNotification(info, 'info', 8000);
-    }
-
-
-
-    async function runMLAnalysis() {
-        const btn = event.target;
-        const originalText = btn.innerHTML;
-
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running AI Analysis...';
-        btn.disabled = true;
-
-        try {
-            showNotification('🤖 Starting AI-powered risk analysis...', 'info');
-
-            const response = await fetch('/api/analytics/run-prediction', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                showNotification(data.message, 'success');
-
-                // Show detailed results modal
-                showMLAnalysisResultsModal(data.details);
-
-                // Refresh prediction data if needed
-                if (data.refresh_required) {
-                    setTimeout(() => {
-                        loadPredictionResults();
-                    }, 1000);
-                }
-            } else {
-                showNotification('❌ Analysis failed: ' + (data.error || 'Unknown error'), 'error');
-            }
-        } catch (error) {
-            console.error('Error running ML analysis:', error);
-            showNotification('❌ Error running AI analysis', 'error');
-        } finally {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        }
-    }
-
-    function showMLAnalysisResultsModal(details) {
-        const modal = document.createElement('div');
-        modal.className = 'modal fade';
-        modal.id = 'mlAnalysisModal';
-        modal.innerHTML = `
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title">🤖 AI Analysis Results</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h6 class="card-title">📊 Analysis Summary</h6>
-                                        <div class="mb-3">
-                                            <strong>Patients Analyzed:</strong> ${details.patients_analyzed || 0}
-                                        </div>
-                                        <div class="mb-3">
-                                            <strong>High-Risk Identified:</strong> ${details.high_risk_identified || 0}
-                                        </div>
-                                        <div class="mb-3">
-                                            <strong>Algorithm Version:</strong> ${details.algorithm_version || 'ML-v3.0'}
-                                        </div>
-                                        <div class="mb-3">
-                                            <strong>Confidence Score:</strong> ${details.confidence_score || 85}%
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h6 class="card-title">🎯 Model Performance</h6>
-                                        ${details.model_performance ? `
-                                            <div class="mb-3">
-                                                <strong>Accuracy:</strong> ${details.model_performance.accuracy}%
-                                            </div>
-                                            <div class="mb-3">
-                                                <strong>Precision:</strong> ${details.model_performance.precision}%
-                                            </div>
-                                            <div class="mb-3">
-                                                <strong>Recall:</strong> ${details.model_performance.recall}%
-                                            </div>
-                                        ` : `
-                                            <div class="mb-3">
-                                                <strong>Analysis Type:</strong> ${details.analysis_type || 'Statistical Analysis'}
-                                            </div>
-                                            <div class="mb-3">
-                                                <strong>Data Points Processed:</strong> ${details.data_points_processed || 0}
-                                            </div>
-                                        `}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row mt-3">
-                            <div class="col-12">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h6 class="card-title">📋 Next Steps</h6>
-                                        <ul class="list-unstyled">
-                                            <li><i class="fas fa-check-circle text-success"></i> Review high-risk patient profiles</li>
-                                            <li><i class="fas fa-check-circle text-success"></i> Update safety protocols based on findings</li>
-                                            <li><i class="fas fa-check-circle text-success"></i> Schedule follow-up assessments</li>
-                                            <li><i class="fas fa-check-circle text-success"></i> Monitor prediction accuracy over time</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" onclick="loadPredictionResults()">
-                            <i class="fas fa-sync"></i> Refresh Data
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-        const modalInstance = new bootstrap.Modal(modal);
-        modalInstance.show();
-
-        modal.addEventListener('hidden.bs.modal', () => {
-            modal.remove();
-        });
-    }
-
-    function viewPatientDetails(patientId) {
-        showNotification(`Opening detailed view for patient ${patientId}...`, 'info');
-        // In a real implementation, this would open a patient detail modal or page
-    }
-
-    // CRUD Operations - CREATE
-    function addNewPatient() {
-        new bootstrap.Modal(document.getElementById('addPatientModal')).show();
-    }
-
-    function addNewIncident() {
-        // Set default date to current date/time
-        const now = new Date();
-        const dateTimeLocal = now.toISOString().slice(0, 16);
-        document.querySelector('#addIncidentForm input[name="incident_date"]').value = dateTimeLocal;
-
-        new bootstrap.Modal(document.getElementById('addIncidentModal')).show();
-    }
-
-    // CRUD Operations - UPDATE
-    function editPatient(patientId) {
-        // Load patient data for editing
-        loadPatientData(patientId);
-        new bootstrap.Modal(document.getElementById('editPatientModal')).show();
-    }
-
-    async function loadPatientData(patientId) {
-        try {
-            const response = await fetch(`/api/analytics/patient/${patientId}`);
-            const data = await response.json();
-
-            if (data.success) {
-                const patient = data.patient;
-
-                // Populate edit form
-                document.getElementById('editPatientId').value = patient.patient_id;
-                document.getElementById('editPatientIdDisplay').value = patient.patient_id;
-                document.getElementById('editPatientAge').value = patient.age || '';
-                document.getElementById('editPatientGender').value = patient.gender || '';
-                document.getElementById('editPatientEpilepsyType').value = patient.epilepsy_type || '';
-                document.getElementById('editPatientSeizures').value = patient.recent_seizures || 0;
-                document.getElementById('editPatientRiskLevel').value = patient.risk_level || '';
-                document.getElementById('editPatientNotes').value = patient.notes || '';
-            } else {
-                showNotification('Error loading patient data: ' + (data.error || 'Unknown error'), 'error');
-            }
-        } catch (error) {
-            console.error('Error loading patient data:', error);
-            showNotification('Error loading patient data', 'error');
-        }
-    }
-
-    // CRUD Operations - DELETE
-    function deletePatient(patientId) {
-        document.getElementById('deletePatientName').textContent = patientId;
-        new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
-    }
-
-    async function confirmDelete() {
-        const patientId = document.getElementById('editPatientId').value ||
-            document.getElementById('deletePatientName').textContent;
-
-        try {
-            const response = await fetch(`/api/analytics/patient/${patientId}`, {
-                method: 'DELETE'
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                showNotification(`Patient ${patientId} deleted successfully`, 'success');
-                bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
-                // Refresh the prediction table
-                await loadPredictionResults();
-            } else {
-                showNotification('Error deleting patient: ' + (data.error || 'Unknown error'), 'error');
-            }
-        } catch (error) {
-            console.error('Error deleting patient:', error);
-            showNotification('Error deleting patient', 'error');
-        }
-    }
-
-    function formatDate(dateString) {
-        if (!dateString) return 'Never';
-        const date = new Date(dateString);
-        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-
-    function startRealTimeUpdates() {
-        // Simulate real-time data updates every 30 seconds
-        setInterval(() => {
-            // Update metrics with small random variations
-            const metrics = ['totalIncidents', 'seizureCount', 'avgResponseTime', 'highRiskCases'];
-            metrics.forEach(metric => {
-                const element = document.getElementById(metric);
-                if (element) {
-                    const currentValue = parseInt(element.textContent) || 0;
-                    const variation = Math.floor(Math.random() * 3) - 1; // -1, 0, or 1
-                    element.textContent = Math.max(0, currentValue + variation);
-                }
-            });
-        }, 30000);
-    }
-
-    // Form submission handlers for CRUD operations
-    document.addEventListener('DOMContentLoaded', function () {
-        // Add Patient Form Handler
-        document.getElementById('addPatientForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
-
-            const formData = new FormData(this);
-            const patientData = Object.fromEntries(formData.entries());
-
-            try {
-                const response = await fetch('/api/analytics/patient', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(patientData)
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showNotification('Patient added successfully!', 'success');
-                    bootstrap.Modal.getInstance(document.getElementById('addPatientModal')).hide();
-                    this.reset();
-                    // Refresh the prediction table
-                    await loadPredictionResults();
-                } else {
-                    showNotification('Error adding patient: ' + (data.error || 'Unknown error'), 'error');
-                }
-            } catch (error) {
-                console.error('Error adding patient:', error);
-                showNotification('Error adding patient', 'error');
-            }
-        });
-
-        // Add Incident Form Handler
-        document.getElementById('addIncidentForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
-
-            const formData = new FormData(this);
-            const incidentData = Object.fromEntries(formData.entries());
-
-            try {
-                const response = await fetch('/api/analytics/incident', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(incidentData)
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showNotification('Incident added successfully!', 'success');
-                    bootstrap.Modal.getInstance(document.getElementById('addIncidentModal')).hide();
-                    this.reset();
-                    // Refresh analytics data
-                    await loadMetrics();
-                    await loadPredictionResults();
-                } else {
-                    showNotification('Error adding incident: ' + (data.error || 'Unknown error'), 'error');
-                }
-            } catch (error) {
-                console.error('Error adding incident:', error);
-                showNotification('Error adding incident', 'error');
-            }
-        });
-
-        // Edit Patient Form Handler
-        document.getElementById('editPatientForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
-
-            const formData = new FormData(this);
-            const patientData = Object.fromEntries(formData.entries());
-            const patientId = patientData.patient_id;
-
-            try {
-                const response = await fetch(`/api/analytics/patient/${patientId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(patientData)
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showNotification('Patient updated successfully!', 'success');
-                    bootstrap.Modal.getInstance(document.getElementById('editPatientModal')).hide();
-                    // Refresh the prediction table
-                    await loadPredictionResults();
-                } else {
-                    showNotification('Error updating patient: ' + (data.error || 'Unknown error'), 'error');
-                }
-            } catch (error) {
-                console.error('Error updating patient:', error);
-                showNotification('Error updating patient', 'error');
-            }
-        });
-
-        // Export Modal Functions
-        function showExportModal() {
-            const modal = new bootstrap.Modal(document.getElementById('exportModal'));
-            modal.show();
-        }
-
-        async function exportData() {
-            const exportType = document.getElementById('exportType').value;
-            const dateRange = document.getElementById('exportDateRange').value;
-
-            const filters = {
-                includeMetrics: document.getElementById('includeMetrics').checked,
-                includePredictions: document.getElementById('includePredictions').checked,
-                includeTrends: document.getElementById('includeTrends').checked
-            };
-
-            try {
-                showNotification('Generating export...', 'info');
-
-                const response = await fetch('/api/analytics/export-data', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        type: exportType,
-                        dateRange: dateRange,
-                        filters: filters
-                    })
-                });
-
-                if (exportType === 'json') {
-                    const data = await response.json();
-                    if (data.success) {
-                        // Download JSON file
-                        const blob = new Blob([JSON.stringify(data.data, null, 2)], { type: 'application/json' });
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = data.filename;
-                        document.body.appendChild(a);
-                        a.click();
-                        window.URL.revokeObjectURL(url);
-                        document.body.removeChild(a);
-
-                        showNotification('Export completed successfully!', 'success');
-                        bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
-                    } else {
-                        showNotification('Export failed: ' + (data.error || 'Unknown error'), 'error');
-                    }
-                } else {
-                    // For PDF and CSV, the response is the file
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `safestep_export_${new Date().toISOString().slice(0, 10)}.${exportType}`;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
-
-                    showNotification('Export completed successfully!', 'success');
-                    bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
-                }
-            } catch (error) {
-                console.error('Export error:', error);
-                showNotification('Export failed: ' + error.message, 'error');
-            }
-        }
-        // Make export helpers global for inline handlers
-        window.showExportModal = showExportModal;
-        window.exportData = exportData;
-    });
 
     function showNotification(message, type = 'info') {
         const notification = document.createElement('div');
@@ -3100,5 +1460,305 @@
             }
         }, 5000);
     }
+
+
+
+
+
+
+
+    // AI Prediction Functions
+    function runPredictionAnalysis() {
+        const statusElement = document.getElementById('predictionStatus');
+        const resultsElement = document.getElementById('predictionResults');
+        
+        if (statusElement) {
+            statusElement.innerHTML = '<div class="status-indicator running"></div><span class="status-text">Running AI Analysis...</span>';
+        }
+        
+        fetch('/api/analytics/run-prediction', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('AI analysis completed successfully!', 'success');
+                loadPredictionResults();
+            } else {
+                showNotification(data.message || 'Error running AI analysis', 'error');
+                if (statusElement) {
+                    statusElement.innerHTML = '<div class="status-indicator error"></div><span class="status-text">Analysis Failed</span>';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error running AI analysis:', error);
+            showNotification('Error running AI analysis', 'error');
+            if (statusElement) {
+                statusElement.innerHTML = '<div class="status-indicator error"></div><span class="status-text">Analysis Failed</span>';
+            }
+        });
+    }
+
+    function loadPredictionResults() {
+        fetch('/api/analytics/prediction-results')
+            .then(response => response.json())
+            .then(data => {
+                renderPredictionResults(data);
+                const statusElement = document.getElementById('predictionStatus');
+                if (statusElement) {
+                    statusElement.innerHTML = '<div class="status-indicator"></div><span class="status-text">Analysis Complete</span>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading prediction results:', error);
+                showNotification('Error loading prediction results', 'error');
+            });
+    }
+
+    function renderPredictionResults(data) {
+        const resultsElement = document.getElementById('predictionResults');
+        if (!resultsElement || !data.predictions) return;
+        
+        resultsElement.innerHTML = '';
+        
+        data.predictions.forEach(prediction => {
+            const card = document.createElement('div');
+            card.className = `prediction-card ${prediction.risk_level.toLowerCase()}-risk`;
+            card.innerHTML = `
+                <h5>${prediction.patient_id}</h5>
+                <p><strong>Risk Level:</strong> <span class="risk-badge risk-${prediction.risk_level.toLowerCase()}">${prediction.risk_level}</span></p>
+                <p><strong>Confidence:</strong> ${(prediction.confidence * 100).toFixed(1)}%</p>
+                <p><strong>Next Seizure Prediction:</strong> ${prediction.next_seizure_prediction || 'N/A'}</p>
+                <p><strong>Recommendations:</strong> ${prediction.recommendations || 'No specific recommendations'}</p>
+            `;
+            resultsElement.appendChild(card);
+        });    }
+
+    // Seizure Prediction Functions
+    let currentPredictionId = null;
+    let seizurePredictions = [];
+
+    function loadSeizurePredictions() {
+        fetch('/api/seizure-predictions')
+            .then(response => response.json())
+            .then(data => {
+                seizurePredictions = data.predictions || [];
+                renderSeizurePredictions(seizurePredictions);
+            })
+            .catch(error => {
+                console.error('Error loading seizure predictions:', error);
+                showNotification('Error loading seizure predictions', 'error');
+            });
+    }
+
+    function renderSeizurePredictions(predictions) {
+        const tbody = document.getElementById('seizurePredictionsTableBody');
+        if (!tbody) return;
+        
+        tbody.innerHTML = '';
+        
+        predictions.forEach(prediction => {
+            const row = document.createElement('tr');
+            const riskClass = prediction.risk_level ? prediction.risk_level.toLowerCase() : 'unknown';
+            
+            row.innerHTML = `
+                <td>${prediction.patient_id || 'N/A'}</td>
+                <td>${prediction.prediction_date ? new Date(prediction.prediction_date).toLocaleDateString() : 'N/A'}</td>
+                <td><span class="badge bg-${getRiskColor(prediction.risk_level)}">${prediction.risk_level || 'Unknown'}</span></td>
+                <td>${prediction.risk_score !== undefined ? prediction.risk_score.toFixed(1) : 'N/A'}</td>
+                <td>${prediction.next_seizure_prediction || 'N/A'}</td>
+                <td>${prediction.confidence_score !== undefined ? (prediction.confidence_score * 100).toFixed(1) + '%' : 'N/A'}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editPrediction(${prediction.id})" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deletePrediction(${prediction.id})" title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    function getRiskColor(riskLevel) {
+        switch(riskLevel?.toLowerCase()) {
+            case 'low': return 'success';
+            case 'medium': return 'warning';
+            case 'high': return 'danger';
+            case 'critical': return 'dark';
+            default: return 'secondary';
+        }
+    }
+
+    function openPredictionModal(predictionId = null) {
+        currentPredictionId = predictionId;
+        const modal = new bootstrap.Modal(document.getElementById('predictionModal'));
+        const title = document.getElementById('predictionModalTitle');
+        
+        if (predictionId) {
+            title.textContent = 'Edit Seizure Prediction';
+            loadPredictionData(predictionId);
+        } else {
+            title.textContent = 'Add New Seizure Prediction';
+            clearPredictionForm();
+        }
+        
+        modal.show();
+    }
+
+    function loadPredictionData(predictionId) {
+        const prediction = seizurePredictions.find(p => p.id === predictionId);
+        if (prediction) {
+            document.getElementById('predictionPatientId').value = prediction.patient_id || '';
+            document.getElementById('predictionRiskScore').value = prediction.risk_score || '';
+            document.getElementById('predictionRiskLevel').value = prediction.risk_level || '';
+            document.getElementById('nextSeizurePrediction').value = prediction.next_seizure_prediction || '';
+            document.getElementById('confidenceScore').value = prediction.confidence_score || '';
+            document.getElementById('modelVersion').value = prediction.model_version || '1.0';
+            document.getElementById('riskFactors').value = Array.isArray(prediction.factors) ? prediction.factors.join(', ') : (prediction.factors || '');
+            document.getElementById('predictionRecommendations').value = Array.isArray(prediction.recommendations) ? prediction.recommendations.join(', ') : (prediction.recommendations || '');
+        }
+    }
+
+    function clearPredictionForm() {
+        document.getElementById('predictionForm').reset();
+        document.getElementById('modelVersion').value = '1.0';
+    }
+
+    function savePrediction() {
+        const form = document.getElementById('predictionForm');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const predictionData = {
+            patient_id: document.getElementById('predictionPatientId').value,
+            risk_score: parseFloat(document.getElementById('predictionRiskScore').value),
+            risk_level: document.getElementById('predictionRiskLevel').value,
+            next_seizure_prediction: document.getElementById('nextSeizurePrediction').value,
+            confidence_score: parseFloat(document.getElementById('confidenceScore').value) || null,
+            model_version: document.getElementById('modelVersion').value || '1.0',
+            factors: document.getElementById('riskFactors').value.split(',').map(f => f.trim()).filter(f => f),
+            recommendations: document.getElementById('predictionRecommendations').value.split(',').map(r => r.trim()).filter(r => r)
+        };
+
+        const url = currentPredictionId ? `/api/seizure-predictions/${currentPredictionId}` : '/api/seizure-predictions';
+        const method = currentPredictionId ? 'PUT' : 'POST';
+
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(predictionData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(currentPredictionId ? 'Prediction updated successfully!' : 'Prediction created successfully!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('predictionModal')).hide();
+                loadSeizurePredictions();
+            } else {
+                showNotification(data.message || 'Error saving prediction', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error saving prediction:', error);
+            showNotification('Error saving prediction', 'error');
+        });
+    }
+
+    function editPrediction(predictionId) {
+        openPredictionModal(predictionId);
+    }
+
+    function deletePrediction(predictionId) {
+        if (confirm('Are you sure you want to delete this prediction?')) {
+            fetch(`/api/seizure-predictions/${predictionId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Prediction deleted successfully!', 'success');
+                    loadSeizurePredictions();
+                } else {
+                    showNotification(data.message || 'Error deleting prediction', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting prediction:', error);
+                showNotification('Error deleting prediction', 'error');
+            });
+        }
+    }
+
+    function refreshPredictions() {
+        loadSeizurePredictions();
+        showNotification('Predictions refreshed!', 'info');
+    }
+
+    function searchPredictions() {
+        const searchTerm = document.getElementById('predictionSearch').value.toLowerCase();
+        const riskFilter = document.getElementById('predictionRiskFilter').value;
+        const timeFilter = document.getElementById('predictionTimeFilter').value;
+        
+        let filteredPredictions = seizurePredictions.filter(prediction => {
+            const matchesSearch = !searchTerm || 
+                prediction.patient_id?.toString().toLowerCase().includes(searchTerm) ||
+                prediction.risk_level?.toLowerCase().includes(searchTerm);
+            
+            const matchesRisk = !riskFilter || prediction.risk_level?.toLowerCase() === riskFilter.toLowerCase();
+            
+            let matchesTime = true;
+            if (timeFilter && prediction.prediction_date) {
+                const predictionDate = new Date(prediction.prediction_date);
+                const now = new Date();
+                const daysDiff = (now - predictionDate) / (1000 * 60 * 60 * 24);
+                
+                switch(timeFilter) {
+                    case 'today':
+                        matchesTime = daysDiff < 1;
+                        break;
+                    case 'week':
+                        matchesTime = daysDiff < 7;
+                        break;
+                    case 'month':
+                        matchesTime = daysDiff < 30;
+                        break;
+                }
+            }
+            
+            return matchesSearch && matchesRisk && matchesTime;
+        });
+        
+        renderSeizurePredictions(filteredPredictions);
+    }
+
+    // Add event listeners for seizure predictions
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load seizure predictions on page load
+        loadSeizurePredictions();
+        
+        // Set up search and filter event listeners
+        const searchInput = document.getElementById('predictionSearch');
+        const riskFilter = document.getElementById('predictionRiskFilter');
+        const timeFilter = document.getElementById('predictionTimeFilter');
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', searchPredictions);
+        }
+        if (riskFilter) {
+            riskFilter.addEventListener('change', searchPredictions);
+        }
+        if (timeFilter) {
+            timeFilter.addEventListener('change', searchPredictions);
+        }
+    });
+
+
 </script>
 {% endblock %}

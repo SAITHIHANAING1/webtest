@@ -11,6 +11,9 @@ from werkzeug.security import generate_password_hash
 def migrate_database():
     """Apply database migrations"""
     db_path = os.path.join('..', 'instance', 'safestep.db')
+    # Also try the local path if the relative path doesn't work
+    if not os.path.exists(db_path):
+        db_path = 'safestep.db'
     
     # Check if database exists
     if not os.path.exists(db_path):

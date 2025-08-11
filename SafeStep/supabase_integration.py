@@ -593,6 +593,114 @@ def get_epilepsy_patients_from_supabase():
         print(f"❌ Error getting epilepsy patients from Supabase: {e}")
         return []
 
+def create_seizure_prediction(patient_id: int, prediction_data: dict):
+    """Create a new seizure prediction record in Supabase"""
+    if not supabase:
+        return None
+    
+    try:
+        prediction_record = {
+            'patient_id': patient_id,
+            'prediction_date': datetime.utcnow().isoformat(),
+            'risk_score': prediction_data.get('risk_score', 0.0),
+            'risk_level': prediction_data.get('risk_level', 'Low'),
+            'next_seizure_prediction': prediction_data.get('next_seizure_prediction'),
+            'confidence_score': prediction_data.get('confidence_score', 0.0),
+            'factors': prediction_data.get('factors', []),
+            'recommendations': prediction_data.get('recommendations', []),
+            'model_version': prediction_data.get('model_version', '1.0'),
+            'created_at': datetime.utcnow().isoformat(),
+            'updated_at': datetime.utcnow().isoformat()
+        }
+        
+        result = supabase.table('seizure_prediction').insert(prediction_record).execute()
+        
+        if result.data:
+            print(f"✅ Seizure prediction created with ID: {result.data[0].get('id')}")
+            return result.data[0]
+        else:
+            print("❌ Failed to create seizure prediction")
+            return None
+            
+    except Exception as e:
+        print(f"❌ Error creating seizure prediction: {e}")
+        return None
+
+def get_seizure_predictions_for_patient(patient_id: int, limit: int = 10):
+    """Get seizure predictions for a specific patient"""
+    if not supabase:
+        return []
+    
+    try:
+        result = supabase.table('seizure_prediction').select('*').eq('patient_id', patient_id).order('prediction_date', desc=True).limit(limit).execute()
+        
+        if result.data:
+            return result.data
+        else:
+            return []
+            
+    except Exception as e:
+        print(f"❌ Error getting seizure predictions: {e}")
+        return []
+
+def get_all_seizure_predictions(limit: int = 50):
+    """Get all seizure predictions with patient information"""
+    if not supabase:
+        return []
+    
+    try:
+        # Get predictions with patient data
+        result = supabase.table('seizure_prediction').select('*, pwids(patient_id, age, gender, epilepsy_type)').order('prediction_date', desc=True).limit(limit).execute()
+        
+        if result.data:
+            return result.data
+        else:
+            return []
+            
+    except Exception as e:
+        print(f"❌ Error getting all seizure predictions: {e}")
+        return []
+
+def update_seizure_prediction(prediction_id: int, prediction_data: dict):
+    """Update an existing seizure prediction"""
+    if not supabase:
+        return False
+    
+    try:
+        prediction_data['updated_at'] = datetime.utcnow().isoformat()
+        
+        result = supabase.table('seizure_prediction').update(prediction_data).eq('id', prediction_id).execute()
+        
+        if result.data:
+            print(f"✅ Seizure prediction updated")
+            return True
+        else:
+            print("❌ Failed to update seizure prediction")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error updating seizure prediction: {e}")
+        return False
+
+def delete_seizure_prediction(prediction_id: int):
+    """Delete a seizure prediction"""
+    if not supabase:
+        return False
+    
+    try:
+        result = supabase.table('seizure_prediction').delete().eq('id', prediction_id).execute()
+        
+        if result.data:
+            print(f"✅ Seizure prediction deleted")
+            return True
+        else:
+            print("❌ Failed to delete seizure prediction")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error deleting seizure prediction: {e}")
+        return False
+
 if __name__ == '__main__':
     print("🧪 Testing Supabase integration...")
     
