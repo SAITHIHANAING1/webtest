@@ -155,9 +155,7 @@
                                         <th class="sortable" onclick="sortTable(2)">
                                             Severity <i class="fas fa-sort ms-1"></i>
                                         </th>
-                                        <th class="sortable" onclick="sortTable(3)">
-                                            Patient <i class="fas fa-sort ms-1"></i>
-                                        </th>
+                                        <!-- Removed Patient column -->
                                         <th class="sortable" onclick="sortTable(4)">
                                             Location <i class="fas fa-sort ms-1"></i>
                                         </th>
@@ -188,18 +186,7 @@
                                                 {{ session.severity|title if session.severity else 'Monitoring' }}
                                             </span>
                                         </td>
-                                        <td>
-                                            {% if session.patient_id %}
-                                                {% set patient = patients_dict[session.patient_id] if patients_dict and session.patient_id in patients_dict else None %}
-                                                {% if patient %}
-                                                    {{ patient.name }} ({{ patient.gender }}, {{ patient.age }})
-                                                {% else %}
-                                                    <span class="text-muted">Unknown</span>
-                                                {% endif %}
-                                            {% else %}
-                                                <span class="text-muted">None</span>
-                                            {% endif %}
-                                        </td>
+                                        <!-- Removed Patient cell -->
                                         <td>
                                             <i class="fas fa-map-marker-alt me-1 text-muted"></i>
                                             {{ session.location or 'Unknown' }}

@@ -257,15 +257,7 @@ endblock %} {% block content %}
       </div>
       <div class="modal-body">
         <form id="seizureEventForm">
-          <div class="mb-3">
-            <label for="eventPatient" class="form-label">Patient</label>
-            <select class="form-select" id="eventPatient" required>
-              <option value="">Select patient...</option>
-              {% for patient in patients %}
-                <option value="{{ patient.id }}">{{ patient.name }} ({{ patient.gender }}, {{ patient.age }})</option>
-              {% endfor %}
-            </select>
-          </div>
+          <!-- Patient selection removed -->
           <div class="mb-3">
             <label for="eventSeverity" class="form-label">Severity</label>
             <select class="form-select" id="eventSeverity" required>
@@ -571,7 +563,6 @@ endblock %} {% block content %}
     }
 
     function saveSeizureEvent() {
-      const patient_id = document.getElementById("eventPatient").value;
       const severity = document.getElementById("eventSeverity").value;
       const location = document.getElementById("eventLocation").value;
       const triggers = document.getElementById("eventTriggers").value;
@@ -579,10 +570,6 @@ endblock %} {% block content %}
       const end_time = window._monitoringEndTime || null;
       const start_time = window._monitoringStartTime || null;
 
-      if (!patient_id) {
-        alert("Please select a patient.");
-        return;
-      }
       if (!severity) {
         alert("Please select a severity level.");
         return;
@@ -594,7 +581,6 @@ endblock %} {% block content %}
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          patient_id: patient_id,
           severity: severity,
           location: location,
           triggers: triggers,
