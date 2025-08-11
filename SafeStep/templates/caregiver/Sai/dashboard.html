@@ -71,17 +71,6 @@
                 Continue Learning <i class="fas fa-arrow-right ms-1"></i>
             </a>
         </div>
-        
-        <div class="caregiver-stat-card">
-            <div class="caregiver-stat-icon" style="background: var(--gradient-warning);">
-                <i class="fas fa-brain"></i>
-            </div>
-            <div class="caregiver-stat-value">94%</div>
-            <div class="caregiver-stat-label">Prediction Accuracy</div>
-            <a href="{{ url_for('prediction_dashboard') }}" class="btn btn-sm btn-outline-warning mt-2">
-                View Predictions <i class="fas fa-arrow-right ms-1"></i>
-            </a>
-        </div>
     </div>
 
     <!-- Main Content Row -->
@@ -177,48 +166,6 @@
 
         <!-- Right Column -->
         <div class="col-lg-4">
-            <!-- AI Predictions Panel -->
-            <div class="caregiver-card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-brain me-2"></i>AI Predictions
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1">Next 6 Hours</h6>
-                            <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-success" style="width: 15%"></div>
-                            </div>
-                            <small class="text-muted">Low Risk (15%)</small>
-                        </div>
-                        <div class="text-success">
-                            <i class="fas fa-check-circle fs-4"></i>
-                        </div>
-                    </div>
-                    
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1">Next 24 Hours</h6>
-                            <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-warning" style="width: 35%"></div>
-                            </div>
-                            <small class="text-muted">Moderate Risk (35%)</small>
-                        </div>
-                        <div class="text-warning">
-                            <i class="fas fa-exclamation-triangle fs-4"></i>
-                        </div>
-                    </div>
-                    
-                    <div class="text-center mt-3">
-                        <a href="{{ url_for('prediction_dashboard') }}" class="btn btn-outline-primary btn-sm">
-                            View Detailed Analysis
-                        </a>
-                    </div>
-                </div>
-            </div>
-
             <!-- System Status -->
             <div class="caregiver-card">
                 <div class="card-header">

@@ -185,10 +185,6 @@
                         <li><a class="dropdown-item d-flex align-items-center" href="{{ url_for('seizure_history') }}">
                                 <i class="fas fa-history me-2"></i>History
                             </a></li>
-                        <li><a class="dropdown-item d-flex align-items-center"
-                                href="{{ url_for('prediction_dashboard') }}">
-                                <i class="fas fa-chart-line me-2"></i>Predictions
-                            </a></li>
                     </ul>
                 </div>
                 <a class="nav-link d-flex align-items-center" href="{{ url_for('safety_zones') }}">
@@ -196,9 +192,6 @@
                 </a>
                 <a class="nav-link d-flex align-items-center" href="{{ url_for('training_modules') }}">
                     <i class="fas fa-graduation-cap me-2"></i>Training
-                </a>
-                <a class="nav-link d-flex align-items-center" href="{{ url_for('support_ticket') }}">
-                    <i class="fas fa-life-ring me-2"></i>Support
                 </a>
             </div>
             {% else %}
@@ -210,17 +203,14 @@
                 <a class="nav-link d-flex align-items-center" href="{{ url_for('user_management') }}">
                     <i class="fas fa-users me-2"></i>Users
                 </a>
+                <a class="nav-link d-flex align-items-center" href="{{ url_for('admin_zones') }}">
+                    <i class="fas fa-map-marker-alt me-2"></i>Zones
+                </a>
                 <a class="nav-link d-flex align-items-center" href="{{ url_for('training_management') }}">
                     <i class="fas fa-book me-2"></i>Training
                 </a>
-                <a class="nav-link d-flex align-items-center" href="{{ url_for('ticket_management') }}">
-                    <i class="fas fa-ticket-alt me-2"></i>Tickets
-                </a>
                 <a class="nav-link d-flex align-items-center" href="{{ url_for('analytics') }}">
                     <i class="fas fa-chart-bar me-2"></i>Analytics
-                </a>
-                <a class="nav-link d-flex align-items-center" href="{{ url_for('admin_zones') }}">
-                    <i class="fas fa-map-marker-alt me-2"></i>Zones
                 </a>
             </div>
             {% endif %}
