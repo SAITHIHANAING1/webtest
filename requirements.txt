@@ -1,5 +1,5 @@
 # SafeStep Flask Application Requirements
-
+python = 3.11.11
 # Core Flask and Web Framework
 Flask==2.3.3
 Flask-SQLAlchemy==3.0.5
