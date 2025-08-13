@@ -51,46 +51,10 @@ database_url = os.environ.get('DATABASE_URL')
 print(f"🔍 DATABASE_URL from environment: {database_url}")
 print(f"🔍 supabase_available: {supabase_available}")
 
-# Try to test PostgreSQL connection before using it
-postgresql_available = False
-if database_url and supabase_available:
-    try:
-        # Test the connection by importing psycopg2 and trying to connect
-        import psycopg2
-        from urllib.parse import urlparse
-        
-        # Parse the DATABASE_URL to extract connection parameters
-        parsed = urlparse(database_url)
-        
-        # Test connection with a timeout
-        import socket
-        socket.setdefaulttimeout(5)  # 5 second timeout
-        
-        # Try to connect to the database
-        conn = psycopg2.connect(
-            host=parsed.hostname,
-            port=parsed.port or 5432,
-            database=parsed.path[1:],  # Remove leading slash
-            user=parsed.username,
-            password=parsed.password
-        )
-        conn.close()
-        postgresql_available = True
-        print("✅ PostgreSQL connection test successful")
-    except Exception as e:
-        print(f"⚠️ PostgreSQL connection test failed: {e}")
-        print("🔄 Falling back to SQLite database")
-        postgresql_available = False
-
-if postgresql_available:
-    # Using Supabase/PostgreSQL
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    print("🔗 Using Supabase PostgreSQL database")
-else:
-    # Fallback to SQLite for local development
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///safestep.db'
-    print("🔗 Using SQLite database (local)")
-    print(f"🔗 SQLite path: {os.path.abspath('safestep.db')}")
+if not (database_url and supabase_available):
+    raise RuntimeError("PostgreSQL (Supabase) connection required. DATABASE_URL or Supabase not available.")
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+print("🔗 Using Supabase PostgreSQL database")
     
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
