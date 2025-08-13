@@ -74,8 +74,8 @@ DATABASE\_URL=sqlite:///safe-step.db
 
 1) **Clone & enter the project**
 ```bash
-git clone https://github.com/<your-org-or-user>/<your-repo>.git
-cd <your-repo>
+git clone https://github.com/SAITHIHANAING1/webtest.git
+cd webtest
 ````
 
 2. **Create & activate a virtual environment**
@@ -105,6 +105,32 @@ python app.py
 ```
 http://127.0.0.1:5000/
 ```
+
+## 🐳 Docker Deployment (Recommended)
+
+For easier deployment and production use, Docker is the recommended approach:
+
+### Quick Start with Docker
+```bash
+# Clone the repository
+git clone https://github.com/SAITHIHANAING1/webtest.git
+cd webtest
+
+# Configure environment
+cp .env.docker .env
+# Edit .env with your settings
+
+# Deploy with Docker
+docker-compose up -d
+```
+
+**Access**: http://localhost:5000
+- **Admin**: `admin` / `admin123`
+- **Demo**: `demo` / `demo123`
+
+For detailed Docker deployment instructions, see:
+- [DOCKER_QUICK_START.md](./DOCKER_QUICK_START.md) - Get running in 5 minutes
+- [DOCKER_DEPLOYMENT_GUIDE.md](./DOCKER_DEPLOYMENT_GUIDE.md) - Comprehensive deployment guide
 
 ## 🧭 App Routing
 
