@@ -613,7 +613,7 @@ def create_seizure_prediction(patient_id: int, prediction_data: dict):
             'updated_at': datetime.utcnow().isoformat()
         }
         
-        result = supabase.table('seizure_prediction').insert(prediction_record).execute()
+        result = supabase.table('seizure_predictions').insert(prediction_record).execute()
         
         if result.data:
             print(f"✅ Seizure prediction created with ID: {result.data[0].get('id')}")
@@ -632,7 +632,7 @@ def get_seizure_predictions_for_patient(patient_id: int, limit: int = 10):
         return []
     
     try:
-        result = supabase.table('seizure_prediction').select('*').eq('patient_id', patient_id).order('prediction_date', desc=True).limit(limit).execute()
+        result = supabase.table('seizure_predictions').select('*').eq('patient_id', patient_id).order('prediction_date', desc=True).limit(limit).execute()
         
         if result.data:
             return result.data
@@ -650,7 +650,7 @@ def get_all_seizure_predictions(limit: int = 50):
     
     try:
         # Get predictions with patient data
-        result = supabase.table('seizure_prediction').select('*, pwids(patient_id, age, gender, epilepsy_type)').order('prediction_date', desc=True).limit(limit).execute()
+        result = supabase.table('seizure_predictions').select('*, pwids(patient_id, age, gender, epilepsy_type)').order('prediction_date', desc=True).limit(limit).execute()
         
         if result.data:
             return result.data
@@ -669,7 +669,7 @@ def update_seizure_prediction(prediction_id: int, prediction_data: dict):
     try:
         prediction_data['updated_at'] = datetime.utcnow().isoformat()
         
-        result = supabase.table('seizure_prediction').update(prediction_data).eq('id', prediction_id).execute()
+        result = supabase.table('seizure_predictions').update(prediction_data).eq('id', prediction_id).execute()
         
         if result.data:
             print(f"✅ Seizure prediction updated")
@@ -688,7 +688,7 @@ def delete_seizure_prediction(prediction_id: int):
         return False
     
     try:
-        result = supabase.table('seizure_prediction').delete().eq('id', prediction_id).execute()
+        result = supabase.table('seizure_predictions').delete().eq('id', prediction_id).execute()
         
         if result.data:
             print(f"✅ Seizure prediction deleted")

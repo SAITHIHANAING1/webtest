@@ -4274,4 +4274,6 @@ if __name__ == '__main__':
     print("🎯 Demo Mode: /demo/caregiver")
     print("=" * 50)
     
-    app.run(debug=True)
+    # Use PORT env var for Cloud Run, default to 5000 locally
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=False, host="0.0.0.0", port=port)
