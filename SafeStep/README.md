@@ -349,9 +349,8 @@ python app.py
 # Using Gunicorn
 gunicorn -w 4 -b 0.0.0.0:5000 app:app
 
-# Using Docker (if configured)
-docker build -t safestep .
-docker run -p 5000:5000 safestep
+# Run the application
+python app.py
 ```
 
 ## 🤝 Contributing
