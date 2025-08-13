@@ -486,6 +486,50 @@ class LocationTracking(db.Model):
             'zone_id': self.zone_id
         }
 
+class ReportLog(db.Model):
+    """
+    Track all report exports for auditing and history
+    """
+    __tablename__ = 'report_logs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    report_type = db.Column(db.String(20), nullable=False)  # 'pdf', 'csv', 'json'
+    filename = db.Column(db.String(255), nullable=False)
+    filters_applied = db.Column(db.Text)  # JSON string of filters
+    record_count = db.Column(db.Integer, default=0)
+    file_size_bytes = db.Column(db.BigInteger)  # File size in bytes
+    status = db.Column(db.String(20), default='completed')  # 'completed', 'failed', 'in_progress'
+    error_message = db.Column(db.Text)  # Store error details if failed
+    export_timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Relationships
+    user = db.relationship('User', backref='report_logs')
+    
+    # Add index for performance
+    __table_args__ = (
+        db.Index('idx_report_user_timestamp', 'user_id', 'export_timestamp'),
+        db.Index('idx_report_timestamp', 'export_timestamp'),
+        db.Index('idx_report_status', 'status'),
+    )
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'username': self.user.username if self.user else None,
+            'report_type': self.report_type,
+            'filename': self.filename,
+            'filters_applied': json.loads(self.filters_applied) if self.filters_applied else {},
+            'record_count': self.record_count,
+            'file_size_bytes': self.file_size_bytes,
+            'file_size_mb': round(self.file_size_bytes / (1024 * 1024), 2) if self.file_size_bytes else None,
+            'status': self.status,
+            'error_message': self.error_message,
+            'export_timestamp': self.export_timestamp.isoformat() if self.export_timestamp else None,
+            'export_timestamp_formatted': self.export_timestamp.strftime('%Y-%m-%d %H:%M:%S') if self.export_timestamp else None
+        }
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -2796,17 +2840,44 @@ def delete_seizure_prediction_endpoint(prediction_id):
 @admin_required
 def export_analytics_data():
     """Export analytics data in various formats"""
+    report_log = None
     try:
         data = request.get_json()
         export_type = data.get('type', 'pdf')  # pdf, csv, json
         date_range = data.get('dateRange', '30')
         filters = data.get('filters', {})
         
+        # Initialize report log
+        timestamp = datetime.utcnow()
+        filename = f'analytics_export_{timestamp.strftime("%Y%m%d_%H%M%S")}.{export_type}'
+        report_log = ReportLog(
+            user_id=current_user.id,
+            report_type=export_type,
+            filename=filename,
+            filters_applied=json.dumps(filters),
+            status='in_progress'
+        )
+        
+        # Get record count estimate for logging
+        record_count = 0
+        try:
+            metrics = get_analytics_metrics()
+            if metrics.get('success'):
+                data_counts = metrics.get('data', {})
+                record_count = data_counts.get('total_incidents', 0) + data_counts.get('active_patients', 0)
+        except:
+            pass
+        
         # Try Supabase first
         try:
             from supabase_integration import export_analytics_data_supabase
             supabase_result = export_analytics_data_supabase(filters)
             if supabase_result:
+                # Log successful Supabase export
+                report_log.status = 'completed'
+                report_log.record_count = record_count
+                db.session.add(report_log)
+                db.session.commit()
                 return jsonify(supabase_result)
         except Exception as e:
             print(f"Supabase export failed: {e}")
@@ -2886,11 +2957,20 @@ def export_analytics_data():
                 # Build PDF
                 doc.build(story)
                 buffer.seek(0)
+                pdf_content = buffer.getvalue()
                 
+                # Log successful export
+                report_log.status = 'completed'
+                report_log.record_count = record_count
+                report_log.file_size_bytes = len(pdf_content)
+                db.session.add(report_log)
+                db.session.commit()
+                
+                buffer.seek(0)
                 return send_file(
                     buffer,
                     as_attachment=True,
-                    download_name=f'safestep_analytics_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.pdf',
+                    download_name=filename,
                     mimetype='application/pdf'
                 )
                 
@@ -2904,8 +2984,11 @@ def export_analytics_data():
                 
                 # Get prediction results
                 predictions = get_prediction_results()
+                csv_record_count = 0
                 if predictions.get('success'):
-                    for pred in predictions.get('predictions', []):
+                    pred_list = predictions.get('predictions', [])
+                    csv_record_count = len(pred_list)
+                    for pred in pred_list:
                         writer.writerow([
                             pred.get('patient_id', ''),
                             pred.get('risk_level', ''),
@@ -2914,11 +2997,20 @@ def export_analytics_data():
                             pred.get('last_update', '')
                         ])
                 
+                csv_content = output.getvalue()
+                
+                # Log successful export
+                report_log.status = 'completed'
+                report_log.record_count = csv_record_count
+                report_log.file_size_bytes = len(csv_content.encode('utf-8'))
+                db.session.add(report_log)
+                db.session.commit()
+                
                 output.seek(0)
                 return Response(
                     output.getvalue(),
                     mimetype='text/csv',
-                    headers={'Content-Disposition': f'attachment; filename=safestep_predictions_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.csv'}
+                    headers={'Content-Disposition': f'attachment; filename={filename}'}
                 )
                 
             elif export_type == 'json':
@@ -2933,15 +3025,173 @@ def export_analytics_data():
                     'locations': get_enhanced_location_distribution()
                 }
                 
+                json_str = json.dumps(export_data, indent=2)
+                
+                # Log successful export
+                report_log.status = 'completed'
+                report_log.record_count = record_count
+                report_log.file_size_bytes = len(json_str.encode('utf-8'))
+                db.session.add(report_log)
+                db.session.commit()
+                
                 return jsonify({
                     'success': True,
                     'data': export_data,
-                    'filename': f'analytics_export_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.json'
+                    'filename': filename
                 })
             
         except Exception as e:
             print(f"Export generation failed: {e}")
+            # Log failed export
+            if report_log:
+                report_log.status = 'failed'
+                report_log.error_message = str(e)
+                db.session.add(report_log)
+                db.session.commit()
             return jsonify({'success': False, 'error': str(e)}), 500
+        
+    except Exception as e:
+        # Log failed export
+        if report_log:
+            report_log.status = 'failed'
+            report_log.error_message = str(e)
+            db.session.add(report_log)
+            db.session.commit()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# Report History CRUD Routes
+@app.route('/api/reports', methods=['GET'])
+@login_required
+@admin_required
+def get_report_history():
+    """Get paginated report history with filtering"""
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        report_type = request.args.get('type')
+        status = request.args.get('status')
+        user_id = request.args.get('user_id', type=int)
+        
+        query = ReportLog.query
+        
+        # Apply filters
+        if report_type:
+            query = query.filter(ReportLog.report_type == report_type)
+        if status:
+            query = query.filter(ReportLog.status == status)
+        if user_id:
+            query = query.filter(ReportLog.user_id == user_id)
+            
+        # Order by most recent first
+        query = query.order_by(ReportLog.export_timestamp.desc())
+        
+        # Paginate
+        reports = query.paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+        
+        return jsonify({
+            'success': True,
+            'reports': [report.to_dict() for report in reports.items],
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total': reports.total,
+                'pages': reports.pages,
+                'has_next': reports.has_next,
+                'has_prev': reports.has_prev
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/reports/<int:report_id>', methods=['GET'])
+@login_required
+@admin_required
+def get_report_details(report_id):
+    """Get detailed information about a specific report"""
+    try:
+        report = ReportLog.query.get_or_404(report_id)
+        return jsonify({
+            'success': True,
+            'report': report.to_dict()
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/reports/<int:report_id>', methods=['DELETE'])
+@login_required
+@admin_required
+def delete_report_log(report_id):
+    """Delete a report log entry"""
+    try:
+        report = ReportLog.query.get_or_404(report_id)
+        db.session.delete(report)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Report log deleted successfully'
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/reports/stats', methods=['GET'])
+@login_required
+@admin_required
+def get_report_stats():
+    """Get report statistics for dashboard"""
+    try:
+        from sqlalchemy import func
+        
+        # Total reports
+        total_reports = ReportLog.query.count()
+        
+        # Reports by type
+        type_stats = db.session.query(
+            ReportLog.report_type,
+            func.count(ReportLog.id).label('count')
+        ).group_by(ReportLog.report_type).all()
+        
+        # Reports by status
+        status_stats = db.session.query(
+            ReportLog.status,
+            func.count(ReportLog.id).label('count')
+        ).group_by(ReportLog.status).all()
+        
+        # Recent activity (last 30 days)
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        recent_reports = ReportLog.query.filter(
+            ReportLog.export_timestamp >= thirty_days_ago
+        ).count()
+        
+        # Top users by export count
+        top_users = db.session.query(
+            ReportLog.user_id,
+            User.username,
+            func.count(ReportLog.id).label('export_count')
+        ).join(User).group_by(
+            ReportLog.user_id, User.username
+        ).order_by(
+            func.count(ReportLog.id).desc()
+        ).limit(5).all()
+        
+        return jsonify({
+            'success': True,
+            'stats': {
+                'total_reports': total_reports,
+                'recent_reports': recent_reports,
+                'by_type': {stat[0]: stat[1] for stat in type_stats},
+                'by_status': {stat[0]: stat[1] for stat in status_stats},
+                'top_users': [{
+                    'user_id': stat[0],
+                    'username': stat[1],
+                    'export_count': stat[2]
+                } for stat in top_users]
+            }
+        })
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -4263,6 +4513,48 @@ if __name__ == '__main__':
                 
             print(f"✅ Admin user exists: {admin.username} - Active: {admin.is_active}")
             print(f"✅ Demo caregiver exists: {demo_caregiver.username} - Active: {demo_caregiver.is_active}")
+            
+            # Create sample report logs for testing
+            existing_reports = ReportLog.query.count()
+            if existing_reports == 0:
+                sample_reports = [
+                    ReportLog(
+                        user_id=admin.id,
+                        report_type='PDF',
+                        filename='analytics_export_2025_08_13.pdf',
+                        filters_applied='{"dateRange": "30", "incidentType": "seizure"}',
+                        record_count=45,
+                        file_size_bytes=2048576,
+                        status='completed',
+                        export_timestamp=datetime.utcnow() - timedelta(hours=2)
+                    ),
+                    ReportLog(
+                        user_id=admin.id,
+                        report_type='CSV',
+                        filename='patient_data_export.csv',
+                        filters_applied='{"dateRange": "7", "location": "home"}',
+                        record_count=23,
+                        file_size_bytes=512000,
+                        status='completed',
+                        export_timestamp=datetime.utcnow() - timedelta(hours=5)
+                    ),
+                    ReportLog(
+                        user_id=demo_caregiver.id,
+                        report_type='JSON',
+                        filename='incident_report.json',
+                        filters_applied='{"severity": "high"}',
+                        record_count=12,
+                        file_size_bytes=256000,
+                        status='failed',
+                        error_message='Export timeout - data too large',
+                        export_timestamp=datetime.utcnow() - timedelta(hours=1)
+                    )
+                ]
+                
+                for report in sample_reports:
+                    db.session.add(report)
+                db.session.commit()
+                print("✅ Sample report logs created for testing")
         except Exception as e:
             print(f"Admin user setup failed: {e}")
     
