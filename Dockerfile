@@ -11,19 +11,20 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 # Install system dependencies
-RUN apk update && apk add --no-cache \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
-    musl-dev \
-    postgresql-dev \
+    libc6-dev \
+    libpq-dev \
     libffi-dev \
-    openssl-dev \
-    cairo-dev \
-    pango-dev \
-    gdk-pixbuf-dev \
+    libssl-dev \
+    libcairo2-dev \
+    libpango1.0-dev \
+    libgdk-pixbuf2.0-dev \
     shared-mime-info \
     make \
     curl \
-    && rm -rf /var/cache/apk/*
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements file
 COPY requirements.txt .
