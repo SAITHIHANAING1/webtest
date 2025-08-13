@@ -1,0 +1,627 @@
+{% extends "base.html" %}
+
+{% block title %}Healthcare Providers - Safe-Step{% endblock %}
+
+{% block body_class %}caregiver-page{% endblock %}
+
+{% block extra_css %}
+<style>
+    .provider-card {
+        border-left: 4px solid var(--info-color);
+        transition: all 0.3s ease;
+    }
+    .provider-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .specialty-badge {
+        background: var(--primary-color);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        margin: 2px;
+        display: inline-block;
+    }
+    .contact-info {
+        background: var(--gray-50);
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 10px;
+    }
+    .provider-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: var(--gradient-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+    .rating-stars {
+        color: var(--warning-color);
+    }
+    .provider-status {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .status-active {
+        background: var(--success-color);
+        color: white;
+    }
+    .status-inactive {
+        background: var(--gray-500);
+        color: white;
+    }
+    .appointment-badge {
+        background: var(--info-color);
+        color: white;
+        padding: 2px 6px;
+        border-radius: 8px;
+        font-size: 0.7rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="caregiver-container">
+    <!-- Page Header -->
+    <div class="caregiver-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="fas fa-user-md me-3"></i>Healthcare Providers</h1>
+                <p>Manage your network of healthcare professionals and their contact information.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProviderModal">
+                    <i class="fas fa-plus me-2"></i>Add Provider
+                </button>
+                <button class="btn btn-outline-primary" onclick="refreshProviders()">
+                    <i class="fas fa-sync-alt me-2"></i>Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="caregiver-stat-card">
+                <div class="caregiver-stat-icon" style="background: var(--gradient-info);">
+                    <i class="fas fa-user-md"></i>
+                </div>
+                <div class="caregiver-stat-value" id="totalProviders">0</div>
+                <div class="caregiver-stat-label">Total Providers</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="caregiver-stat-card">
+                <div class="caregiver-stat-icon" style="background: var(--gradient-primary);">
+                    <i class="fas fa-stethoscope"></i>
+                </div>
+                <div class="caregiver-stat-value" id="specialtiesCount">0</div>
+                <div class="caregiver-stat-label">Specialties</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="caregiver-stat-card">
+                <div class="caregiver-stat-icon" style="background: var(--gradient-success);">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="caregiver-stat-value" id="upcomingAppointments">0</div>
+                <div class="caregiver-stat-label">Upcoming Appointments</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="caregiver-stat-card">
+                <div class="caregiver-stat-icon" style="background: var(--gradient-warning);">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="caregiver-stat-value" id="averageRating">0.0</div>
+                <div class="caregiver-stat-label">Average Rating</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter and Search -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="searchProviders" placeholder="Search providers...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="filterSpecialty">
+                        <option value="">All Specialties</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="filterLocation">
+                        <option value="">All Locations</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                        <i class="fas fa-times me-1"></i>Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Providers List -->
+    <div class="card shadow">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Healthcare Providers</h5>
+        </div>
+        <div class="card-body">
+            <div id="providersContainer">
+                <!-- Providers will be loaded here -->
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Loading healthcare providers...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Provider Modal -->
+<div class="modal fade" id="addProviderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Add Healthcare Provider</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addProviderForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="providerName" class="form-label">Provider Name *</label>
+                                <input type="text" class="form-control" id="providerName" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="specialty" class="form-label">Specialty *</label>
+                                <input type="text" class="form-control" id="specialty" placeholder="e.g., Cardiologist" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="phoneNumber" class="form-label">Phone Number *</label>
+                                <input type="tel" class="form-control" id="phoneNumber" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address</label>
+                        <textarea class="form-control" id="address" rows="2" placeholder="Full address including city, state, zip"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="hospitalAffiliation" class="form-label">Hospital/Clinic Affiliation</label>
+                                <input type="text" class="form-control" id="hospitalAffiliation">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="insuranceAccepted" class="form-label">Insurance Accepted</label>
+                                <input type="text" class="form-control" id="insuranceAccepted" placeholder="Separate multiple with commas">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="rating" class="form-label">Rating (1-5)</label>
+                                <select class="form-select" id="rating">
+                                    <option value="">No rating</option>
+                                    <option value="1">1 Star</option>
+                                    <option value="2">2 Stars</option>
+                                    <option value="3">3 Stars</option>
+                                    <option value="4">4 Stars</option>
+                                    <option value="5">5 Stars</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="website" class="form-label">Website</label>
+                                <input type="url" class="form-control" id="website" placeholder="https://">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" rows="3" placeholder="Additional notes about this provider..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveProvider()">Save Provider</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Provider Details Modal -->
+<div class="modal fade" id="providerDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user-md me-2"></i>Provider Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="providerDetailsContent">
+                <!-- Provider details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="editProviderBtn">Edit Provider</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let allProviders = [];
+let filteredProviders = [];
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadProviders();
+    loadStats();
+    
+    // Set up search and filter event listeners
+    document.getElementById('searchProviders').addEventListener('input', filterProviders);
+    document.getElementById('filterSpecialty').addEventListener('change', filterProviders);
+    document.getElementById('filterLocation').addEventListener('change', filterProviders);
+});
+
+// Load providers
+function loadProviders() {
+    fetch('/api/enhanced/healthcare-providers')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                allProviders = data.providers;
+                filteredProviders = [...allProviders];
+                displayProviders(filteredProviders);
+                populateFilters();
+            } else {
+                showError('Failed to load providers: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading providers:', error);
+            showError('Failed to load providers. Please try again.');
+        });
+}
+
+// Display providers
+function displayProviders(providers) {
+    const container = document.getElementById('providersContainer');
+    
+    if (providers.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-user-md fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No healthcare providers found</h5>
+                <p class="text-muted">Click "Add Provider" to get started.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = providers.map(provider => `
+        <div class="provider-card card mb-3 position-relative">
+            <div class="provider-status ${provider.is_active ? 'status-active' : 'status-inactive'}">
+                ${provider.is_active ? 'Active' : 'Inactive'}
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-1">
+                        <div class="provider-avatar">
+                            ${provider.provider_name.charAt(0).toUpperCase()}
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <h5 class="card-title">
+                            ${provider.provider_name}
+                            ${provider.rating ? `
+                                <span class="rating-stars ms-2">
+                                    ${generateStars(provider.rating)}
+                                </span>
+                            ` : ''}
+                        </h5>
+                        <span class="specialty-badge">${provider.specialty}</span>
+                        ${provider.hospital_affiliation ? `<span class="specialty-badge" style="background: var(--info-color);">${provider.hospital_affiliation}</span>` : ''}
+                        
+                        <div class="contact-info">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1">
+                                        <i class="fas fa-phone text-primary me-2"></i>
+                                        <a href="tel:${provider.phone_number}">${provider.phone_number}</a>
+                                    </p>
+                                    ${provider.email ? `
+                                        <p class="mb-1">
+                                            <i class="fas fa-envelope text-primary me-2"></i>
+                                            <a href="mailto:${provider.email}">${provider.email}</a>
+                                        </p>
+                                    ` : ''}
+                                    ${provider.website ? `
+                                        <p class="mb-1">
+                                            <i class="fas fa-globe text-primary me-2"></i>
+                                            <a href="${provider.website}" target="_blank">Website</a>
+                                        </p>
+                                    ` : ''}
+                                </div>
+                                <div class="col-md-6">
+                                    ${provider.address ? `
+                                        <p class="mb-1">
+                                            <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                                            ${provider.address}
+                                        </p>
+                                    ` : ''}
+                                    ${provider.insurance_accepted && provider.insurance_accepted.length > 0 ? `
+                                        <p class="mb-1">
+                                            <i class="fas fa-shield-alt text-primary me-2"></i>
+                                            <small>Insurance: ${provider.insurance_accepted.slice(0, 2).join(', ')}${provider.insurance_accepted.length > 2 ? '...' : ''}</small>
+                                        </p>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${provider.notes ? `<p class="text-muted small mt-2"><strong>Notes:</strong> ${provider.notes}</p>` : ''}
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="mb-2">
+                            ${provider.upcoming_appointments ? `
+                                <span class="appointment-badge">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    ${provider.upcoming_appointments} upcoming
+                                </span>
+                            ` : ''}
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-sm btn-primary me-2" onclick="viewProviderDetails('${provider.id}')">
+                                <i class="fas fa-eye me-1"></i>View Details
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary me-2" onclick="editProvider('${provider.id}')">
+                                <i class="fas fa-edit me-1"></i>Edit
+                            </button>
+                            <button class="btn btn-sm btn-outline-success" onclick="scheduleAppointment('${provider.id}')">
+                                <i class="fas fa-calendar-plus me-1"></i>Schedule
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Generate star rating display
+function generateStars(rating) {
+    let stars = '';
+    for (let i = 1; i <= 5; i++) {
+        if (i <= rating) {
+            stars += '<i class="fas fa-star"></i>';
+        } else {
+            stars += '<i class="far fa-star"></i>';
+        }
+    }
+    return stars;
+}
+
+// Populate filter dropdowns
+function populateFilters() {
+    const specialties = [...new Set(allProviders.map(p => p.specialty))].sort();
+    const locations = [...new Set(allProviders.map(p => p.address ? p.address.split(',').pop().trim() : '').filter(l => l))].sort();
+    
+    const specialtySelect = document.getElementById('filterSpecialty');
+    specialtySelect.innerHTML = '<option value="">All Specialties</option>' + 
+        specialties.map(s => `<option value="${s}">${s}</option>`).join('');
+    
+    const locationSelect = document.getElementById('filterLocation');
+    locationSelect.innerHTML = '<option value="">All Locations</option>' + 
+        locations.map(l => `<option value="${l}">${l}</option>`).join('');
+}
+
+// Filter providers
+function filterProviders() {
+    const searchTerm = document.getElementById('searchProviders').value.toLowerCase();
+    const selectedSpecialty = document.getElementById('filterSpecialty').value;
+    const selectedLocation = document.getElementById('filterLocation').value;
+    
+    filteredProviders = allProviders.filter(provider => {
+        const matchesSearch = !searchTerm || 
+            provider.provider_name.toLowerCase().includes(searchTerm) ||
+            provider.specialty.toLowerCase().includes(searchTerm) ||
+            (provider.hospital_affiliation && provider.hospital_affiliation.toLowerCase().includes(searchTerm));
+        
+        const matchesSpecialty = !selectedSpecialty || provider.specialty === selectedSpecialty;
+        
+        const matchesLocation = !selectedLocation || 
+            (provider.address && provider.address.includes(selectedLocation));
+        
+        return matchesSearch && matchesSpecialty && matchesLocation;
+    });
+    
+    displayProviders(filteredProviders);
+}
+
+// Clear filters
+function clearFilters() {
+    document.getElementById('searchProviders').value = '';
+    document.getElementById('filterSpecialty').value = '';
+    document.getElementById('filterLocation').value = '';
+    filteredProviders = [...allProviders];
+    displayProviders(filteredProviders);
+}
+
+// Load statistics
+function loadStats() {
+    fetch('/api/enhanced/healthcare-providers/stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('totalProviders').textContent = data.stats.total_providers;
+                document.getElementById('specialtiesCount').textContent = data.stats.specialties_count;
+                document.getElementById('upcomingAppointments').textContent = data.stats.upcoming_appointments;
+                document.getElementById('averageRating').textContent = data.stats.average_rating.toFixed(1);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading stats:', error);
+        });
+}
+
+// Save provider
+function saveProvider() {
+    const formData = {
+        provider_name: document.getElementById('providerName').value,
+        specialty: document.getElementById('specialty').value,
+        phone_number: document.getElementById('phoneNumber').value,
+        email: document.getElementById('email').value || null,
+        address: document.getElementById('address').value || null,
+        hospital_affiliation: document.getElementById('hospitalAffiliation').value || null,
+        insurance_accepted: document.getElementById('insuranceAccepted').value.split(',').map(s => s.trim()).filter(s => s),
+        rating: document.getElementById('rating').value ? parseInt(document.getElementById('rating').value) : null,
+        website: document.getElementById('website').value || null,
+        notes: document.getElementById('notes').value || null
+    };
+    
+    fetch('/api/enhanced/healthcare-providers', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess('Healthcare provider added successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('addProviderModal')).hide();
+            document.getElementById('addProviderForm').reset();
+            loadProviders();
+            loadStats();
+        } else {
+            showError('Failed to add provider: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error saving provider:', error);
+        showError('Failed to save provider. Please try again.');
+    });
+}
+
+// View provider details
+function viewProviderDetails(providerId) {
+    const provider = allProviders.find(p => p.id === providerId);
+    if (!provider) return;
+    
+    const content = `
+        <div class="row">
+            <div class="col-md-2">
+                <div class="provider-avatar" style="width: 80px; height: 80px; font-size: 2rem;">
+                    ${provider.provider_name.charAt(0).toUpperCase()}
+                </div>
+            </div>
+            <div class="col-md-10">
+                <h4>${provider.provider_name}</h4>
+                <p class="text-muted">${provider.specialty}</p>
+                ${provider.rating ? `
+                    <div class="rating-stars mb-2">
+                        ${generateStars(provider.rating)} (${provider.rating}/5)
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+        
+        <hr>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="fas fa-phone me-2"></i>Contact Information</h6>
+                <p><strong>Phone:</strong> ${provider.phone_number}</p>
+                ${provider.email ? `<p><strong>Email:</strong> ${provider.email}</p>` : ''}
+                ${provider.website ? `<p><strong>Website:</strong> <a href="${provider.website}" target="_blank">${provider.website}</a></p>` : ''}
+                ${provider.address ? `<p><strong>Address:</strong><br>${provider.address}</p>` : ''}
+            </div>
+            <div class="col-md-6">
+                <h6><i class="fas fa-info-circle me-2"></i>Additional Information</h6>
+                ${provider.hospital_affiliation ? `<p><strong>Hospital/Clinic:</strong> ${provider.hospital_affiliation}</p>` : ''}
+                ${provider.insurance_accepted && provider.insurance_accepted.length > 0 ? `
+                    <p><strong>Insurance Accepted:</strong><br>
+                    ${provider.insurance_accepted.map(ins => `<span class="specialty-badge" style="background: var(--success-color);">${ins}</span>`).join(' ')}
+                    </p>
+                ` : ''}
+                ${provider.notes ? `<p><strong>Notes:</strong><br>${provider.notes}</p>` : ''}
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('providerDetailsContent').innerHTML = content;
+    document.getElementById('editProviderBtn').onclick = () => editProvider(providerId);
+    
+    const modal = new bootstrap.Modal(document.getElementById('providerDetailsModal'));
+    modal.show();
+}
+
+// Refresh providers
+function refreshProviders() {
+    loadProviders();
+    loadStats();
+    showSuccess('Providers refreshed!');
+}
+
+// Utility functions
+function showSuccess(message) {
+    alert('Success: ' + message);
+}
+
+function showError(message) {
+    alert('Error: ' + message);
+}
+
+function editProvider(providerId) {
+    alert('Edit functionality coming soon!');
+}
+
+function scheduleAppointment(providerId) {
+    alert('Appointment scheduling coming soon!');
+}
+</script>
+{% endblock %}

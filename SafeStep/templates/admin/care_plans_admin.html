@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+
+{% block title %}Care Plans - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1"><i class="fas fa-clipboard-list me-2"></i>Care Plan Management</h2>
+                    <p class="text-muted mb-0">Comprehensive care plan oversight and coordination</p>
+                </div>
+                <div>
+                    <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addCarePlanModal">
+                        <i class="fas fa-plus me-2"></i>Create Care Plan
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="refreshData()">
+                        <i class="fas fa-sync-alt me-2"></i>Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="totalPlans">0</h4>
+                            <p class="mb-0">Total Care Plans</p>
+                        </div>
+                        <i class="fas fa-clipboard-list fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="activePlans">0</h4>
+                            <p class="mb-0">Active Plans</p>
+                        </div>
+                        <i class="fas fa-play-circle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="pendingTasks">0</h4>
+                            <p class="mb-0">Pending Tasks</p>
+                        </div>
+                        <i class="fas fa-clock fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="completionRate">0%</h4>
+                            <p class="mb-0">Avg Completion Rate</p>
+                        </div>
+                        <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Search Care Plans</label>
+                            <input type="text" class="form-control" id="searchInput" placeholder="Search by plan name, patient...">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="statusFilter">
+                                <option value="">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="completed">Completed</option>
+                                <option value="paused">Paused</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Patient</label>
+                            <select class="form-select" id="patientFilter">
+                                <option value="">All Patients</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Priority</label>
+                            <select class="form-select" id="priorityFilter">
+                                <option value="">All Priorities</option>
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-primary" onclick="applyFilters()">
+                                    <i class="fas fa-filter me-1"></i>Filter
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                                    <i class="fas fa-times me-1"></i>Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Care Plans Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Care Plans Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="carePlansTable">
+                            <thead>
+                                <tr>
+                                    <th>Plan Name</th>
+                                    <th>Patient</th>
+                                    <th>Created By</th>
+                                    <th>Start Date</th>
+                                    <th>Status</th>
+                                    <th>Progress</th>
+                                    <th>Priority</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="carePlansTableBody">
+                                <!-- Dynamic content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Management Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Tasks</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm" id="tasksTable">
+                            <thead>
+                                <tr>
+                                    <th>Task</th>
+                                    <th>Care Plan</th>
+                                    <th>Patient</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                    <th>Assigned To</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tasksTableBody">
+                                <!-- Dynamic content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Care Plan Modal -->
+<div class="modal fade" id="addCarePlanModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New Care Plan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addCarePlanForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Patient *</label>
+                            <select class="form-select" id="patientSelect" required>
+                                <option value="">Select Patient</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Plan Name *</label>
+                            <input type="text" class="form-control" id="planName" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Priority *</label>
+                            <select class="form-select" id="priority" required>
+                                <option value="">Select Priority</option>
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="startDate">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Target End Date</label>
+                            <input type="date" class="form-control" id="endDate">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="description" rows="3" placeholder="Describe the care plan objectives and approach..."></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Goals</label>
+                            <textarea class="form-control" id="goals" rows="3" placeholder="List the specific goals for this care plan..."></textarea>
+                        </div>
+                        
+                        <!-- Tasks Section -->
+                        <div class="col-12">
+                            <hr>
+                            <h6>Initial Tasks</h6>
+                            <div id="tasksContainer">
+                                <div class="task-item border rounded p-3 mb-3">
+                                    <div class="row g-2">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Task Name</label>
+                                            <input type="text" class="form-control task-name" placeholder="Task name">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Due Date</label>
+                                            <input type="date" class="form-control task-due-date">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Assigned To</label>
+                                            <select class="form-select task-assigned-to">
+                                                <option value="">Select Provider</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">&nbsp;</label>
+                                            <button type="button" class="btn btn-outline-danger w-100" onclick="removeTask(this)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">Task Description</label>
+                                            <textarea class="form-control task-description" rows="2" placeholder="Task details..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary" onclick="addTask()">
+                                <i class="fas fa-plus me-1"></i>Add Task
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveCarePlan()">Create Care Plan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadCarePlans();
+    loadTasks();
+    loadPatients();
+    loadStatistics();
+});
+
+// Load care plans data
+function loadCarePlans() {
+    console.log('Loading care plans...');
+}
+
+// Load tasks data
+function loadTasks() {
+    console.log('Loading tasks...');
+}
+
+// Load patients for dropdowns
+function loadPatients() {
+    console.log('Loading patients...');
+}
+
+// Load statistics
+function loadStatistics() {
+    console.log('Loading statistics...');
+}
+
+// Save new care plan
+function saveCarePlan() {
+    console.log('Saving care plan...');
+}
+
+// Add new task to form
+function addTask() {
+    console.log('Adding task...');
+}
+
+// Remove task from form
+function removeTask(button) {
+    button.closest('.task-item').remove();
+}
+
+// Apply filters
+function applyFilters() {
+    console.log('Applying filters...');
+}
+
+// Clear filters
+function clearFilters() {
+    console.log('Clearing filters...');
+}
+
+// Refresh data
+function refreshData() {
+    loadCarePlans();
+    loadTasks();
+    loadStatistics();
+}
+</script>
+{% endblock %}

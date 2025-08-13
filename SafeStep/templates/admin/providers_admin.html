@@ -1,0 +1,880 @@
+{% extends "base.html" %}
+
+{% block title %}Healthcare Providers - Admin{% endblock %}
+
+{% block head %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1"><i class="fas fa-user-md me-2"></i>Healthcare Provider Management</h2>
+                    <p class="text-muted mb-0">Manage healthcare providers and patient assignments</p>
+                </div>
+                <div>
+                    <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addProviderModal">
+                        <i class="fas fa-plus me-2"></i>Add Provider
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="refreshData()">
+                        <i class="fas fa-sync-alt me-2"></i>Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="totalProviders">0</h4>
+                            <p class="mb-0">Total Providers</p>
+                        </div>
+                        <i class="fas fa-user-md fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="activeProviders">0</h4>
+                            <p class="mb-0">Active Providers</p>
+                        </div>
+                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="specialties">0</h4>
+                            <p class="mb-0">Specialties</p>
+                        </div>
+                        <i class="fas fa-stethoscope fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="assignments">0</h4>
+                            <p class="mb-0">Patient Assignments</p>
+                        </div>
+                        <i class="fas fa-link fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Search Providers</label>
+                            <input type="text" class="form-control" id="searchInput" placeholder="Search by name, specialty, phone...">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Specialty</label>
+                            <select class="form-select" id="specialtyFilter">
+                                <option value="">All Specialties</option>
+                                <option value="neurologist">Neurologist</option>
+                                <option value="epileptologist">Epileptologist</option>
+                                <option value="primary_care">Primary Care</option>
+                                <option value="pharmacist">Pharmacist</option>
+                                <option value="nurse">Nurse</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="statusFilter">
+                                <option value="">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-primary" onclick="applyFilters()">
+                                    <i class="fas fa-filter me-1"></i>Filter
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                                    <i class="fas fa-times me-1"></i>Clear
+                                </button>
+                                <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#assignmentModal">
+                                    <i class="fas fa-link me-1"></i>Manage Assignments
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Singapore Healthcare Providers Map for PWIDs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Singapore Healthcare Providers for PWIDs</h5>
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="toggleMapView()">
+                                <i class="fas fa-expand-arrows-alt me-1"></i>Toggle Fullscreen
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="refreshMap()">
+                                <i class="fas fa-sync-alt me-1"></i>Refresh Map
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <!-- Map Container -->
+                            <div id="singaporeMap" style="height: 500px; border-radius: 8px; border: 1px solid #dee2e6;"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <!-- Map Legend and Filters -->
+                            <div class="mb-3">
+                                <h6>Provider Types</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="showOST" checked>
+                                    <label class="form-check-label" for="showOST">
+                                        <span class="badge bg-success me-2">●</span>OST Clinics
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="showNSP" checked>
+                                    <label class="form-check-label" for="showNSP">
+                                        <span class="badge bg-primary me-2">●</span>Needle & Syringe Programs
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="showCounseling" checked>
+                                    <label class="form-check-label" for="showCounseling">
+                                        <span class="badge bg-warning me-2">●</span>Counseling Services
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="showTesting" checked>
+                                    <label class="form-check-label" for="showTesting">
+                                        <span class="badge bg-info me-2">●</span>HIV/HCV Testing
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="showRehab" checked>
+                                    <label class="form-check-label" for="showRehab">
+                                        <span class="badge bg-danger me-2">●</span>Rehabilitation Centers
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Quick Stats -->
+                            <div class="card bg-light">
+                                <div class="card-body p-3">
+                                    <h6 class="card-title">Quick Statistics</h6>
+                                    <div class="row text-center">
+                                        <div class="col-6">
+                                            <div class="border-end">
+                                                <h5 class="mb-0 text-success" id="mapOSTCount">12</h5>
+                                                <small class="text-muted">OST Clinics</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <h5 class="mb-0 text-primary" id="mapNSPCount">8</h5>
+                                            <small class="text-muted">NSP Sites</small>
+                                        </div>
+                                    </div>
+                                    <hr class="my-2">
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <h6 class="mb-0 text-warning" id="mapCounselingCount">15</h6>
+                                            <small class="text-muted">Counseling</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <h6 class="mb-0 text-info" id="mapTestingCount">20</h6>
+                                            <small class="text-muted">Testing</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <h6 class="mb-0 text-danger" id="mapRehabCount">6</h6>
+                                            <small class="text-muted">Rehab</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Selected Provider Info -->
+                            <div class="mt-3">
+                                <div id="selectedProviderInfo" class="card" style="display: none;">
+                                    <div class="card-body p-3">
+                                        <h6 class="card-title">Selected Provider</h6>
+                                        <div id="providerDetails"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Providers Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Healthcare Providers</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="providersTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Specialty</th>
+                                    <th>Contact</th>
+                                    <th>Location</th>
+                                    <th>Patients</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="providersTableBody">
+                                <!-- Dynamic content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Provider Modal -->
+<div class="modal fade" id="addProviderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Healthcare Provider</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addProviderForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">First Name *</label>
+                            <input type="text" class="form-control" id="firstName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Last Name *</label>
+                            <input type="text" class="form-control" id="lastName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Specialty *</label>
+                            <select class="form-select" id="specialty" required>
+                                <option value="">Select Specialty</option>
+                                <option value="neurologist">Neurologist</option>
+                                <option value="epileptologist">Epileptologist</option>
+                                <option value="primary_care">Primary Care</option>
+                                <option value="pharmacist">Pharmacist</option>
+                                <option value="nurse">Nurse</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">License Number</label>
+                            <input type="text" class="form-control" id="licenseNumber">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone *</label>
+                            <input type="tel" class="form-control" id="phone" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Address</label>
+                            <textarea class="form-control" id="address" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Hospital/Clinic</label>
+                            <input type="text" class="form-control" id="hospital">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Department</label>
+                            <input type="text" class="form-control" id="department">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" id="notes" rows="2"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveProvider()">Save Provider</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assignment Management Modal -->
+<div class="modal fade" id="assignmentModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manage Patient-Provider Assignments</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Available Patients</h6>
+                        <div class="list-group" id="patientsList">
+                            <!-- Dynamic content -->
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Provider Assignments</h6>
+                        <div class="list-group" id="assignmentsList">
+                            <!-- Dynamic content -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="saveAssignments()">Save Assignments</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadProviders();
+    loadStatistics();
+});
+
+// Load providers data
+function loadProviders() {
+    console.log('Loading providers...');
+    fetch('/api/enhanced/providers')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayProviders(data.data);
+                updateProviderStats(data.data);
+            } else {
+                console.error('Error loading providers:', data.error);
+                document.getElementById('providersTableBody').innerHTML = 
+                    '<tr><td colspan="7" class="text-center text-danger">Error: Failed to load providers. Please try again.</td></tr>';
+            }
+        })
+        .catch(error => {
+            console.error('Network error:', error);
+            document.getElementById('providersTableBody').innerHTML = 
+                '<tr><td colspan="7" class="text-center text-danger">Error: Failed to load providers. Please try again.</td></tr>';
+        });
+}
+
+// Display providers in table
+function displayProviders(providers) {
+    const tbody = document.getElementById('providersTableBody');
+    if (!providers || providers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No providers found</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = providers.map(provider => `
+        <tr>
+            <td>${provider.name || 'N/A'}</td>
+            <td><span class="badge bg-primary">${provider.specialty || 'N/A'}</span></td>
+            <td>
+                <div>${provider.phone || 'N/A'}</div>
+                <small class="text-muted">${provider.email || 'N/A'}</small>
+            </td>
+            <td>
+                <div>${provider.hospital_affiliation || 'N/A'}</div>
+                <small class="text-muted">${provider.address || 'N/A'}</small>
+            </td>
+            <td><span class="badge bg-info">0</span></td>
+            <td>
+                <span class="badge ${provider.is_active ? 'bg-success' : 'bg-secondary'}">
+                    ${provider.is_active ? 'Active' : 'Inactive'}
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="editProvider('${provider.id}')">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-info" onclick="viewProvider('${provider.id}')">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Update provider statistics
+function updateProviderStats(providers) {
+    const totalProviders = providers.length;
+    const activeProviders = providers.filter(p => p.is_active).length;
+    const specialties = [...new Set(providers.map(p => p.specialty))].length;
+    
+    document.querySelector('.card-body h3').textContent = totalProviders;
+    document.querySelectorAll('.card-body h3')[1].textContent = activeProviders;
+    document.querySelectorAll('.card-body h3')[2].textContent = specialties;
+}
+
+// Load statistics
+function loadStatistics() {
+    console.log('Loading statistics...');
+    // Statistics will be updated when providers are loaded
+}
+
+// Save new provider
+function saveProvider() {
+    console.log('Saving provider...');
+    const form = document.getElementById('addProviderForm');
+    const formData = new FormData(form);
+    
+    const providerData = {
+        name: `${formData.get('firstName')} ${formData.get('lastName')}`,
+        specialty: formData.get('specialty'),
+        license_number: formData.get('licenseNumber'),
+        phone: formData.get('phone'),
+        email: formData.get('email'),
+        address: formData.get('address'),
+        hospital_affiliation: formData.get('hospitalAffiliation'),
+        years_experience: parseInt(formData.get('yearsExperience')) || 0
+    };
+    
+    fetch('/api/enhanced/providers', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(providerData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('addProviderModal')).hide();
+            form.reset();
+            loadProviders();
+            showAlert('Provider added successfully!', 'success');
+        } else {
+            showAlert('Error adding provider: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Network error occurred', 'danger');
+    });
+}
+
+// Apply filters
+function applyFilters() {
+    const specialty = document.getElementById('specialtyFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    
+    let url = '/api/enhanced/providers?';
+    const params = new URLSearchParams();
+    
+    if (specialty) params.append('specialty', specialty);
+    if (status === 'active') params.append('active_only', 'true');
+    if (status === 'inactive') params.append('active_only', 'false');
+    
+    url += params.toString();
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayProviders(data.data);
+                updateProviderStats(data.data);
+            } else {
+                showAlert('Error filtering providers: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('Network error occurred', 'danger');
+        });
+}
+
+// Clear filters
+function clearFilters() {
+    document.getElementById('specialtyFilter').value = '';
+    document.getElementById('statusFilter').value = '';
+    loadProviders();
+}
+
+// Save assignments
+function saveAssignments() {
+    console.log('Saving assignments...');
+    showAlert('Assignment functionality coming soon!', 'info');
+}
+
+// Helper functions
+function editProvider(providerId) {
+    console.log('Edit provider:', providerId);
+    showAlert('Edit functionality coming soon!', 'info');
+}
+
+function viewProvider(providerId) {
+    console.log('View provider:', providerId);
+    showAlert('View functionality coming soon!', 'info');
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.container-fluid');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+// Refresh data
+function refreshData() {
+    loadProviders();
+    loadStatistics();
+}
+
+// Map variables
+let singaporeMap;
+let markersLayer;
+let isFullscreen = false;
+
+// Singapore healthcare providers data for PWIDs
+const singaporeProviders = {
+    ost: [
+        {name: "National Addictions Management Service (NAMS)", lat: 1.3521, lng: 103.8198, address: "Institute of Mental Health, Buangkok Green Medical Park", phone: "+65 6389 2200"},
+        {name: "Tan Tock Seng Hospital - Addiction Medicine", lat: 1.3207, lng: 103.8456, address: "11 Jalan Tan Tock Seng", phone: "+65 6256 6011"},
+        {name: "Singapore General Hospital - Addiction Medicine", lat: 1.2799, lng: 103.8352, address: "Outram Road", phone: "+65 6222 3322"},
+        {name: "Changi General Hospital - Addiction Services", lat: 1.3404, lng: 103.9496, address: "2 Simei Street 3", phone: "+65 6788 8833"},
+        {name: "National University Hospital - Addiction Unit", lat: 1.2966, lng: 103.7764, address: "5 Lower Kent Ridge Road", phone: "+65 6779 5555"},
+        {name: "Khoo Teck Puat Hospital - Addiction Services", lat: 1.4241, lng: 103.8384, address: "90 Yishun Central", phone: "+65 6555 8000"},
+        {name: "Alexandra Hospital - Addiction Medicine", lat: 1.2886, lng: 103.8007, address: "378 Alexandra Road", phone: "+65 6472 2000"},
+        {name: "Ng Teng Fong General Hospital - Addiction Unit", lat: 1.3387, lng: 103.7436, address: "1 Jurong East Street 21", phone: "+65 6716 2000"},
+        {name: "Sengkang General Hospital - Addiction Services", lat: 1.3917, lng: 103.8951, address: "110 Sengkang East Way", phone: "+65 6930 7000"},
+        {name: "Woodlands Health Campus - Addiction Medicine", lat: 1.4382, lng: 103.7890, address: "17 Woodlands Drive 17", phone: "+65 6363 3000"},
+        {name: "Community Court - Drug Treatment Court", lat: 1.2884, lng: 103.8455, address: "1 Havelock Square", phone: "+65 6435 5000"},
+        {name: "Prison Medical Services - Addiction Treatment", lat: 1.3138, lng: 103.8159, address: "Changi Prison Complex", phone: "+65 6546 3000"}
+    ],
+    nsp: [
+        {name: "Action for AIDS - NSP", lat: 1.3048, lng: 103.8318, address: "Block 78 Tanjong Pagar Road", phone: "+65 6254 0212"},
+        {name: "Singapore Anti-Narcotics Association (SANA)", lat: 1.3138, lng: 103.8159, address: "Geylang East Central", phone: "+65 6747 1011"},
+        {name: "Community Health Assessment Team (CHAT)", lat: 1.3521, lng: 103.8198, address: "Institute of Mental Health", phone: "+65 6389 2200"},
+        {name: "Yishun Community Hospital - Outreach", lat: 1.4241, lng: 103.8384, address: "2 Yishun Central 2", phone: "+65 6807 8800"},
+        {name: "Bright Vision Hospital - Community Program", lat: 1.3783, lng: 103.8456, address: "5 Lorong Napiri", phone: "+65 6248 5755"},
+        {name: "St. Andrew's Community Hospital - NSP", lat: 1.3138, lng: 103.8159, address: "8 Simei Street 3", phone: "+65 6586 1000"},
+        {name: "Ren Ci Community Hospital - Outreach", lat: 1.3404, lng: 103.9496, address: "71 Irrawaddy Road", phone: "+65 6250 1122"},
+        {name: "Mobile Outreach Team - Central", lat: 1.2884, lng: 103.8455, address: "Mobile Service - City Area", phone: "+65 6254 0212"}
+    ],
+    counseling: [
+        {name: "Singapore Anti-Narcotics Association (SANA) - Counseling", lat: 1.3138, lng: 103.8159, address: "Geylang East Central", phone: "+65 6747 1011"},
+        {name: "National Addictions Management Service - Counseling", lat: 1.3521, lng: 103.8198, address: "Institute of Mental Health", phone: "+65 6389 2200"},
+        {name: "We Care Community Services", lat: 1.3207, lng: 103.8456, address: "Toa Payoh Central", phone: "+65 6259 5900"},
+        {name: "Counselling and Care Centre", lat: 1.2799, lng: 103.8352, address: "Chinatown Point", phone: "+65 6536 6366"},
+        {name: "Touch Community Services - Addiction Counseling", lat: 1.3404, lng: 103.9496, address: "Tampines Central", phone: "+65 6804 6555"},
+        {name: "Care Corner Counselling Centre", lat: 1.2966, lng: 103.7764, address: "Jurong West Central", phone: "+65 6563 5800"},
+        {name: "Fei Yue Community Services - Counseling", lat: 1.4241, lng: 103.8384, address: "Yishun Ring Road", phone: "+65 6819 9170"},
+        {name: "Thye Hua Kwan Moral Charities - Counseling", lat: 1.2886, lng: 103.8007, address: "Redhill Close", phone: "+65 6272 1151"},
+        {name: "AMKFSC Community Services - Counseling", lat: 1.3687, lng: 103.8454, address: "Ang Mo Kio Avenue 4", phone: "+65 6453 3951"},
+        {name: "Brahm Centre - Addiction Counseling", lat: 1.3917, lng: 103.8951, address: "Sengkang East Avenue", phone: "+65 6881 1688"},
+        {name: "Lions Befrienders Service Association", lat: 1.4382, lng: 103.7890, address: "Woodlands Centre Road", phone: "+65 6560 7777"},
+        {name: "Samaritans of Singapore (SOS) - Crisis Support", lat: 1.3048, lng: 103.8318, address: "Bishan Street 13", phone: "+65 1800 221 4444"},
+        {name: "Silver Ribbon Singapore - Mental Health Support", lat: 1.3138, lng: 103.8159, address: "Geylang Road", phone: "+65 6386 1928"},
+        {name: "Club HEAL - Peer Support", lat: 1.3521, lng: 103.8198, address: "Bukit Batok West Avenue 8", phone: "+65 6563 1481"},
+        {name: "Shan You Counselling Centre", lat: 1.3207, lng: 103.8456, address: "Tanjong Pagar Road", phone: "+65 6225 4377"}
+    ],
+    testing: [
+        {name: "Action for AIDS - Testing Centre", lat: 1.3048, lng: 103.8318, address: "Block 78 Tanjong Pagar Road", phone: "+65 6254 0212"},
+        {name: "DSC Clinic - HIV/STI Testing", lat: 1.2799, lng: 103.8352, address: "31 Kelantan Lane", phone: "+65 6296 9648"},
+        {name: "Anonymous Test Site (ATS) - Tan Tock Seng", lat: 1.3207, lng: 103.8456, address: "11 Jalan Tan Tock Seng", phone: "+65 6357 7888"},
+        {name: "Polyclinic - Geylang", lat: 1.3138, lng: 103.8159, address: "21 Geylang East Central", phone: "+65 6643 6969"},
+        {name: "Polyclinic - Tampines", lat: 1.3404, lng: 103.9496, address: "1 Tampines Street 41", phone: "+65 6786 0088"},
+        {name: "Polyclinic - Jurong", lat: 1.2966, lng: 103.7764, address: "190 Jurong East Avenue 1", phone: "+65 6665 5655"},
+        {name: "Polyclinic - Yishun", lat: 1.4241, lng: 103.8384, address: "2 Yishun Central 2", phone: "+65 6758 8828"},
+        {name: "Polyclinic - Queenstown", lat: 1.2886, lng: 103.8007, address: "580 Stirling Road", phone: "+65 6474 8488"},
+        {name: "Polyclinic - Ang Mo Kio", lat: 1.3687, lng: 103.8454, address: "21 Ang Mo Kio Central 2", phone: "+65 6453 8033"},
+        {name: "Polyclinic - Sengkang", lat: 1.3917, lng: 103.8951, address: "2 Sengkang Square", phone: "+65 6315 9988"},
+        {name: "Polyclinic - Woodlands", lat: 1.4382, lng: 103.7890, address: "10 Woodlands Street 31", phone: "+65 6363 4555"},
+        {name: "Polyclinic - Bedok", lat: 1.3240, lng: 103.9301, address: "11 Bedok North Street 1", phone: "+65 6244 5612"},
+        {name: "Polyclinic - Bukit Batok", lat: 1.3487, lng: 103.7495, address: "50 Bukit Batok West Avenue 3", phone: "+65 6665 3220"},
+        {name: "Polyclinic - Clementi", lat: 1.3162, lng: 103.7649, address: "451 Clementi Avenue 3", phone: "+65 6774 8135"},
+        {name: "Polyclinic - Hougang", lat: 1.3713, lng: 103.8929, address: "89 Hougang Avenue 4", phone: "+65 6386 8555"},
+        {name: "Polyclinic - Pasir Ris", lat: 1.3721, lng: 103.9474, address: "1 Pasir Ris Drive 4", phone: "+65 6585 8000"},
+        {name: "Polyclinic - Pioneer", lat: 1.3379, lng: 103.6972, address: "26 Jurong West Street 61", phone: "+65 6316 6900"},
+        {name: "Polyclinic - Punggol", lat: 1.4043, lng: 103.9021, address: "681 Punggol Drive", phone: "+65 6643 6969"},
+        {name: "Polyclinic - Sembawang", lat: 1.4491, lng: 103.8185, address: "605 Sembawang Road", phone: "+65 6757 7188"},
+        {name: "Polyclinic - Toa Payoh", lat: 1.3343, lng: 103.8467, address: "2003 Lorong 8 Toa Payoh", phone: "+65 6354 8135"}
+    ],
+    rehab: [
+        {name: "The Helping Hand - Residential Program", lat: 1.3404, lng: 103.9496, address: "Simei Street 1", phone: "+65 6788 4555"},
+        {name: "Teen Challenge Singapore", lat: 1.2966, lng: 103.7764, address: "Jurong West Street 91", phone: "+65 6316 8160"},
+        {name: "Selarang Halfway House", lat: 1.3917, lng: 103.8951, address: "Changi Village Road", phone: "+65 6214 3222"},
+        {name: "Community Addictions Management Programme (CAMP)", lat: 1.3521, lng: 103.8198, address: "Institute of Mental Health", phone: "+65 6389 2200"},
+        {name: "Singapore Anti-Narcotics Association - Residential", lat: 1.3138, lng: 103.8159, address: "Geylang East Central", phone: "+65 6747 1011"},
+        {name: "New Life Stories - Halfway House", lat: 1.4241, lng: 103.8384, address: "Yishun Avenue 11", phone: "+65 6257 1211"}
+    ]
+};
+
+// Initialize map
+function initializeMap() {
+    // Create map centered on Singapore
+    singaporeMap = L.map('singaporeMap').setView([1.3521, 103.8198], 11);
+    
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(singaporeMap);
+    
+    // Create markers layer group
+    markersLayer = L.layerGroup().addTo(singaporeMap);
+    
+    // Load all markers
+    loadMapMarkers();
+    
+    // Add event listeners for checkboxes
+    document.getElementById('showOST').addEventListener('change', updateMapMarkers);
+    document.getElementById('showNSP').addEventListener('change', updateMapMarkers);
+    document.getElementById('showCounseling').addEventListener('change', updateMapMarkers);
+    document.getElementById('showTesting').addEventListener('change', updateMapMarkers);
+    document.getElementById('showRehab').addEventListener('change', updateMapMarkers);
+}
+
+// Load markers on map
+function loadMapMarkers() {
+    markersLayer.clearLayers();
+    
+    // Add OST markers
+    if (document.getElementById('showOST').checked) {
+        singaporeProviders.ost.forEach(provider => {
+            const marker = L.marker([provider.lat, provider.lng], {
+                icon: createCustomIcon('success')
+            }).addTo(markersLayer);
+            
+            marker.bindPopup(createPopupContent(provider, 'OST Clinic'));
+            marker.on('click', () => showProviderDetails(provider, 'OST Clinic'));
+        });
+    }
+    
+    // Add NSP markers
+    if (document.getElementById('showNSP').checked) {
+        singaporeProviders.nsp.forEach(provider => {
+            const marker = L.marker([provider.lat, provider.lng], {
+                icon: createCustomIcon('primary')
+            }).addTo(markersLayer);
+            
+            marker.bindPopup(createPopupContent(provider, 'Needle & Syringe Program'));
+            marker.on('click', () => showProviderDetails(provider, 'Needle & Syringe Program'));
+        });
+    }
+    
+    // Add Counseling markers
+    if (document.getElementById('showCounseling').checked) {
+        singaporeProviders.counseling.forEach(provider => {
+            const marker = L.marker([provider.lat, provider.lng], {
+                icon: createCustomIcon('warning')
+            }).addTo(markersLayer);
+            
+            marker.bindPopup(createPopupContent(provider, 'Counseling Service'));
+            marker.on('click', () => showProviderDetails(provider, 'Counseling Service'));
+        });
+    }
+    
+    // Add Testing markers
+    if (document.getElementById('showTesting').checked) {
+        singaporeProviders.testing.forEach(provider => {
+            const marker = L.marker([provider.lat, provider.lng], {
+                icon: createCustomIcon('info')
+            }).addTo(markersLayer);
+            
+            marker.bindPopup(createPopupContent(provider, 'HIV/HCV Testing'));
+            marker.on('click', () => showProviderDetails(provider, 'HIV/HCV Testing'));
+        });
+    }
+    
+    // Add Rehab markers
+    if (document.getElementById('showRehab').checked) {
+        singaporeProviders.rehab.forEach(provider => {
+            const marker = L.marker([provider.lat, provider.lng], {
+                icon: createCustomIcon('danger')
+            }).addTo(markersLayer);
+            
+            marker.bindPopup(createPopupContent(provider, 'Rehabilitation Center'));
+            marker.on('click', () => showProviderDetails(provider, 'Rehabilitation Center'));
+        });
+    }
+}
+
+// Create custom icon
+function createCustomIcon(color) {
+    const colors = {
+        success: '#28a745',
+        primary: '#007bff',
+        warning: '#ffc107',
+        info: '#17a2b8',
+        danger: '#dc3545'
+    };
+    
+    return L.divIcon({
+        className: 'custom-marker',
+        html: `<div style="background-color: ${colors[color]}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+    });
+}
+
+// Create popup content
+function createPopupContent(provider, type) {
+    return `
+        <div class="popup-content">
+            <h6 class="mb-2">${provider.name}</h6>
+            <p class="mb-1"><strong>Type:</strong> ${type}</p>
+            <p class="mb-1"><strong>Address:</strong> ${provider.address}</p>
+            <p class="mb-0"><strong>Phone:</strong> ${provider.phone}</p>
+        </div>
+    `;
+}
+
+// Show provider details in sidebar
+function showProviderDetails(provider, type) {
+    const detailsDiv = document.getElementById('providerDetails');
+    const infoCard = document.getElementById('selectedProviderInfo');
+    
+    detailsDiv.innerHTML = `
+        <h6 class="text-primary">${provider.name}</h6>
+        <p class="mb-1"><span class="badge bg-secondary">${type}</span></p>
+        <p class="mb-1"><strong>Address:</strong><br>${provider.address}</p>
+        <p class="mb-1"><strong>Phone:</strong> ${provider.phone}</p>
+        <div class="mt-2">
+            <button class="btn btn-sm btn-outline-primary" onclick="getDirections(${provider.lat}, ${provider.lng})">
+                <i class="fas fa-directions me-1"></i>Get Directions
+            </button>
+        </div>
+    `;
+    
+    infoCard.style.display = 'block';
+}
+
+// Get directions (opens Google Maps)
+function getDirections(lat, lng) {
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+    window.open(url, '_blank');
+}
+
+// Update map markers based on filters
+function updateMapMarkers() {
+    loadMapMarkers();
+    updateMapStatistics();
+}
+
+// Update map statistics
+function updateMapStatistics() {
+    let ostCount = document.getElementById('showOST').checked ? singaporeProviders.ost.length : 0;
+    let nspCount = document.getElementById('showNSP').checked ? singaporeProviders.nsp.length : 0;
+    let counselingCount = document.getElementById('showCounseling').checked ? singaporeProviders.counseling.length : 0;
+    let testingCount = document.getElementById('showTesting').checked ? singaporeProviders.testing.length : 0;
+    let rehabCount = document.getElementById('showRehab').checked ? singaporeProviders.rehab.length : 0;
+    
+    document.getElementById('mapOSTCount').textContent = ostCount;
+    document.getElementById('mapNSPCount').textContent = nspCount;
+    document.getElementById('mapCounselingCount').textContent = counselingCount;
+    document.getElementById('mapTestingCount').textContent = testingCount;
+    document.getElementById('mapRehabCount').textContent = rehabCount;
+}
+
+// Toggle fullscreen map
+function toggleMapView() {
+    const mapContainer = document.getElementById('singaporeMap').parentElement.parentElement.parentElement;
+    
+    if (!isFullscreen) {
+        mapContainer.style.position = 'fixed';
+        mapContainer.style.top = '0';
+        mapContainer.style.left = '0';
+        mapContainer.style.width = '100vw';
+        mapContainer.style.height = '100vh';
+        mapContainer.style.zIndex = '9999';
+        mapContainer.style.backgroundColor = 'white';
+        document.getElementById('singaporeMap').style.height = '90vh';
+        isFullscreen = true;
+    } else {
+        mapContainer.style.position = 'relative';
+        mapContainer.style.top = 'auto';
+        mapContainer.style.left = 'auto';
+        mapContainer.style.width = 'auto';
+        mapContainer.style.height = 'auto';
+        mapContainer.style.zIndex = 'auto';
+        mapContainer.style.backgroundColor = 'transparent';
+        document.getElementById('singaporeMap').style.height = '500px';
+        isFullscreen = false;
+    }
+    
+    // Refresh map after resize
+    setTimeout(() => {
+        singaporeMap.invalidateSize();
+    }, 100);
+}
+
+// Refresh map
+function refreshMap() {
+    loadMapMarkers();
+    updateMapStatistics();
+    singaporeMap.setView([1.3521, 103.8198], 11);
+}
+
+// Initialize map when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadProviders();
+    loadStatistics();
+    
+    // Initialize map after a short delay to ensure DOM is ready
+    setTimeout(initializeMap, 500);
+});
+</script>
+
+<!-- Leaflet JavaScript -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+{% endblock %}

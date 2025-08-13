@@ -1,0 +1,570 @@
+{% extends "base.html" %}
+
+{% block title %}Medication Management - Safe-Step{% endblock %}
+
+{% block body_class %}caregiver-page{% endblock %}
+
+{% block extra_css %}
+<style>
+    .medication-card {
+        border-left: 4px solid var(--primary-color);
+        transition: all 0.3s ease;
+    }
+    .medication-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .adherence-score {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+    .adherence-excellent { color: var(--success-color); }
+    .adherence-good { color: var(--info-color); }
+    .adherence-fair { color: var(--warning-color); }
+    .adherence-poor { color: var(--danger-color); }
+    .side-effect-tag {
+        background: var(--gray-200);
+        color: var(--gray-700);
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        margin: 2px;
+        display: inline-block;
+    }
+    .medication-status {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .status-active {
+        background: var(--success-color);
+        color: white;
+    }
+    .status-inactive {
+        background: var(--gray-500);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="caregiver-container">
+    <!-- Page Header -->
+    <div class="caregiver-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="fas fa-pills me-3"></i>Medication Management</h1>
+                <p>Track medications, adherence, and side effects for your patients.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMedicationModal">
+                    <i class="fas fa-plus me-2"></i>Add Medication
+                </button>
+                <button class="btn btn-outline-primary" onclick="refreshMedications()">
+                    <i class="fas fa-sync-alt me-2"></i>Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="caregiver-stat-card">
+                <div class="caregiver-stat-icon" style="background: var(--gradient-primary);">
+                    <i class="fas fa-pills"></i>
+                </div>
+                <div class="caregiver-stat-value" id="totalMedications">0</div>
+                <div class="caregiver-stat-label">Active Medications</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="caregiver-stat-card">
+                <div class="caregiver-stat-icon" style="background: var(--gradient-success);">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="caregiver-stat-value" id="adherenceRate">0%</div>
+                <div class="caregiver-stat-label">Adherence Rate</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="caregiver-stat-card">
+                <div class="caregiver-stat-icon" style="background: var(--gradient-warning);">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="caregiver-stat-value" id="missedDoses">0</div>
+                <div class="caregiver-stat-label">Missed Doses (7d)</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="caregiver-stat-card">
+                <div class="caregiver-stat-icon" style="background: var(--gradient-info);">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="caregiver-stat-value" id="nextDose">--:--</div>
+                <div class="caregiver-stat-label">Next Dose</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Medications List -->
+    <div class="card shadow">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Current Medications</h5>
+        </div>
+        <div class="card-body">
+            <div id="medicationsContainer">
+                <!-- Medications will be loaded here -->
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Loading medications...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Medication Logs -->
+    <div class="card shadow mt-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Medication Logs</h5>
+        </div>
+        <div class="card-body">
+            <div id="medicationLogsContainer">
+                <!-- Logs will be loaded here -->
+                <div class="text-center py-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Loading medication logs...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Medication Modal -->
+<div class="modal fade" id="addMedicationModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Add New Medication</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addMedicationForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="medicationName" class="form-label">Medication Name *</label>
+                                <input type="text" class="form-control" id="medicationName" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="dosage" class="form-label">Dosage *</label>
+                                <input type="text" class="form-control" id="dosage" placeholder="e.g., 500mg" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="frequency" class="form-label">Frequency *</label>
+                                <select class="form-select" id="frequency" required>
+                                    <option value="">Select frequency</option>
+                                    <option value="Once daily">Once daily</option>
+                                    <option value="Twice daily">Twice daily</option>
+                                    <option value="Three times daily">Three times daily</option>
+                                    <option value="Four times daily">Four times daily</option>
+                                    <option value="As needed">As needed</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="prescribingDoctor" class="form-label">Prescribing Doctor</label>
+                                <input type="text" class="form-control" id="prescribingDoctor">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="startDate" class="form-label">Start Date *</label>
+                                <input type="date" class="form-control" id="startDate" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="endDate" class="form-label">End Date</label>
+                                <input type="date" class="form-control" id="endDate">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sideEffects" class="form-label">Known Side Effects</label>
+                        <input type="text" class="form-control" id="sideEffects" placeholder="Separate multiple side effects with commas">
+                        <div class="form-text">Enter any known side effects, separated by commas</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" rows="3" placeholder="Additional notes about this medication..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveMedication()">Save Medication</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log Medication Modal -->
+<div class="modal fade" id="logMedicationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-check me-2"></i>Log Medication</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="logMedicationForm">
+                    <input type="hidden" id="logMedicationId">
+                    <div class="mb-3">
+                        <label class="form-label">Medication</label>
+                        <p id="logMedicationName" class="form-control-plaintext fw-bold"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dosageTaken" class="form-label">Dosage Taken</label>
+                        <input type="text" class="form-control" id="dosageTaken">
+                    </div>
+                    <div class="mb-3">
+                        <label for="takenAt" class="form-label">Time Taken</label>
+                        <input type="datetime-local" class="form-control" id="takenAt">
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="missedDose">
+                            <label class="form-check-label" for="missedDose">
+                                Mark as missed dose
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sideEffectsExperienced" class="form-label">Side Effects Experienced</label>
+                        <input type="text" class="form-control" id="sideEffectsExperienced" placeholder="Separate multiple side effects with commas">
+                    </div>
+                    <div class="mb-3">
+                        <label for="logNotes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="logNotes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveMedicationLog()">Save Log</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentPatientId = null;
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    // Set current date as default for start date
+    document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
+    
+    // Set current datetime for medication log
+    document.getElementById('takenAt').value = new Date().toISOString().slice(0, 16);
+    
+    // Load medications
+    loadMedications();
+    loadMedicationLogs();
+    loadStats();
+});
+
+// Load medications
+function loadMedications() {
+    fetch('/api/enhanced/medications')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayMedications(data.medications);
+            } else {
+                showError('Failed to load medications: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading medications:', error);
+            showError('Failed to load medications. Please try again.');
+        });
+}
+
+// Display medications
+function displayMedications(medications) {
+    const container = document.getElementById('medicationsContainer');
+    
+    if (medications.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-pills fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No medications found</h5>
+                <p class="text-muted">Click "Add Medication" to get started.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = medications.map(med => `
+        <div class="medication-card card mb-3 position-relative">
+            <div class="medication-status ${med.is_active ? 'status-active' : 'status-inactive'}">
+                ${med.is_active ? 'Active' : 'Inactive'}
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5 class="card-title">
+                            <i class="fas fa-pills me-2 text-primary"></i>
+                            ${med.medication_name}
+                        </h5>
+                        <p class="card-text">
+                            <strong>Dosage:</strong> ${med.dosage}<br>
+                            <strong>Frequency:</strong> ${med.frequency}<br>
+                            ${med.prescribing_doctor ? `<strong>Doctor:</strong> ${med.prescribing_doctor}<br>` : ''}
+                            <strong>Start Date:</strong> ${new Date(med.start_date).toLocaleDateString()}
+                            ${med.end_date ? `<br><strong>End Date:</strong> ${new Date(med.end_date).toLocaleDateString()}` : ''}
+                        </p>
+                        ${med.side_effects && med.side_effects.length > 0 ? `
+                            <div class="mb-2">
+                                <small class="text-muted">Known Side Effects:</small><br>
+                                ${med.side_effects.map(effect => `<span class="side-effect-tag">${effect}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                        ${med.notes ? `<p class="text-muted small"><strong>Notes:</strong> ${med.notes}</p>` : ''}
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="adherence-score ${getAdherenceClass(med.adherence_score)}">
+                            ${med.adherence_score}%
+                        </div>
+                        <small class="text-muted">Adherence Score</small>
+                        <div class="mt-3">
+                            <button class="btn btn-sm btn-primary me-2" onclick="logMedication('${med.id}', '${med.medication_name}', '${med.dosage}')">
+                                <i class="fas fa-check me-1"></i>Log Dose
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="editMedication('${med.id}')">
+                                <i class="fas fa-edit me-1"></i>Edit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Get adherence class for styling
+function getAdherenceClass(score) {
+    if (score >= 90) return 'adherence-excellent';
+    if (score >= 75) return 'adherence-good';
+    if (score >= 60) return 'adherence-fair';
+    return 'adherence-poor';
+}
+
+// Load medication logs
+function loadMedicationLogs() {
+    fetch('/api/enhanced/medications/logs')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayMedicationLogs(data.logs);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading medication logs:', error);
+        });
+}
+
+// Display medication logs
+function displayMedicationLogs(logs) {
+    const container = document.getElementById('medicationLogsContainer');
+    
+    if (logs.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-3">
+                <p class="text-muted">No medication logs found.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = `
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Medication</th>
+                        <th>Dosage</th>
+                        <th>Time Taken</th>
+                        <th>Status</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${logs.map(log => `
+                        <tr>
+                            <td>${log.medication_name}</td>
+                            <td>${log.dosage_taken || log.prescribed_dosage}</td>
+                            <td>${new Date(log.taken_at).toLocaleString()}</td>
+                            <td>
+                                <span class="badge ${log.missed ? 'bg-danger' : 'bg-success'}">
+                                    ${log.missed ? 'Missed' : 'Taken'}
+                                </span>
+                            </td>
+                            <td>${log.notes || '-'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+// Load statistics
+function loadStats() {
+    fetch('/api/enhanced/medications/stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('totalMedications').textContent = data.stats.total_medications;
+                document.getElementById('adherenceRate').textContent = data.stats.adherence_rate + '%';
+                document.getElementById('missedDoses').textContent = data.stats.missed_doses_7d;
+                document.getElementById('nextDose').textContent = data.stats.next_dose || '--:--';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading stats:', error);
+        });
+}
+
+// Save medication
+function saveMedication() {
+    const formData = {
+        medication_name: document.getElementById('medicationName').value,
+        dosage: document.getElementById('dosage').value,
+        frequency: document.getElementById('frequency').value,
+        prescribing_doctor: document.getElementById('prescribingDoctor').value,
+        start_date: document.getElementById('startDate').value,
+        end_date: document.getElementById('endDate').value || null,
+        side_effects: document.getElementById('sideEffects').value.split(',').map(s => s.trim()).filter(s => s),
+        notes: document.getElementById('notes').value
+    };
+    
+    fetch('/api/enhanced/medications', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess('Medication added successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('addMedicationModal')).hide();
+            document.getElementById('addMedicationForm').reset();
+            loadMedications();
+            loadStats();
+        } else {
+            showError('Failed to add medication: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error saving medication:', error);
+        showError('Failed to save medication. Please try again.');
+    });
+}
+
+// Log medication
+function logMedication(medicationId, medicationName, dosage) {
+    document.getElementById('logMedicationId').value = medicationId;
+    document.getElementById('logMedicationName').textContent = medicationName + ' (' + dosage + ')';
+    document.getElementById('dosageTaken').value = dosage;
+    
+    const modal = new bootstrap.Modal(document.getElementById('logMedicationModal'));
+    modal.show();
+}
+
+// Save medication log
+function saveMedicationLog() {
+    const formData = {
+        medication_id: document.getElementById('logMedicationId').value,
+        dosage_taken: document.getElementById('dosageTaken').value,
+        taken_at: document.getElementById('takenAt').value,
+        missed: document.getElementById('missedDose').checked,
+        side_effects_experienced: document.getElementById('sideEffectsExperienced').value.split(',').map(s => s.trim()).filter(s => s),
+        notes: document.getElementById('logNotes').value
+    };
+    
+    fetch('/api/enhanced/medications/log', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess('Medication log saved successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('logMedicationModal')).hide();
+            document.getElementById('logMedicationForm').reset();
+            loadMedicationLogs();
+            loadMedications(); // Refresh to update adherence scores
+            loadStats();
+        } else {
+            showError('Failed to save medication log: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error saving medication log:', error);
+        showError('Failed to save medication log. Please try again.');
+    });
+}
+
+// Refresh medications
+function refreshMedications() {
+    loadMedications();
+    loadMedicationLogs();
+    loadStats();
+    showSuccess('Medications refreshed!');
+}
+
+// Utility functions
+function showSuccess(message) {
+    // You can implement a toast notification system here
+    alert('Success: ' + message);
+}
+
+function showError(message) {
+    // You can implement a toast notification system here
+    alert('Error: ' + message);
+}
+
+function editMedication(medicationId) {
+    // Implement edit functionality
+    alert('Edit functionality coming soon!');
+}
+</script>
+{% endblock %}

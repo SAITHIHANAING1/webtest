@@ -43,6 +43,14 @@ except ImportError:
     print("ℹ️ RAG Chatbot not available")
     chatbot_available = False
 
+# Initialize Enhanced Routes
+try:
+    from enhanced_routes import enhanced_bp
+    app.register_blueprint(enhanced_bp, url_prefix='/api/enhanced')
+    print("✅ Enhanced routes enabled (Medication, Healthcare Providers, Care Plans, Emergency Response)")
+except ImportError:
+    print("ℹ️ Enhanced routes not available")
+
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(16))
 

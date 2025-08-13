@@ -1,0 +1,805 @@
+{% extends "base.html" %}
+
+{% block title %}Emergency Contacts - Safe-Step{% endblock %}
+
+{% block body_class %}caregiver-page{% endblock %}
+
+{% block extra_css %}
+<style>
+    .emergency-card {
+        border-left: 4px solid var(--danger-color);
+        transition: all 0.3s ease;
+    }
+    .emergency-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .contact-type-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .type-primary {
+        background: var(--danger-color);
+        color: white;
+    }
+    .type-secondary {
+        background: var(--warning-color);
+        color: white;
+    }
+    .type-medical {
+        background: var(--info-color);
+        color: white;
+    }
+    .type-family {
+        background: var(--success-color);
+        color: white;
+    }
+    .type-other {
+        background: var(--gray-500);
+        color: white;
+    }
+    .priority-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+    .priority-1 { background: var(--danger-color); }
+    .priority-2 { background: var(--warning-color); }
+    .priority-3 { background: var(--info-color); }
+    .priority-4 { background: var(--success-color); }
+    .priority-5 { background: var(--gray-400); }
+    .contact-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--gradient-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+    .quick-dial-btn {
+        background: var(--gradient-danger);
+        border: none;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    .quick-dial-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    }
+    .emergency-protocol {
+        background: var(--danger-light);
+        border: 1px solid var(--danger-color);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    .protocol-step {
+        background: white;
+        border-radius: 6px;
+        padding: 10px;
+        margin-bottom: 8px;
+        border-left: 3px solid var(--primary-color);
+    }
+    .availability-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+    }
+    .available { background: var(--success-color); }
+    .unavailable { background: var(--danger-color); }
+    .unknown { background: var(--gray-400); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="caregiver-container">
+    <!-- Page Header -->
+    <div class="caregiver-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="fas fa-phone-alt me-3 text-danger"></i>Emergency Contacts</h1>
+                <p>Manage emergency contacts and response protocols for quick access during emergencies.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#emergencyProtocolModal">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Emergency Protocol
+                </button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addContactModal">
+                    <i class="fas fa-plus me-2"></i>Add Contact
+                </button>
+                <button class="btn btn-outline-primary" onclick="refreshContacts()">
+                    <i class="fas fa-sync-alt me-2"></i>Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="caregiver-stat-card">
+                <div class="caregiver-stat-icon" style="background: var(--gradient-danger);">
+                    <i class="fas fa-phone-alt"></i>
+                </div>
+                <div class="caregiver-stat-value" id="totalContacts">0</div>
+                <div class="caregiver-stat-label">Total Contacts</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="caregiver-stat-card">
+                <div class="caregiver-stat-icon" style="background: var(--gradient-warning);">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="caregiver-stat-value" id="primaryContacts">0</div>
+                <div class="caregiver-stat-label">Primary Contacts</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="caregiver-stat-card">
+                <div class="caregiver-stat-icon" style="background: var(--gradient-info);">
+                    <i class="fas fa-user-md"></i>
+                </div>
+                <div class="caregiver-stat-value" id="medicalContacts">0</div>
+                <div class="caregiver-stat-label">Medical Contacts</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="caregiver-stat-card">
+                <div class="caregiver-stat-icon" style="background: var(--gradient-success);">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="caregiver-stat-value" id="lastUpdated">--</div>
+                <div class="caregiver-stat-label">Last Updated</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Dial Section -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>Quick Dial - Primary Contacts</h5>
+        </div>
+        <div class="card-body">
+            <div id="quickDialContainer">
+                <!-- Quick dial buttons will be loaded here -->
+                <div class="text-center py-3">
+                    <div class="spinner-border text-danger" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Loading quick dial contacts...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter and Search -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="searchContacts" placeholder="Search contacts...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="filterType">
+                        <option value="">All Types</option>
+                        <option value="primary">Primary</option>
+                        <option value="secondary">Secondary</option>
+                        <option value="medical">Medical</option>
+                        <option value="family">Family</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="filterPriority">
+                        <option value="">All Priorities</option>
+                        <option value="1">Priority 1 (Highest)</option>
+                        <option value="2">Priority 2</option>
+                        <option value="3">Priority 3</option>
+                        <option value="4">Priority 4</option>
+                        <option value="5">Priority 5 (Lowest)</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                        <i class="fas fa-times me-1"></i>Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emergency Contacts List -->
+    <div class="card shadow">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Emergency Contacts</h5>
+        </div>
+        <div class="card-body">
+            <div id="contactsContainer">
+                <!-- Contacts will be loaded here -->
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Loading emergency contacts...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Contact Modal -->
+<div class="modal fade" id="addContactModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Add Emergency Contact</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addContactForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="contactName" class="form-label">Contact Name *</label>
+                                <input type="text" class="form-control" id="contactName" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="relationship" class="form-label">Relationship</label>
+                                <input type="text" class="form-control" id="relationship" placeholder="e.g., Spouse, Doctor, Friend">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="primaryPhone" class="form-label">Primary Phone *</label>
+                                <input type="tel" class="form-control" id="primaryPhone" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="secondaryPhone" class="form-label">Secondary Phone</label>
+                                <input type="tel" class="form-control" id="secondaryPhone">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="contactType" class="form-label">Contact Type *</label>
+                                <select class="form-select" id="contactType" required>
+                                    <option value="">Select type</option>
+                                    <option value="primary">Primary Emergency</option>
+                                    <option value="secondary">Secondary Emergency</option>
+                                    <option value="medical">Medical Professional</option>
+                                    <option value="family">Family Member</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="priority" class="form-label">Priority Level *</label>
+                                <select class="form-select" id="priority" required>
+                                    <option value="">Select priority</option>
+                                    <option value="1">1 - Highest (Call first)</option>
+                                    <option value="2">2 - High</option>
+                                    <option value="3">3 - Medium</option>
+                                    <option value="4">4 - Low</option>
+                                    <option value="5">5 - Lowest</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="availability" class="form-label">Availability</label>
+                                <input type="text" class="form-control" id="availability" placeholder="e.g., 24/7, Weekdays 9-5">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address</label>
+                        <textarea class="form-control" id="address" rows="2" placeholder="Full address"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="medicalInfo" class="form-label">Medical Information</label>
+                        <textarea class="form-control" id="medicalInfo" rows="2" placeholder="Relevant medical information, specialties, etc."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Additional Notes</label>
+                        <textarea class="form-control" id="notes" rows="3" placeholder="Any additional notes about this contact..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="isActive" checked>
+                            <label class="form-check-label" for="isActive">
+                                Active contact (include in emergency protocols)
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveContact()">Save Contact</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Emergency Protocol Modal -->
+<div class="modal fade" id="emergencyProtocolModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Emergency Response Protocol</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="emergency-protocol">
+                    <h6><i class="fas fa-ambulance me-2"></i>Immediate Emergency (Life-threatening)</h6>
+                    <div class="protocol-step">
+                        <strong>Step 1:</strong> Call 911 immediately
+                    </div>
+                    <div class="protocol-step">
+                        <strong>Step 2:</strong> Provide first aid if trained
+                    </div>
+                    <div class="protocol-step">
+                        <strong>Step 3:</strong> Call primary emergency contact
+                    </div>
+                    <div class="protocol-step">
+                        <strong>Step 4:</strong> Notify healthcare provider
+                    </div>
+                </div>
+                
+                <div class="emergency-protocol">
+                    <h6><i class="fas fa-exclamation-circle me-2"></i>Non-Life-Threatening Emergency</h6>
+                    <div class="protocol-step">
+                        <strong>Step 1:</strong> Assess the situation
+                    </div>
+                    <div class="protocol-step">
+                        <strong>Step 2:</strong> Call primary emergency contact
+                    </div>
+                    <div class="protocol-step">
+                        <strong>Step 3:</strong> Contact healthcare provider
+                    </div>
+                    <div class="protocol-step">
+                        <strong>Step 4:</strong> Document the incident
+                    </div>
+                </div>
+                
+                <div class="emergency-protocol">
+                    <h6><i class="fas fa-phone me-2"></i>Quick Reference Numbers</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Emergency Services:</strong> 911</p>
+                            <p><strong>Poison Control:</strong> 1-800-222-1222</p>
+                            <p><strong>Crisis Hotline:</strong> 988</p>
+                        </div>
+                        <div class="col-md-6">
+                            <div id="protocolQuickNumbers">
+                                <!-- Quick numbers will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" onclick="printProtocol()">
+                    <i class="fas fa-print me-1"></i>Print Protocol
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contact Details Modal -->
+<div class="modal fade" id="contactDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user me-2"></i>Contact Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="contactDetailsContent">
+                <!-- Contact details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="editContactBtn">Edit Contact</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let allContacts = [];
+let filteredContacts = [];
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadContacts();
+    loadStats();
+    
+    // Set up search and filter event listeners
+    document.getElementById('searchContacts').addEventListener('input', filterContacts);
+    document.getElementById('filterType').addEventListener('change', filterContacts);
+    document.getElementById('filterPriority').addEventListener('change', filterContacts);
+});
+
+// Load contacts
+function loadContacts() {
+    fetch('/api/enhanced/emergency-contacts')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                allContacts = data.contacts;
+                filteredContacts = [...allContacts];
+                displayContacts(filteredContacts);
+                displayQuickDial();
+                updateProtocolQuickNumbers();
+            } else {
+                showError('Failed to load contacts: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading contacts:', error);
+            showError('Failed to load contacts. Please try again.');
+        });
+}
+
+// Display contacts
+function displayContacts(contacts) {
+    const container = document.getElementById('contactsContainer');
+    
+    if (contacts.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-phone-alt fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No emergency contacts found</h5>
+                <p class="text-muted">Click "Add Contact" to get started.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Sort by priority
+    contacts.sort((a, b) => a.priority - b.priority);
+    
+    container.innerHTML = contacts.map(contact => `
+        <div class="emergency-card card mb-3">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-1">
+                        <div class="contact-avatar">
+                            ${contact.contact_name.charAt(0).toUpperCase()}
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="priority-indicator priority-${contact.priority}"></span>
+                            <h5 class="card-title mb-0">${contact.contact_name}</h5>
+                            <span class="contact-type-badge type-${contact.contact_type} ms-2">
+                                ${contact.contact_type.toUpperCase()}
+                            </span>
+                            ${!contact.is_active ? '<span class="badge bg-secondary ms-2">Inactive</span>' : ''}
+                        </div>
+                        
+                        ${contact.relationship ? `<p class="text-muted mb-2"><strong>Relationship:</strong> ${contact.relationship}</p>` : ''}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1">
+                                    <i class="fas fa-phone text-primary me-2"></i>
+                                    <a href="tel:${contact.primary_phone}">${contact.primary_phone}</a>
+                                </p>
+                                ${contact.secondary_phone ? `
+                                    <p class="mb-1">
+                                        <i class="fas fa-mobile-alt text-primary me-2"></i>
+                                        <a href="tel:${contact.secondary_phone}">${contact.secondary_phone}</a>
+                                    </p>
+                                ` : ''}
+                                ${contact.email ? `
+                                    <p class="mb-1">
+                                        <i class="fas fa-envelope text-primary me-2"></i>
+                                        <a href="mailto:${contact.email}">${contact.email}</a>
+                                    </p>
+                                ` : ''}
+                            </div>
+                            <div class="col-md-6">
+                                ${contact.availability ? `
+                                    <p class="mb-1">
+                                        <i class="fas fa-clock text-primary me-2"></i>
+                                        <small>${contact.availability}</small>
+                                    </p>
+                                ` : ''}
+                                ${contact.address ? `
+                                    <p class="mb-1">
+                                        <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                                        <small>${contact.address}</small>
+                                    </p>
+                                ` : ''}
+                            </div>
+                        </div>
+                        
+                        ${contact.medical_info ? `<p class="text-info small mt-2"><strong>Medical Info:</strong> ${contact.medical_info}</p>` : ''}
+                        ${contact.notes ? `<p class="text-muted small"><strong>Notes:</strong> ${contact.notes}</p>` : ''}
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="mb-2">
+                            <small class="text-muted">Priority ${contact.priority}</small>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button class="quick-dial-btn" onclick="callContact('${contact.primary_phone}', '${contact.contact_name}')">
+                                <i class="fas fa-phone me-2"></i>Call Now
+                            </button>
+                            <button class="btn btn-sm btn-primary" onclick="viewContactDetails('${contact.id}')">
+                                <i class="fas fa-eye me-1"></i>View Details
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="editContact('${contact.id}')">
+                                <i class="fas fa-edit me-1"></i>Edit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Display quick dial section
+function displayQuickDial() {
+    const primaryContacts = allContacts
+        .filter(contact => contact.is_active && (contact.contact_type === 'primary' || contact.priority <= 2))
+        .sort((a, b) => a.priority - b.priority)
+        .slice(0, 4);
+    
+    const container = document.getElementById('quickDialContainer');
+    
+    if (primaryContacts.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-3">
+                <p class="text-muted">No primary contacts available for quick dial.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = `
+        <div class="row">
+            ${primaryContacts.map(contact => `
+                <div class="col-md-3 mb-3">
+                    <div class="text-center">
+                        <div class="contact-avatar mx-auto mb-2" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            ${contact.contact_name.charAt(0).toUpperCase()}
+                        </div>
+                        <h6>${contact.contact_name}</h6>
+                        <small class="text-muted d-block mb-2">${contact.relationship || contact.contact_type}</small>
+                        <button class="quick-dial-btn" onclick="callContact('${contact.primary_phone}', '${contact.contact_name}')">
+                            <i class="fas fa-phone me-2"></i>Call
+                        </button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+// Update protocol quick numbers
+function updateProtocolQuickNumbers() {
+    const primaryContacts = allContacts
+        .filter(contact => contact.is_active && contact.priority <= 2)
+        .sort((a, b) => a.priority - b.priority)
+        .slice(0, 3);
+    
+    const container = document.getElementById('protocolQuickNumbers');
+    
+    if (primaryContacts.length > 0) {
+        container.innerHTML = primaryContacts.map(contact => `
+            <p><strong>${contact.contact_name}:</strong> ${contact.primary_phone}</p>
+        `).join('');
+    } else {
+        container.innerHTML = '<p class="text-muted">No primary contacts configured</p>';
+    }
+}
+
+// Filter contacts
+function filterContacts() {
+    const searchTerm = document.getElementById('searchContacts').value.toLowerCase();
+    const selectedType = document.getElementById('filterType').value;
+    const selectedPriority = document.getElementById('filterPriority').value;
+    
+    filteredContacts = allContacts.filter(contact => {
+        const matchesSearch = !searchTerm || 
+            contact.contact_name.toLowerCase().includes(searchTerm) ||
+            (contact.relationship && contact.relationship.toLowerCase().includes(searchTerm)) ||
+            contact.primary_phone.includes(searchTerm);
+        
+        const matchesType = !selectedType || contact.contact_type === selectedType;
+        const matchesPriority = !selectedPriority || contact.priority.toString() === selectedPriority;
+        
+        return matchesSearch && matchesType && matchesPriority;
+    });
+    
+    displayContacts(filteredContacts);
+}
+
+// Clear filters
+function clearFilters() {
+    document.getElementById('searchContacts').value = '';
+    document.getElementById('filterType').value = '';
+    document.getElementById('filterPriority').value = '';
+    filteredContacts = [...allContacts];
+    displayContacts(filteredContacts);
+}
+
+// Load statistics
+function loadStats() {
+    fetch('/api/enhanced/emergency-contacts/stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('totalContacts').textContent = data.stats.total_contacts;
+                document.getElementById('primaryContacts').textContent = data.stats.primary_contacts;
+                document.getElementById('medicalContacts').textContent = data.stats.medical_contacts;
+                document.getElementById('lastUpdated').textContent = data.stats.last_updated || '--';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading stats:', error);
+        });
+}
+
+// Save contact
+function saveContact() {
+    const formData = {
+        contact_name: document.getElementById('contactName').value,
+        relationship: document.getElementById('relationship').value || null,
+        primary_phone: document.getElementById('primaryPhone').value,
+        secondary_phone: document.getElementById('secondaryPhone').value || null,
+        email: document.getElementById('email').value || null,
+        contact_type: document.getElementById('contactType').value,
+        priority: parseInt(document.getElementById('priority').value),
+        availability: document.getElementById('availability').value || null,
+        address: document.getElementById('address').value || null,
+        medical_info: document.getElementById('medicalInfo').value || null,
+        notes: document.getElementById('notes').value || null,
+        is_active: document.getElementById('isActive').checked
+    };
+    
+    fetch('/api/enhanced/emergency-contacts', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess('Emergency contact added successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('addContactModal')).hide();
+            document.getElementById('addContactForm').reset();
+            document.getElementById('isActive').checked = true; // Reset to default
+            loadContacts();
+            loadStats();
+        } else {
+            showError('Failed to add contact: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error saving contact:', error);
+        showError('Failed to save contact. Please try again.');
+    });
+}
+
+// Call contact
+function callContact(phoneNumber, contactName) {
+    if (confirm(`Call ${contactName} at ${phoneNumber}?`)) {
+        // In a real app, this would integrate with the device's phone system
+        window.location.href = `tel:${phoneNumber}`;
+    }
+}
+
+// View contact details
+function viewContactDetails(contactId) {
+    const contact = allContacts.find(c => c.id === contactId);
+    if (!contact) return;
+    
+    const content = `
+        <div class="row mb-4">
+            <div class="col-md-2">
+                <div class="contact-avatar" style="width: 80px; height: 80px; font-size: 2rem;">
+                    ${contact.contact_name.charAt(0).toUpperCase()}
+                </div>
+            </div>
+            <div class="col-md-10">
+                <h4>${contact.contact_name}</h4>
+                <p class="text-muted">${contact.relationship || contact.contact_type}</p>
+                <span class="contact-type-badge type-${contact.contact_type}">${contact.contact_type.toUpperCase()}</span>
+                <span class="badge bg-info ms-2">Priority ${contact.priority}</span>
+                ${!contact.is_active ? '<span class="badge bg-secondary ms-2">Inactive</span>' : ''}
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="fas fa-phone me-2"></i>Contact Information</h6>
+                <p><strong>Primary Phone:</strong> <a href="tel:${contact.primary_phone}">${contact.primary_phone}</a></p>
+                ${contact.secondary_phone ? `<p><strong>Secondary Phone:</strong> <a href="tel:${contact.secondary_phone}">${contact.secondary_phone}</a></p>` : ''}
+                ${contact.email ? `<p><strong>Email:</strong> <a href="mailto:${contact.email}">${contact.email}</a></p>` : ''}
+                ${contact.address ? `<p><strong>Address:</strong><br>${contact.address}</p>` : ''}
+            </div>
+            <div class="col-md-6">
+                <h6><i class="fas fa-info-circle me-2"></i>Additional Information</h6>
+                ${contact.availability ? `<p><strong>Availability:</strong> ${contact.availability}</p>` : ''}
+                ${contact.medical_info ? `<p><strong>Medical Information:</strong><br>${contact.medical_info}</p>` : ''}
+                ${contact.notes ? `<p><strong>Notes:</strong><br>${contact.notes}</p>` : ''}
+                <p><strong>Added:</strong> ${new Date(contact.created_at).toLocaleDateString()}</p>
+                <p><strong>Last Updated:</strong> ${new Date(contact.updated_at).toLocaleDateString()}</p>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('contactDetailsContent').innerHTML = content;
+    document.getElementById('editContactBtn').onclick = () => editContact(contactId);
+    
+    const modal = new bootstrap.Modal(document.getElementById('contactDetailsModal'));
+    modal.show();
+}
+
+// Refresh contacts
+function refreshContacts() {
+    loadContacts();
+    loadStats();
+    showSuccess('Contacts refreshed!');
+}
+
+// Print protocol
+function printProtocol() {
+    window.print();
+}
+
+// Utility functions
+function showSuccess(message) {
+    alert('Success: ' + message);
+}
+
+function showError(message) {
+    alert('Error: ' + message);
+}
+
+function editContact(contactId) {
+    alert('Edit functionality coming soon!');
+}
+</script>
+{% endblock %}
