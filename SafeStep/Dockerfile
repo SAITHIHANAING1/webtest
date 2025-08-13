@@ -26,4 +26,4 @@ COPY . /app
 ENV PORT=8080
 
 # Gunicorn is recommended for prod; app entrypoint is app:app
-CMD exec gunicorn app:app --bind 0.0.0.0:$PORT --workers 3 --threads 8 --timeout 120
+CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "--workers", "4", "--timeout", "120", "app:app"]
