@@ -22,8 +22,11 @@ RUN python -m pip install --upgrade pip setuptools wheel && \
 # Copy SafeStep directory to app root (flatten structure)
 COPY SafeStep/ .
 
-# Create instance directory for SQLite database
-RUN mkdir -p instance
+# Create instance directory for SQLite database with proper permissions
+RUN mkdir -p /app/instance && chmod 777 /app/instance
+
+# Create a writable data directory for SQLite
+RUN mkdir -p /app/data && chmod 777 /app/data
 
 # Set port
 ENV PORT=8080

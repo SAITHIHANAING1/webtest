@@ -64,9 +64,41 @@ print(f"🔍 USE_SQLITE flag: {use_sqlite}")
 # Database selection logic
 if use_sqlite:
     # Force SQLite if explicitly requested
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/safestep.db'
-    print("🔗 Using SQLite database (forced by USE_SQLITE flag)")
-    os.makedirs('instance', exist_ok=True)
+    # Try multiple paths for Railway/container environments
+    sqlite_paths = [
+        '/app/data/safestep.db',  # Writable data directory
+        '/app/instance/safestep.db',  # Instance directory
+        '/tmp/safestep.db',  # Temporary directory (always writable)
+        'safestep.db'  # Current directory fallback
+    ]
+    
+    sqlite_db_path = None
+    for path in sqlite_paths:
+        try:
+            # Test if we can create the directory and file
+            if '/' in path:
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+            # Test write permissions
+            test_path = path + '.test'
+            with open(test_path, 'w') as f:
+                f.write('test')
+            os.remove(test_path)
+            sqlite_db_path = path
+            break
+        except (OSError, PermissionError):
+            continue
+    
+    if sqlite_db_path:
+        app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{sqlite_db_path}'
+        print(f"🔗 Using SQLite database at: {sqlite_db_path}")
+    else:
+        # Last resort - in-memory database
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+        print("🔗 Using SQLite in-memory database (fallback)")
+    
+    # Ensure directory exists for non-memory databases
+    if sqlite_db_path and '/' in sqlite_db_path:
+        os.makedirs(os.path.dirname(sqlite_db_path), exist_ok=True)
 elif database_url and database_url.startswith('postgresql://'):
     # Try PostgreSQL/Supabase first
     # Auto-fix common connection issues
