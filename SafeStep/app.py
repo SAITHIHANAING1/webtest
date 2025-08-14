@@ -2769,40 +2769,7 @@ def get_response_time_chart():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-@app.route('/api/analytics/medication-compliance')
-@login_required
-@admin_required
-def get_medication_compliance():
-    """Distribution of medication compliance from patient profiles"""
-    try:
-        # Count categories on profiles where available
-        categories = ['excellent', 'good', 'fair', 'poor']
-        counts = {cat: 0 for cat in categories}
-        try:
-            profiles = PwidProfile.query.all()
-            for p in profiles:
-                cat = getattr(p, 'medication_compliance', None)
-                if cat and cat.lower() in counts:
-                    counts[cat.lower()] += 1
-        except Exception:
-            pass
-
-        # If all zeros, produce a neutral default to avoid empty chart
-        if sum(counts.values()) == 0:
-            counts = {'excellent': 5, 'good': 8, 'fair': 6, 'poor': 3}
-
-        return jsonify({
-            'success': True,
-            'labels': ['Excellent', 'Good', 'Fair', 'Poor'],
-            'datasets': [{
-                'label': 'Medication Compliance',
-                'data': [counts['excellent'], counts['good'], counts['fair'], counts['poor']],
-                'backgroundColor': ['#34d399', '#60a5fa', '#fbbf24', '#f87171'],
-                'borderColor': ['#10b981', '#3b82f6', '#f59e0b', '#ef4444']
-            }]
-        })
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+# Duplicate route removed - using the more comprehensive version below
 
 @app.route('/api/analytics/prediction-results')
 @login_required
