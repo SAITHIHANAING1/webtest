@@ -22,14 +22,11 @@ RUN python -m pip install --upgrade pip setuptools wheel && \
 # Copy SafeStep directory to app root (flatten structure)
 COPY SafeStep/ .
 
-# Copy the simple run script
-COPY run.py .
-
 # Create instance directory for SQLite database
 RUN mkdir -p instance
 
 # Set port
 ENV PORT=8080
 
-# Use the simple run script without any shell issues
-CMD ["python", "run.py"]
+# Use wsgi.py for production
+CMD ["python", "wsgi.py"]

@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: safestep
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    plan: free
+    buildCommand: ""
+    startCommand: ""
+    envVars:
+      - key: SECRET_KEY
+        sync: false   # set in Render dashboard
+      - key: FLASK_ENV
+        value: "production"
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: PORT
+        value: "8080"
