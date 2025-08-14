@@ -177,30 +177,7 @@
                 <a class="nav-link d-flex align-items-center" href="{{ url_for('training_modules') }}">
                     <i class="fas fa-graduation-cap me-2"></i>Training
                 </a>
-                <div class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="enhancedDropdown"
-                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-plus-circle me-2"></i>Enhanced Features
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item d-flex align-items-center"
-                                href="/api/enhanced/ui/medications">
-                                <i class="fas fa-pills me-2"></i>Medications
-                            </a></li>
-                        <li><a class="dropdown-item d-flex align-items-center"
-                                href="/api/enhanced/ui/providers">
-                                <i class="fas fa-user-md me-2"></i>Healthcare Providers
-                            </a></li>
-                        <li><a class="dropdown-item d-flex align-items-center"
-                                href="/api/enhanced/ui/care-plans">
-                                <i class="fas fa-clipboard-list me-2"></i>Care Plans
-                            </a></li>
-                        <li><a class="dropdown-item d-flex align-items-center"
-                                href="/api/enhanced/ui/emergency">
-                                <i class="fas fa-phone-alt me-2"></i>Emergency Contacts
-                            </a></li>
-                    </ul>
-                </div>
+                <!-- Enhanced Features dropdown removed -->
             </div>
             {% else %}
             <!-- Admin Navigation -->
@@ -220,30 +197,7 @@
                 <a class="nav-link d-flex align-items-center" href="{{ url_for('analytics') }}">
                     <i class="fas fa-chart-bar me-2"></i>Analytics
                 </a>
-                <div class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="adminEnhancedDropdown"
-                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-cogs me-2"></i>Enhanced Management
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item d-flex align-items-center"
-                                href="/api/enhanced/ui/medications">
-                                <i class="fas fa-pills me-2"></i>Medication Management
-                            </a></li>
-                        <li><a class="dropdown-item d-flex align-items-center"
-                                href="/api/enhanced/ui/providers">
-                                <i class="fas fa-user-md me-2"></i>Healthcare Providers
-                            </a></li>
-                        <li><a class="dropdown-item d-flex align-items-center"
-                                href="/api/enhanced/ui/care-plans">
-                                <i class="fas fa-clipboard-list me-2"></i>Care Plans
-                            </a></li>
-                        <li><a class="dropdown-item d-flex align-items-center"
-                                href="/api/enhanced/ui/emergency">
-                                <i class="fas fa-phone-alt me-2"></i>Emergency Contacts
-                            </a></li>
-                    </ul>
-                </div>
+                <!-- Enhanced Management dropdown removed -->
             </div>
             {% endif %}
 

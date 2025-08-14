@@ -41,9 +41,8 @@ except ImportError:
 
 # Initialize Enhanced Routes
 try:
-    from enhanced_routes import enhanced_bp
-    app.register_blueprint(enhanced_bp, url_prefix='/api/enhanced')
-    print("✅ Enhanced routes enabled (Medication, Healthcare Providers, Care Plans, Emergency Response)")
+    # Enhanced routes removed (Medication, Healthcare Providers, Care Plans, Emergency Response)
+    print("ℹ️ Enhanced routes disabled - features removed")
 except ImportError:
     print("ℹ️ Enhanced routes not available")
 
@@ -339,7 +338,7 @@ class UserQuestionnaire(db.Model):
                 recommendations.append("Frequent seizures may require medical attention. Please consult with your neurologist")
             
             if not self.emergency_contact:
-                recommendations.append("Set up emergency contacts in your profile for immediate assistance during seizures")
+                pass  # Emergency contacts feature removed
         
         if self.sleep_hours_avg and self.sleep_hours_avg < 6:
             recommendations.append("Aim for 7-9 hours of sleep per night as sleep deprivation can trigger seizures")
@@ -1770,6 +1769,32 @@ def update_location():
             'data': location.to_dict()
         })
     except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)})
+
+@app.route('/api/caregiver/alert', methods=['POST'])
+def caregiver_alert():
+    """Receive caregiver alerts (for geofencing notifications)"""
+    try:
+        data = request.get_json()
+        alert_type = data.get('type')
+        patient_id = data.get('patient_id')
+        latitude = data.get('latitude')
+        longitude = data.get('longitude')
+        timestamp = data.get('timestamp')
+        
+        # Log the alert for debugging
+        print(f"🚨 Caregiver alert: {alert_type} for patient {patient_id} at {latitude}, {longitude}")
+        
+        # Here you could store alerts in database, send emails, etc.
+        # For now, just acknowledge receipt
+        
+        return jsonify({
+            'ok': True,
+            'message': 'Alert received',
+            'alert_id': f"{patient_id}_{int(datetime.utcnow().timestamp())}"
+        })
+    except Exception as e:
+        print(f"Error processing caregiver alert: {e}")
         return jsonify({'ok': False, 'error': str(e)})
 
 # Removed test and debug endpoints for cleaner code

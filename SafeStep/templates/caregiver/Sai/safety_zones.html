@@ -122,12 +122,23 @@
           <button id="startTrack" class="btn btn-primary">Track</button>
         </div>
         <div class="mb-3">
-          <button id="generateQR" class="btn btn-success btn-sm w-100">
-            <i class="fas fa-qrcode me-2"></i>Generate QR Code for Patient
+          <button id="testDangerZone" class="btn btn-warning btn-sm w-100">
+            <i class="fas fa-exclamation-triangle me-2"></i>Test Danger Zone Alert
           </button>
         </div>
-        <div class="alert alert-light border-0 p-2 mb-3">
-          <small><strong>Share Link:</strong> <br><code id="shareLink">/caregiver/zones/share?pid=demo</code></small>
+        <div class="alert alert-success border-0 p-3 mb-3">
+          <h6 class="mb-2"><i class="fas fa-share-alt me-2"></i>Patient Location Sharing</h6>
+          <p class="small mb-2">Share this link with the patient to start location tracking:</p>
+          <div class="input-group mb-2">
+            <input type="text" id="shareLink" class="form-control" value="http://localhost:8080/caregiver/zones/share?pid=demo" readonly>
+            <button id="copyLinkBtn" class="btn btn-outline-primary" type="button">
+              <i class="fas fa-copy"></i> Copy
+            </button>
+          </div>
+          <small class="text-muted">
+            <i class="fas fa-info-circle me-1"></i>
+            Patient can open this link to share their location for real-time tracking
+          </small>
         </div>
         <div id="patientList"></div>
       </div>
@@ -141,38 +152,12 @@
   </div>
 </div>
 
-<!-- QR Code Modal -->
-<div class="modal fade" id="qrModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title"><i class="fas fa-qrcode me-2"></i>Patient Tracking QR Code</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body qr-container">
-        <p>Share this QR code with the patient to start location tracking:</p>
-        <div id="qrCodeContainer" class="qr-code"></div>
-        <div class="mt-3">
-          <strong>Patient ID:</strong> <span id="qrPatientId">demo</span><br>
-          <small class="text-muted">Patient can scan this QR code to start sharing location</small>
-        </div>
-        <div class="mt-3">
-          <button id="copyLink" class="btn btn-outline-primary btn-sm">
-            <i class="fas fa-copy me-2"></i>Copy Link
-          </button>
-          <button id="downloadQR" class="btn btn-outline-success btn-sm">
-            <i class="fas fa-download me-2"></i>Download QR
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- QR Modal removed - using inline link sharing instead -->
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<!-- No external QR code libraries needed -->
 <script>
 const SG_BOUNDS = L.latLngBounds(L.latLng(1.16,103.6), L.latLng(1.47,104.0));
 let map, zones = [], zoneLayers = [], patientMarkers = new Map();
@@ -181,14 +166,125 @@ let myLocationMarker = null, locationWatchId = null, isTrackingMyLocation = fals
 // Enhanced features
 let soundAlertsEnabled = true;
 let dangerAlarmEnabled = true;
-let alertSounds = {
-  warning: new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LHdSMFl'), // Short beep
-  danger: new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LHdSMFl') // Alarm sound
-};
+let audioContext = null;
+let alertSounds = {};
+
+// Initialize audio context and create sounds
+function initializeAudio() {
+  try {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // Create warning sound (short beep)
+    alertSounds.warning = createBeepSound(800, 0.2); // 800Hz, 0.2 seconds
+    
+    // Create danger sound (alarm)
+    alertSounds.danger = createAlarmSound(); // Multi-tone alarm
+  } catch (error) {
+    console.error('Audio initialization failed:', error);
+    // Fallback to simple beep
+    alertSounds.warning = createFallbackBeep();
+    alertSounds.danger = createFallbackBeep();
+  }
+}
+
+function createBeepSound(frequency, duration) {
+  return () => {
+    if (!audioContext) return;
+    
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = frequency;
+    oscillator.type = 'square';
+    
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + duration);
+  };
+}
+
+function createAlarmSound() {
+  return () => {
+    if (!audioContext) return;
+    
+    // Create a more urgent alarm sound
+    const frequencies = [880, 1760, 880, 1760]; // Alternating high/low
+    let startTime = audioContext.currentTime;
+    
+    frequencies.forEach((freq, index) => {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = freq;
+      oscillator.type = 'square';
+      
+      const noteStart = startTime + (index * 0.2);
+      const noteEnd = noteStart + 0.15;
+      
+      gainNode.gain.setValueAtTime(0, noteStart);
+      gainNode.gain.linearRampToValueAtTime(0.4, noteStart + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, noteEnd);
+      
+      oscillator.start(noteStart);
+      oscillator.stop(noteEnd);
+    });
+  };
+}
+
+function createFallbackBeep() {
+  return () => {
+    // Simple fallback beep using system bell
+    console.log('🔔 BEEP! (Audio fallback)');
+  };
+}
 let patientZoneStatus = new Map(); // Track zone status for each patient
 let activeAlerts = new Map(); // Track active alerts
 
+// Demo location (Singapore Downtown - can be changed to any location)
+const DEMO_LOCATION = {
+  lat: 1.2915,  // Singapore downtown
+  lng: 103.8560,
+  name: "Downtown Singapore"
+};
+
 function setStatus(msg){ document.getElementById('status').textContent = msg; }
+
+// Create demo location data for consistent testing
+async function createDemoLocationData(pid, lat, lng) {
+  try {
+    console.log(`Creating demo location data for ${pid} at ${lat}, ${lng}`);
+    const response = await fetch('/caregiver/api/location', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        patient_id: pid,
+        latitude: lat,
+        longitude: lng,
+        timestamp: new Date().toISOString(),
+        accuracy: 10
+      })
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      console.log(`Demo location data created successfully:`, result);
+      return result;
+    } else {
+      console.error(`Failed to create demo location data: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Error creating demo location data:', error);
+  }
+}
 
 function initMap(){
   map = L.map('map', { maxBounds: SG_BOUNDS.pad(0.2) }).setView([1.3521, 103.8198], 12);
@@ -305,12 +401,23 @@ function handleLocationError(error) {
 
 function addPatient(pid){
   if(!pid || patientMarkers.has(pid)) return;
-  const m = L.marker([1.3521,103.8198]).addTo(map).bindPopup(`Patient: ${pid}`);
+  
+  // Use demo location for demo patient, default location for others
+  const lat = pid === 'demo' ? DEMO_LOCATION.lat : 1.3521;
+  const lng = pid === 'demo' ? DEMO_LOCATION.lng : 103.8198;
+  
+  const m = L.marker([lat, lng]).addTo(map).bindPopup(`Patient: ${pid}`);
   patientMarkers.set(pid, m);
   renderPatientList();
   if (!currentTrackedPatient) {
     currentTrackedPatient = pid;
     updateLocationStatus('info', `Now tracking patient: ${pid}`, null, null, null, pid);
+  }
+  
+  // If it's the demo patient, create location data immediately
+  if (pid === 'demo') {
+    console.log(`Creating demo location data for ${pid} at ${lat}, ${lng}`);
+    createDemoLocationData(pid, lat, lng);
   }
 }
 
@@ -444,14 +551,17 @@ function startPolling(){
 
 // Enhanced Alert System
 function checkGeofencing(patientId, lat, lng) {
-  const currentStatus = checkPatientZoneStatus(lat, lng);
+  const currentStatus = pointStatus(lat, lng); // Use existing pointStatus function
   const previousStatus = patientZoneStatus.get(patientId);
+  
+  console.log(`Geofencing check for ${patientId}: ${previousStatus} -> ${currentStatus}`);
   
   // Update status tracking
   patientZoneStatus.set(patientId, currentStatus);
   
   // Check for status changes and trigger alerts
   if (previousStatus !== currentStatus) {
+    console.log(`Zone status changed for ${patientId}: ${previousStatus} -> ${currentStatus}`);
     triggerZoneAlert(patientId, currentStatus, previousStatus, lat, lng);
   }
   
@@ -543,13 +653,52 @@ function removeAlert(alertId) {
 
 function playAlertSound(type) {
   try {
-    const sound = alertSounds[type];
-    if (sound) {
-      sound.currentTime = 0;
-      sound.play().catch(e => console.log('Audio play failed:', e));
+    // Simple beep using frequencies
+    if (type === 'warning') {
+      playTone(800, 200); // 800Hz for 200ms
+    } else if (type === 'danger') {
+      // Play alarm sequence
+      playTone(1000, 150);
+      setTimeout(() => playTone(1500, 150), 200);
+      setTimeout(() => playTone(1000, 150), 400);
+      setTimeout(() => playTone(1500, 150), 600);
     }
   } catch (e) {
-    console.log('Sound play error:', e);
+    console.error('Sound play error:', e);
+  }
+}
+
+function playTone(frequency, duration) {
+  try {
+    // Ensure audio context exists
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    
+    // Resume if suspended
+    if (audioContext.state === 'suspended') {
+      audioContext.resume();
+    }
+    
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = frequency;
+    oscillator.type = 'square';
+    
+    // Envelope
+    const now = audioContext.currentTime;
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(0.1, now + 0.01);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, now + (duration / 1000));
+    
+    oscillator.start(now);
+    oscillator.stop(now + (duration / 1000));
+  } catch (error) {
+    console.error('Tone generation error:', error);
   }
 }
 
@@ -568,82 +717,101 @@ function sendCaregiverNotification(patientId, lat, lng) {
   }).catch(e => console.log('Notification failed:', e));
 }
 
-// QR Code Generation
-function generateQRCode(patientId) {
-  const shareUrl = `${window.location.origin}/caregiver/zones/share?pid=${patientId}`;
-  const qrContainer = document.getElementById('qrCodeContainer');
-  
-  // Clear previous QR code
-  qrContainer.innerHTML = '';
-  
-  // Generate new QR code
-  QRCode.toCanvas(qrContainer, shareUrl, {
-    width: 200,
-    margin: 2,
-    color: {
-      dark: '#000000',
-      light: '#FFFFFF'
-    }
-  }, (error) => {
-    if (error) {
-      qrContainer.innerHTML = '<p class="text-danger">Error generating QR code</p>';
-    }
-  });
-  
-  // Update modal content
-  document.getElementById('qrPatientId').textContent = patientId;
-  document.getElementById('shareLink').textContent = shareUrl;
-  
-  // Show modal
-  new bootstrap.Modal(document.getElementById('qrModal')).show();
-}
-
+// Simple copy link functionality
 function copyShareLink() {
-  const shareLink = document.getElementById('shareLink').textContent;
-  navigator.clipboard.writeText(shareLink).then(() => {
-    const btn = document.getElementById('copyLink');
+  const shareLink = document.getElementById('shareLink');
+  shareLink.select();
+  navigator.clipboard.writeText(shareLink.value).then(() => {
+    const btn = document.getElementById('copyLinkBtn');
     const original = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';
+    btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+    btn.classList.remove('btn-outline-primary');
+    btn.classList.add('btn-success');
+    setTimeout(() => {
+      btn.innerHTML = original;
+      btn.classList.remove('btn-success');
+      btn.classList.add('btn-outline-primary');
+    }, 2000);
+  }).catch(() => {
+    // Fallback for older browsers
+    shareLink.select();
+    document.execCommand('copy');
+    const btn = document.getElementById('copyLinkBtn');
+    const original = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
     setTimeout(() => btn.innerHTML = original, 2000);
   });
 }
 
-function downloadQR() {
-  const canvas = document.querySelector('#qrCodeContainer canvas');
-  if (canvas) {
-    const link = document.createElement('a');
-    link.download = `patient_${document.getElementById('qrPatientId').textContent}_qr.png`;
-    link.href = canvas.toDataURL();
-    link.click();
+// Enhanced pollPatient function with geofencing
+async function pollPatient(pid) {
+  try {
+    console.log(`Polling patient: ${pid}`);
+    const r = await fetch(`/caregiver/api/location/${encodeURIComponent(pid)}`);
+    const response = await r.json();
+    console.log(`Poll response for ${pid}:`, response);
+    
+    if (!response.ok || !response.data) {
+      console.log(`No data for patient ${pid}`);
+      return;
+    }
+    
+    const { lat, lng, ts, zone_status } = response.data;
+    if (!lat || !lng) {
+      console.log(`Invalid coordinates for patient ${pid}`);
+      return;
+    }
+    
+    const m = patientMarkers.get(pid);
+    if (!m) {
+      console.log(`No marker found for patient ${pid}`);
+      return;
+    }
+    
+    // Update marker position
+    m.setLatLng([lat, lng]);
+    
+    // Calculate zone status using frontend logic
+    const calculatedStatus = pointStatus(lat, lng);
+    
+    // Use server-provided status if available, otherwise use calculated
+    const finalStatus = zone_status || calculatedStatus;
+    
+    // Check geofencing and trigger alerts
+    const zoneStatus = checkGeofencing(pid, lat, lng);
+    
+    // Update marker color based on status
+    const color = finalStatus === 'danger' ? 'red' : (finalStatus === 'safe' ? 'green' : 'gray');
+    m.setIcon(L.divIcon({
+      className: '', 
+      html: `<i class="fas fa-user" style="color:${color}; font-size: 16px;"></i>`, 
+      iconSize: [16, 16], 
+      iconAnchor: [8, 8]
+    }));
+    
+    // Update popup
+    const time = ts ? new Date(ts * 1000).toLocaleTimeString() : '—';
+    m.getPopup().setContent(`Patient: ${pid}<br>Status: <strong>${finalStatus.toUpperCase()}</strong><br>Updated: ${time}`);
+    
+    // Update patient row in sidebar
+    updatePatientRow(pid, finalStatus, time, lat, lng);
+    
+    // Update main status if this is the currently tracked patient
+    if (currentTrackedPatient === pid) {
+      const statusMessages = {
+        'safe': `✅ ${pid} is in a SAFE zone`,
+        'danger': `⚠️ ${pid} is in a DANGER zone`,
+        'outside': `📍 ${pid} is outside all safety zones`
+      };
+      updateLocationStatus(finalStatus, statusMessages[finalStatus] || `📍 ${pid} location updated`, lat, lng, null, pid);
+    }
+    
+    console.log(`Updated patient ${pid}: ${finalStatus} at ${lat}, ${lng}`);
+    
+  } catch (e) {
+    console.error(`Error polling patient ${pid}:`, e);
   }
 }
-
-// Enhanced pollPatient function with geofencing
-const originalPollPatient = pollPatient;
-pollPatient = function(pid) {
-  fetch(`/caregiver/api/location/${pid}`)
-    .then(res => res.json())
-    .then(data => {
-      if (data.latitude && data.longitude) {
-        const lat = parseFloat(data.latitude);
-        const lng = parseFloat(data.longitude);
-        
-        // Check geofencing and trigger alerts
-        const zoneStatus = checkGeofencing(pid, lat, lng);
-        
-        // Update patient marker and UI
-        updatePatientMarker(pid, lat, lng);
-        updatePatientRow(pid, zoneStatus, data.last_update || 'Unknown', lat, lng);
-        
-        if (pid === currentTrackedPatient) {
-          updateLocationStatus(zoneStatus, 
-            `Patient ${pid}: ${zoneStatus.toUpperCase()} zone`, 
-            lat, lng, data.accuracy, pid);
-        }
-      }
-    })
-    .catch(err => console.log('Poll error:', err));
-};
 
 // Event listeners
 document.getElementById('btnFit').addEventListener('click', fitAll);
@@ -655,17 +823,100 @@ document.getElementById('startTrack').addEventListener('click', ()=>{
   addPatient(pid);
   pollPatient(pid);
   // Update share link
-  document.getElementById('shareLink').textContent = `/caregiver/zones/share?pid=${pid}`;
+  const fullUrl = `${window.location.origin}/caregiver/zones/share?pid=${pid}`;
+  document.getElementById('shareLink').value = fullUrl;
 });
 
-// Enhanced event listeners
-document.getElementById('generateQR').addEventListener('click', () => {
+// Copy link event listener
+document.getElementById('copyLinkBtn').addEventListener('click', copyShareLink);
+
+// Test danger zone button
+document.getElementById('testDangerZone').addEventListener('click', async () => {
   const pid = document.getElementById('pidInput').value.trim() || 'demo';
-  generateQRCode(pid);
+  console.log(`Testing danger zone alert for patient: ${pid}`);
+  
+  // Add patient if not already tracked
+  if (!patientMarkers.has(pid)) {
+    addPatient(pid);
+  }
+  
+  // Use consistent demo location
+  const testLat = DEMO_LOCATION.lat;
+  const testLng = DEMO_LOCATION.lng;
+  console.log(`Using demo location: ${testLat}, ${testLng} (${DEMO_LOCATION.name})`);
+  
+  // Create actual location data in database
+  try {
+    console.log('Creating location data in database...');
+    const locationPayload = {
+      patient_id: pid,
+      latitude: testLat,
+      longitude: testLng,
+      timestamp: new Date().toISOString(),
+      accuracy: 10
+    };
+    console.log('Location payload:', locationPayload);
+    
+    const response = await fetch('/caregiver/api/location', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(locationPayload)
+    });
+    
+    console.log('Response status:', response.status);
+    console.log('Response headers:', response.headers);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Location API error response:', errorText);
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+    
+    const result = await response.json();
+    console.log('Location data creation result:', result);
+    
+    if (result.ok) {
+      console.log('Successfully created location data, now polling...');
+      // Wait a moment for database to update
+      setTimeout(async () => {
+        await pollPatient(pid);
+      }, 500);
+    } else {
+      console.error('Location creation failed:', result.error);
+    }
+  } catch (error) {
+    console.error('Error creating location data:', error);
+  }
+  
+  // Update patient marker position
+  const marker = patientMarkers.get(pid);
+  if (marker) {
+    marker.setLatLng([testLat, testLng]);
+    marker.setIcon(L.divIcon({
+      className: '', 
+      html: `<i class="fas fa-user" style="color:red; font-size: 16px;"></i>`, 
+      iconSize: [16, 16], 
+      iconAnchor: [8, 8]
+    }));
+  }
+  
+  // Trigger zone status check and alerts
+  const zoneStatus = checkGeofencing(pid, testLat, testLng);
+  console.log(`Zone status for test: ${zoneStatus}`);
+  
+  // Force trigger a danger zone alert for testing
+  triggerZoneAlert(pid, 'danger', 'outside', testLat, testLng);
+  
+  // Update UI
+  updatePatientRow(pid, 'danger', new Date().toLocaleTimeString(), testLat, testLng);
+  
+  if (currentTrackedPatient === pid) {
+    updateLocationStatus('danger', `⚠️ TEST: ${pid} entered danger zone`, testLat, testLng, null, pid);
+  }
+  
+  // Test audio immediately
+  playAlertSound('danger');
 });
-
-document.getElementById('copyLink').addEventListener('click', copyShareLink);
-document.getElementById('downloadQR').addEventListener('click', downloadQR);
 
 document.getElementById('soundAlertsToggle').addEventListener('change', (e) => {
   soundAlertsEnabled = e.target.checked;
@@ -675,16 +926,49 @@ document.getElementById('dangerAlarmToggle').addEventListener('change', (e) => {
   dangerAlarmEnabled = e.target.checked;
 });
 
+// Modal close handlers
+document.addEventListener('click', (e) => {
+  if (e.target.matches('[data-bs-dismiss="modal"]') || e.target.id === 'qr-modal-backdrop') {
+    const modal = document.getElementById('qrModal');
+    const backdrop = document.getElementById('qr-modal-backdrop');
+    if (modal) {
+      modal.style.display = 'none';
+      modal.classList.remove('show', 'd-block');
+    }
+    if (backdrop) {
+      backdrop.remove();
+    }
+  }
+});
+
 // Update patient ID input to update share link
 document.getElementById('pidInput').addEventListener('input', (e) => {
   const pid = e.target.value.trim() || 'demo';
-  document.getElementById('shareLink').textContent = `/caregiver/zones/share?pid=${pid}`;
+  const fullUrl = `${window.location.origin}/caregiver/zones/share?pid=${pid}`;
+  document.getElementById('shareLink').value = fullUrl;
 });
 
 // Initialize
-initMap();
-loadZones().then(() => {
-  startPolling();
+document.addEventListener('DOMContentLoaded', function() {
+  initializeAudio();
+  initMap();
+  loadZones().then(() => {
+    startPolling();
+  });
 });
+
+// Initialize audio on first user interaction (required by some browsers)
+document.addEventListener('click', function initAudioOnFirstClick() {
+  if (!audioContext || audioContext.state === 'suspended') {
+    initializeAudio();
+    if (audioContext && audioContext.state === 'suspended') {
+      audioContext.resume();
+    }
+  }
+  // Remove this listener after first click
+  document.removeEventListener('click', initAudioOnFirstClick);
+}, { once: true });
+
+// QR code functionality removed - using simple link sharing
 </script>
 {% endblock %}
