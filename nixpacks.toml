@@ -1,0 +1,14 @@
+[phases.setup]
+nixPkgs = ['python311']
+
+[phases.install]
+cmds = ['pip install -r requirements.txt']
+
+[phases.build]
+cmds = ['mkdir -p instance']
+
+[start]
+cmd = 'python start.py'
+
+[variables]
+PORT = '8080'
