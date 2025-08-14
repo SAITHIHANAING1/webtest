@@ -5,6 +5,244 @@
 {% block head %}
 <!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<!-- Custom Map Styles -->
+<style>
+    .leaflet-container {
+        height: 500px;
+        width: 100%;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        position: relative;
+        z-index: 1;
+        overflow: hidden;
+    }
+    
+    .map-wrapper {
+        height: 500px;
+        width: 100%;
+        overflow: hidden !important;
+        position: relative;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        max-width: 100%;
+        box-sizing: border-box;
+        background: #fff;
+        box-shadow: 0 6px 18px rgba(0,0,0,.06);
+    }
+    
+    #singaporeMap {
+        height: 100% !important;
+        width: 100% !important;
+        border-radius: 8px;
+        position: relative;
+        z-index: 1;
+        overflow: hidden !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    .custom-marker {
+        background: transparent;
+        border: none;
+    }
+    
+    .custom-marker div {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: bold;
+        color: white;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    }
+    
+    .leaflet-popup-content-wrapper {
+        border-radius: 8px;
+    }
+    
+    .popup-content h6 {
+        margin-bottom: 8px;
+        color: #333;
+        font-weight: 600;
+    }
+    
+    .popup-content p {
+        margin-bottom: 4px;
+        font-size: 14px;
+        color: #666;
+    }
+    
+    .leaflet-control-zoom {
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .leaflet-control-zoom a {
+        border-radius: 4px;
+        border: none;
+        background: white;
+        color: #333;
+        font-weight: bold;
+    }
+    
+    .leaflet-control-zoom a:hover {
+        background: #f8f9fa;
+        color: #007bff;
+    }
+    
+    /* Ensure proper containment for map */
+    .card-body {
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .row {
+        margin: 0;
+        overflow: hidden;
+    }
+    
+    .col-md-8, .col-md-4 {
+        padding-left: 15px;
+        padding-right: 15px;
+        overflow: hidden;
+    }
+    
+    .col-md-8 {
+        max-width: 66.666667%;
+        flex: 0 0 66.666667%;
+    }
+    
+    /* Prevent map from breaking out of container */
+    .leaflet-container .leaflet-control-container {
+        position: relative;
+    }
+    
+    .leaflet-popup {
+        z-index: 1000;
+    }
+    
+    .leaflet-marker-icon {
+        z-index: 600;
+    }
+    
+    /* Force strict containment */
+    .leaflet-container,
+    .leaflet-container * {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    .leaflet-pane {
+        overflow: hidden !important;
+    }
+    
+    /* Prevent any absolute positioning from breaking containment */
+    .leaflet-map-pane {
+        position: relative !important;
+        overflow: hidden !important;
+    }
+    
+    /* Fix text visibility and icon colors */
+    .form-check-label {
+        color: #333 !important;
+        font-weight: 500;
+    }
+    
+    .card-body h6 {
+        color: #333 !important;
+    }
+    
+    .card-title {
+        color: #333 !important;
+    }
+    
+    .text-muted {
+        color: #6c757d !important;
+    }
+    
+    .badge {
+        font-size: 14px !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+    
+    /* Ensure proper contrast for all text elements */
+    .col-md-4 {
+        background: #fff;
+        color: #333;
+        padding: 1rem;
+        border-radius: 12px;
+    }
+    
+    .card {
+        background: #fff !important;
+        border-radius: 12px !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 6px 18px rgba(0,0,0,.06) !important;
+    }
+    
+    .card.bg-light {
+        background-color: #f8f9fa !important;
+        color: #333 !important;
+    }
+    
+    .card.bg-light .card-body {
+        color: #333 !important;
+    }
+    
+    .card-body {
+        background: #fff;
+        color: #333;
+        padding: 1rem;
+    }
+    
+    .card-header {
+        background: #fff !important;
+        color: #333 !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+    }
+    
+    /* Fix icon visibility */
+    .fas, .fa {
+        color: inherit !important;
+    }
+    
+    /* Provider type badges with proper contrast */
+    .badge.bg-success {
+        background-color: #198754 !important;
+        color: #fff !important;
+    }
+    
+    .badge.bg-primary {
+        background-color: #0d6efd !important;
+        color: #fff !important;
+    }
+    
+    .badge.bg-warning {
+        background-color: #ffc107 !important;
+        color: #000 !important;
+    }
+    
+    .badge.bg-info {
+        background-color: #0dcaf0 !important;
+        color: #000 !important;
+    }
+    
+    .badge.bg-danger {
+        background-color: #dc3545 !important;
+        color: #fff !important;
+    }
+    
+    /* Additional CSS fixes for Bootstrap variables and text colors */
+    :root {
+        --bs-card-color: black;
+    }
+    
+    .text-danger {
+        color: #000000 !important;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -156,7 +394,9 @@
                     <div class="row">
                         <div class="col-md-8">
                             <!-- Map Container -->
-                            <div id="singaporeMap" style="height: 500px; border-radius: 8px; border: 1px solid #dee2e6;"></div>
+                            <div class="map-wrapper" style="height: 500px; overflow: hidden; position: relative; border-radius: 8px; border: 1px solid #dee2e6;">
+                                <div id="singaporeMap" style="height: 100%; width: 100%; border-radius: 8px;"></div>
+                            </div>
                         </div>
                         <div class="col-md-4">
                             <!-- Map Legend and Filters -->
@@ -661,141 +901,278 @@ const singaporeProviders = {
 
 // Initialize map
 function initializeMap() {
-    // Create map centered on Singapore
-    singaporeMap = L.map('singaporeMap').setView([1.3521, 103.8198], 11);
-    
-    // Add OpenStreetMap tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(singaporeMap);
-    
-    // Create markers layer group
-    markersLayer = L.layerGroup().addTo(singaporeMap);
-    
-    // Load all markers
-    loadMapMarkers();
-    
-    // Add event listeners for checkboxes
-    document.getElementById('showOST').addEventListener('change', updateMapMarkers);
-    document.getElementById('showNSP').addEventListener('change', updateMapMarkers);
-    document.getElementById('showCounseling').addEventListener('change', updateMapMarkers);
-    document.getElementById('showTesting').addEventListener('change', updateMapMarkers);
-    document.getElementById('showRehab').addEventListener('change', updateMapMarkers);
+    try {
+        // Check if map container exists
+        const mapContainer = document.getElementById('singaporeMap');
+        if (!mapContainer) {
+            console.error('Map container not found');
+            return;
+        }
+        
+        // Create map centered on Singapore
+        singaporeMap = L.map('singaporeMap', {
+            zoomControl: true,
+            scrollWheelZoom: true,
+            doubleClickZoom: true,
+            boxZoom: true,
+            keyboard: true,
+            dragging: true,
+            touchZoom: true
+        }).setView([1.3521, 103.8198], 11);
+        
+        // Add OpenStreetMap tiles with error handling
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 18,
+            minZoom: 10,
+            errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+        }).addTo(singaporeMap);
+        
+        // Create markers layer group
+        markersLayer = L.layerGroup().addTo(singaporeMap);
+        
+        // Load all markers
+        loadMapMarkers();
+        
+        // Update statistics
+        updateMapStatistics();
+        
+        // Add event listeners for checkboxes with error handling
+        const checkboxes = ['showOST', 'showNSP', 'showCounseling', 'showTesting', 'showRehab'];
+        checkboxes.forEach(id => {
+            const checkbox = document.getElementById(id);
+            if (checkbox) {
+                checkbox.addEventListener('change', updateMapMarkers);
+            } else {
+                console.warn(`Checkbox ${id} not found`);
+            }
+        });
+        
+        console.log('Map initialized successfully');
+        
+    } catch (error) {
+        console.error('Error initializing map:', error);
+        showAlert('Failed to initialize map. Please refresh the page.', 'danger');
+    }
 }
 
 // Load markers on map
 function loadMapMarkers() {
+    if (!markersLayer) {
+        console.error('Markers layer not initialized');
+        return;
+    }
+    
     markersLayer.clearLayers();
     
-    // Add OST markers
-    if (document.getElementById('showOST').checked) {
-        singaporeProviders.ost.forEach(provider => {
-            const marker = L.marker([provider.lat, provider.lng], {
-                icon: createCustomIcon('success')
-            }).addTo(markersLayer);
-            
-            marker.bindPopup(createPopupContent(provider, 'OST Clinic'));
-            marker.on('click', () => showProviderDetails(provider, 'OST Clinic'));
-        });
-    }
-    
-    // Add NSP markers
-    if (document.getElementById('showNSP').checked) {
-        singaporeProviders.nsp.forEach(provider => {
-            const marker = L.marker([provider.lat, provider.lng], {
-                icon: createCustomIcon('primary')
-            }).addTo(markersLayer);
-            
-            marker.bindPopup(createPopupContent(provider, 'Needle & Syringe Program'));
-            marker.on('click', () => showProviderDetails(provider, 'Needle & Syringe Program'));
-        });
-    }
-    
-    // Add Counseling markers
-    if (document.getElementById('showCounseling').checked) {
-        singaporeProviders.counseling.forEach(provider => {
-            const marker = L.marker([provider.lat, provider.lng], {
-                icon: createCustomIcon('warning')
-            }).addTo(markersLayer);
-            
-            marker.bindPopup(createPopupContent(provider, 'Counseling Service'));
-            marker.on('click', () => showProviderDetails(provider, 'Counseling Service'));
-        });
-    }
-    
-    // Add Testing markers
-    if (document.getElementById('showTesting').checked) {
-        singaporeProviders.testing.forEach(provider => {
-            const marker = L.marker([provider.lat, provider.lng], {
-                icon: createCustomIcon('info')
-            }).addTo(markersLayer);
-            
-            marker.bindPopup(createPopupContent(provider, 'HIV/HCV Testing'));
-            marker.on('click', () => showProviderDetails(provider, 'HIV/HCV Testing'));
-        });
-    }
-    
-    // Add Rehab markers
-    if (document.getElementById('showRehab').checked) {
-        singaporeProviders.rehab.forEach(provider => {
-            const marker = L.marker([provider.lat, provider.lng], {
-                icon: createCustomIcon('danger')
-            }).addTo(markersLayer);
-            
-            marker.bindPopup(createPopupContent(provider, 'Rehabilitation Center'));
-            marker.on('click', () => showProviderDetails(provider, 'Rehabilitation Center'));
-        });
+    try {
+        // Add OST markers
+        const ostCheckbox = document.getElementById('showOST');
+        if (ostCheckbox && ostCheckbox.checked && singaporeProviders.ost) {
+            singaporeProviders.ost.forEach(provider => {
+                const marker = L.marker([provider.lat, provider.lng], {
+                    icon: createCustomIcon('success', 'ost')
+                }).addTo(markersLayer);
+                
+                marker.bindPopup(createPopupContent(provider, 'OST Clinic'));
+                marker.on('click', () => showProviderDetails(provider, 'OST Clinic'));
+            });
+        }
+        
+        // Add NSP markers
+        const nspCheckbox = document.getElementById('showNSP');
+        if (nspCheckbox && nspCheckbox.checked && singaporeProviders.nsp) {
+            singaporeProviders.nsp.forEach(provider => {
+                const marker = L.marker([provider.lat, provider.lng], {
+                    icon: createCustomIcon('primary', 'nsp')
+                }).addTo(markersLayer);
+                
+                marker.bindPopup(createPopupContent(provider, 'Needle & Syringe Program'));
+                marker.on('click', () => showProviderDetails(provider, 'Needle & Syringe Program'));
+            });
+        }
+        
+        // Add Counseling markers
+        const counselingCheckbox = document.getElementById('showCounseling');
+        if (counselingCheckbox && counselingCheckbox.checked && singaporeProviders.counseling) {
+            singaporeProviders.counseling.forEach(provider => {
+                const marker = L.marker([provider.lat, provider.lng], {
+                    icon: createCustomIcon('warning', 'counseling')
+                }).addTo(markersLayer);
+                
+                marker.bindPopup(createPopupContent(provider, 'Counseling Service'));
+                marker.on('click', () => showProviderDetails(provider, 'Counseling Service'));
+            });
+        }
+        
+        // Add Testing markers
+        const testingCheckbox = document.getElementById('showTesting');
+        if (testingCheckbox && testingCheckbox.checked && singaporeProviders.testing) {
+            singaporeProviders.testing.forEach(provider => {
+                const marker = L.marker([provider.lat, provider.lng], {
+                    icon: createCustomIcon('info', 'testing')
+                }).addTo(markersLayer);
+                
+                marker.bindPopup(createPopupContent(provider, 'HIV/HCV Testing'));
+                marker.on('click', () => showProviderDetails(provider, 'HIV/HCV Testing'));
+            });
+        }
+        
+        // Add Rehab markers
+        const rehabCheckbox = document.getElementById('showRehab');
+        if (rehabCheckbox && rehabCheckbox.checked && singaporeProviders.rehab) {
+            singaporeProviders.rehab.forEach(provider => {
+                const marker = L.marker([provider.lat, provider.lng], {
+                    icon: createCustomIcon('danger', 'rehab')
+                }).addTo(markersLayer);
+                
+                marker.bindPopup(createPopupContent(provider, 'Rehabilitation Center'));
+                marker.on('click', () => showProviderDetails(provider, 'Rehabilitation Center'));
+            });
+        }
+        
+        console.log('Map markers loaded successfully');
+        
+    } catch (error) {
+        console.error('Error loading map markers:', error);
+        showAlert('Failed to load map markers. Please try refreshing.', 'warning');
     }
 }
 
-// Create custom icon
-function createCustomIcon(color) {
-    const colors = {
-        success: '#28a745',
-        primary: '#007bff',
-        warning: '#ffc107',
-        info: '#17a2b8',
-        danger: '#dc3545'
+// Create custom icon with FontAwesome icons
+function createCustomIcon(color, type) {
+    const iconConfig = {
+        success: { color: '#28a745', icon: 'fa-hospital', label: 'OST' },
+        primary: { color: '#007bff', icon: 'fa-syringe', label: 'NSP' },
+        warning: { color: '#ffc107', icon: 'fa-comments', label: 'Counseling' },
+        info: { color: '#17a2b8', icon: 'fa-vial', label: 'Testing' },
+        danger: { color: '#dc3545', icon: 'fa-home', label: 'Rehab' }
     };
+    
+    const config = iconConfig[color] || iconConfig.primary;
     
     return L.divIcon({
         className: 'custom-marker',
-        html: `<div style="background-color: ${colors[color]}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
-        iconSize: [20, 20],
-        iconAnchor: [10, 10]
+        html: `
+            <div style="
+                background-color: ${config.color};
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                border: 3px solid white;
+                box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+            ">
+                <i class="fas ${config.icon}" style="
+                    color: white;
+                    font-size: 14px;
+                    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+                "></i>
+            </div>
+        `,
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+        popupAnchor: [0, -32]
     });
 }
 
 // Create popup content
 function createPopupContent(provider, type) {
     return `
-        <div class="popup-content">
-            <h6 class="mb-2">${provider.name}</h6>
-            <p class="mb-1"><strong>Type:</strong> ${type}</p>
-            <p class="mb-1"><strong>Address:</strong> ${provider.address}</p>
-            <p class="mb-0"><strong>Phone:</strong> ${provider.phone}</p>
+        <div class="popup-content" style="min-width: 250px;">
+            <h6 class="mb-2 text-primary" style="font-weight: 600; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+                <i class="fas fa-map-marker-alt me-1"></i>${provider.name}
+            </h6>
+            <div class="mb-2">
+                <span class="badge bg-secondary" style="font-size: 0.75rem;">${type}</span>
+            </div>
+            <p class="mb-2" style="margin-bottom: 8px;">
+                <i class="fas fa-map-pin me-2 text-muted"></i>
+                <strong>Address:</strong><br>
+                <span class="ms-3">${provider.address}</span>
+            </p>
+            <p class="mb-2" style="margin-bottom: 8px;">
+                <i class="fas fa-phone me-2 text-muted"></i>
+                <strong>Phone:</strong> 
+                <a href="tel:${provider.phone}" class="text-decoration-none">${provider.phone}</a>
+            </p>
+            <div class="mt-2 pt-2" style="border-top: 1px solid #eee;">
+                <button class="btn btn-sm btn-outline-primary me-2" onclick="getDirections(${provider.lat}, ${provider.lng})">
+                    <i class="fas fa-directions me-1"></i>Directions
+                </button>
+                <button class="btn btn-sm btn-outline-info" onclick="showProviderDetails(${JSON.stringify(provider).replace(/"/g, '&quot;')}, '${type}')">
+                    <i class="fas fa-info-circle me-1"></i>Details
+                </button>
+            </div>
         </div>
     `;
 }
 
 // Show provider details in sidebar
 function showProviderDetails(provider, type) {
-    const detailsDiv = document.getElementById('providerDetails');
-    const infoCard = document.getElementById('selectedProviderInfo');
-    
-    detailsDiv.innerHTML = `
-        <h6 class="text-primary">${provider.name}</h6>
-        <p class="mb-1"><span class="badge bg-secondary">${type}</span></p>
-        <p class="mb-1"><strong>Address:</strong><br>${provider.address}</p>
-        <p class="mb-1"><strong>Phone:</strong> ${provider.phone}</p>
-        <div class="mt-2">
-            <button class="btn btn-sm btn-outline-primary" onclick="getDirections(${provider.lat}, ${provider.lng})">
-                <i class="fas fa-directions me-1"></i>Get Directions
-            </button>
-        </div>
-    `;
-    
-    infoCard.style.display = 'block';
+    try {
+        // Handle both object and string inputs
+        let providerObj = provider;
+        if (typeof provider === 'string') {
+            providerObj = JSON.parse(provider.replace(/&quot;/g, '"'));
+        }
+        
+        const detailsDiv = document.getElementById('providerDetails');
+        const infoCard = document.getElementById('selectedProviderInfo');
+        
+        if (!detailsDiv || !infoCard) {
+            console.error('Provider details elements not found');
+            return;
+        }
+        
+        detailsDiv.innerHTML = `
+            <div class="provider-details-content">
+                <h6 class="text-primary mb-2" style="font-weight: 600;">
+                    <i class="fas fa-hospital me-2"></i>${providerObj.name}
+                </h6>
+                <div class="mb-3">
+                    <span class="badge bg-secondary mb-2" style="font-size: 0.8rem;">${type}</span>
+                </div>
+                <div class="detail-item mb-2">
+                    <i class="fas fa-map-marker-alt me-2 text-muted"></i>
+                    <strong>Address:</strong><br>
+                    <span class="ms-3 text-muted">${providerObj.address}</span>
+                </div>
+                <div class="detail-item mb-3">
+                    <i class="fas fa-phone me-2 text-muted"></i>
+                    <strong>Phone:</strong> 
+                    <a href="tel:${providerObj.phone}" class="text-decoration-none ms-1">${providerObj.phone}</a>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-sm btn-primary me-2 mb-2" onclick="getDirections(${providerObj.lat}, ${providerObj.lng})">
+                        <i class="fas fa-directions me-1"></i>Get Directions
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary mb-2" onclick="centerMapOnProvider(${providerObj.lat}, ${providerObj.lng})">
+                        <i class="fas fa-crosshairs me-1"></i>Center Map
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        infoCard.style.display = 'block';
+        
+        // Scroll to the provider details if needed
+        infoCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        
+    } catch (error) {
+        console.error('Error showing provider details:', error);
+        showAlert('Failed to display provider details.', 'warning');
+    }
+}
+
+// Center map on specific provider
+function centerMapOnProvider(lat, lng) {
+    if (singaporeMap) {
+        singaporeMap.setView([lat, lng], 15);
+    }
 }
 
 // Get directions (opens Google Maps)
@@ -812,24 +1189,52 @@ function updateMapMarkers() {
 
 // Update map statistics
 function updateMapStatistics() {
-    let ostCount = document.getElementById('showOST').checked ? singaporeProviders.ost.length : 0;
-    let nspCount = document.getElementById('showNSP').checked ? singaporeProviders.nsp.length : 0;
-    let counselingCount = document.getElementById('showCounseling').checked ? singaporeProviders.counseling.length : 0;
-    let testingCount = document.getElementById('showTesting').checked ? singaporeProviders.testing.length : 0;
-    let rehabCount = document.getElementById('showRehab').checked ? singaporeProviders.rehab.length : 0;
-    
-    document.getElementById('mapOSTCount').textContent = ostCount;
-    document.getElementById('mapNSPCount').textContent = nspCount;
-    document.getElementById('mapCounselingCount').textContent = counselingCount;
-    document.getElementById('mapTestingCount').textContent = testingCount;
-    document.getElementById('mapRehabCount').textContent = rehabCount;
+    try {
+        const ostCheckbox = document.getElementById('showOST');
+        const nspCheckbox = document.getElementById('showNSP');
+        const counselingCheckbox = document.getElementById('showCounseling');
+        const testingCheckbox = document.getElementById('showTesting');
+        const rehabCheckbox = document.getElementById('showRehab');
+        
+        let ostCount = (ostCheckbox && ostCheckbox.checked && singaporeProviders.ost) ? singaporeProviders.ost.length : 0;
+        let nspCount = (nspCheckbox && nspCheckbox.checked && singaporeProviders.nsp) ? singaporeProviders.nsp.length : 0;
+        let counselingCount = (counselingCheckbox && counselingCheckbox.checked && singaporeProviders.counseling) ? singaporeProviders.counseling.length : 0;
+        let testingCount = (testingCheckbox && testingCheckbox.checked && singaporeProviders.testing) ? singaporeProviders.testing.length : 0;
+        let rehabCount = (rehabCheckbox && rehabCheckbox.checked && singaporeProviders.rehab) ? singaporeProviders.rehab.length : 0;
+        
+        // Update count displays with error checking
+        const updateElement = (id, count) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = count;
+                element.style.opacity = count > 0 ? '1' : '0.5';
+            }
+        };
+        
+        updateElement('mapOSTCount', ostCount);
+        updateElement('mapNSPCount', nspCount);
+        updateElement('mapCounselingCount', counselingCount);
+        updateElement('mapTestingCount', testingCount);
+        updateElement('mapRehabCount', rehabCount);
+        
+        console.log(`Statistics updated: OST(${ostCount}), NSP(${nspCount}), Counseling(${counselingCount}), Testing(${testingCount}), Rehab(${rehabCount})`);
+        
+    } catch (error) {
+        console.error('Error updating map statistics:', error);
+    }
 }
 
 // Toggle fullscreen map
 function toggleMapView() {
-    const mapContainer = document.getElementById('singaporeMap').parentElement.parentElement.parentElement;
+    const mapWrapper = document.querySelector('.map-wrapper');
+    const mapElement = document.getElementById('singaporeMap');
+    const mapContainer = mapWrapper.parentElement.parentElement.parentElement;
     
     if (!isFullscreen) {
+        // Store original styles
+        mapContainer.setAttribute('data-original-position', mapContainer.style.position || 'static');
+        mapContainer.setAttribute('data-original-zindex', mapContainer.style.zIndex || 'auto');
+        
         mapContainer.style.position = 'fixed';
         mapContainer.style.top = '0';
         mapContainer.style.left = '0';
@@ -837,17 +1242,36 @@ function toggleMapView() {
         mapContainer.style.height = '100vh';
         mapContainer.style.zIndex = '9999';
         mapContainer.style.backgroundColor = 'white';
-        document.getElementById('singaporeMap').style.height = '90vh';
+        mapContainer.style.overflow = 'hidden';
+        
+        mapWrapper.style.height = '90vh';
+        mapWrapper.style.width = '100%';
+        mapWrapper.style.maxWidth = '100%';
+        mapWrapper.style.border = 'none';
+        
+        mapElement.style.height = '100%';
+        mapElement.style.width = '100%';
+        mapElement.style.maxWidth = '100%';
         isFullscreen = true;
     } else {
-        mapContainer.style.position = 'relative';
+        // Restore original styles
+        mapContainer.style.position = mapContainer.getAttribute('data-original-position') || 'static';
         mapContainer.style.top = 'auto';
         mapContainer.style.left = 'auto';
         mapContainer.style.width = 'auto';
         mapContainer.style.height = 'auto';
-        mapContainer.style.zIndex = 'auto';
+        mapContainer.style.zIndex = mapContainer.getAttribute('data-original-zindex') || 'auto';
         mapContainer.style.backgroundColor = 'transparent';
-        document.getElementById('singaporeMap').style.height = '500px';
+        mapContainer.style.overflow = 'visible';
+        
+        mapWrapper.style.height = '500px';
+        mapWrapper.style.width = '100%';
+        mapWrapper.style.maxWidth = '100%';
+        mapWrapper.style.border = '1px solid #dee2e6';
+        
+        mapElement.style.height = '100%';
+        mapElement.style.width = '100%';
+        mapElement.style.maxWidth = '100%';
         isFullscreen = false;
     }
     
@@ -866,11 +1290,50 @@ function refreshMap() {
 
 // Initialize map when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    loadProviders();
-    loadStatistics();
+    console.log('DOM Content Loaded - Initializing healthcare providers page');
     
-    // Initialize map after a short delay to ensure DOM is ready
-    setTimeout(initializeMap, 500);
+    try {
+        // Load provider data and statistics
+        loadProviders();
+        loadStatistics();
+        
+        // Check if Leaflet is loaded
+        if (typeof L === 'undefined') {
+            console.error('Leaflet library not loaded');
+            showAlert('Map library failed to load. Please refresh the page.', 'danger');
+            return;
+        }
+        
+        // Initialize map after ensuring all dependencies are loaded
+        setTimeout(() => {
+            console.log('Initializing map...');
+            initializeMap();
+        }, 800);
+        
+        // Add window resize handler for map
+        window.addEventListener('resize', function() {
+            if (singaporeMap) {
+                setTimeout(() => {
+                    singaporeMap.invalidateSize();
+                }, 100);
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error during page initialization:', error);
+        showAlert('Failed to initialize page. Please refresh and try again.', 'danger');
+    }
+});
+
+// Additional safety check for Leaflet loading
+window.addEventListener('load', function() {
+    // Double-check map initialization if it failed during DOMContentLoaded
+    setTimeout(() => {
+        if (!singaporeMap && typeof L !== 'undefined') {
+            console.log('Retrying map initialization...');
+            initializeMap();
+        }
+    }, 1000);
 });
 </script>
 

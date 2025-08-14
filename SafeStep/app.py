@@ -54,13 +54,14 @@ except ImportError:
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(16))
 
-# Database configuration - Supabase PostgreSQL or fallback to SQLite
+# Database configuration - Supabase PostgreSQL only
 database_url = os.environ.get('DATABASE_URL')
 print(f"🔍 DATABASE_URL from environment: {database_url}")
 print(f"🔍 supabase_available: {supabase_available}")
 
 if not (database_url and supabase_available):
     raise RuntimeError("PostgreSQL (Supabase) connection required. DATABASE_URL or Supabase not available.")
+
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 print("🔗 Using Supabase PostgreSQL database")
     
@@ -549,8 +550,9 @@ def get_zones_for_user(user_id):
     try:
         if supabase_available:
             supabase = get_supabase_client()
-            response = supabase.table('zones').select('*').eq('user_id', user_id).execute()
-            return response.data
+            if supabase:
+                response = supabase.table('zones').select('*').eq('user_id', user_id).execute()
+                return response.data
         return []
     except Exception as e:
         print(f"Error getting zones for user: {e}")
@@ -561,8 +563,9 @@ def get_active_zones_count(user_id):
     try:
         if supabase_available:
             supabase = get_supabase_client()
-            response = supabase.table('zones').select('id').eq('user_id', user_id).eq('is_active', True).execute()
-            return len(response.data)
+            if supabase:
+                response = supabase.table('zones').select('id').eq('user_id', user_id).eq('is_active', True).execute()
+                return len(response.data)
         return 0
     except Exception as e:
         print(f"Error getting active zones count: {e}")
@@ -573,9 +576,10 @@ def create_zone_supabase(user_id, zone_data):
     try:
         if supabase_available:
             supabase = get_supabase_client()
-            zone_data['user_id'] = user_id
-            response = supabase.table('zones').insert(zone_data).execute()
-            return response.data[0] if response.data else None
+            if supabase:
+                zone_data['user_id'] = user_id
+                response = supabase.table('zones').insert(zone_data).execute()
+                return response.data[0] if response.data else None
         return None
     except Exception as e:
         print(f"Error creating zone: {e}")
@@ -586,8 +590,9 @@ def get_all_zones_supabase():
     try:
         if supabase_available:
             supabase = get_supabase_client()
-            response = supabase.table('zones').select('*').execute()
-            return response.data
+            if supabase:
+                response = supabase.table('zones').select('*').execute()
+                return response.data
         return []
     except Exception as e:
         print(f"Error getting all zones: {e}")
@@ -598,8 +603,9 @@ def get_zones_by_status(status='approved'):
     try:
         if supabase_available:
             supabase = get_supabase_client()
-            response = supabase.table('zones').select('*').eq('status', status).eq('is_active', True).execute()
-            return response.data
+            if supabase:
+                response = supabase.table('zones').select('*').eq('status', status).eq('is_active', True).execute()
+                return response.data
         return []
     except Exception as e:
         print(f"Error getting zones by status: {e}")
@@ -899,13 +905,20 @@ def check_questionnaire_completion():
         if current_user.role == 'admin':
             return
         
+        # Skip questionnaire check for API endpoints (especially enhanced routes)
+        if request.endpoint and (
+            request.endpoint.startswith('enhanced.') or 
+            request.path.startswith('/api/') or
+            request.endpoint in ['questionnaire', 'logout', 'static', 'signup', 'login']
+        ):
+            return
+        
         # Check if user has completed questionnaire
         existing_questionnaire = UserQuestionnaire.query.filter_by(user_id=current_user.id).first()
         if not existing_questionnaire:
             # Redirect to questionnaire if not completed
-            if request.endpoint not in ['questionnaire', 'logout', 'static', 'signup', 'login']:
-                print(f"🔍 Redirecting user {current_user.id} to questionnaire from {request.endpoint}")
-                return redirect(url_for('questionnaire'))
+            print(f"🔍 Redirecting user {current_user.id} to questionnaire from {request.endpoint}")
+            return redirect(url_for('questionnaire'))
 
 @app.route('/questionnaire', methods=['GET', 'POST'])
 @login_required
@@ -4034,6 +4047,9 @@ def _create_zone_supabase(data):
     from supabase_integration import get_supabase_client
     supabase = get_supabase_client()
     
+    if not supabase:
+        return None
+    
     zone_data = {
         'name': data['name'],
         'description': data.get('description', ''),
@@ -4078,6 +4094,9 @@ def _update_zone_supabase(zone_id, data):
     from supabase_integration import get_supabase_admin_client
     supabase = get_supabase_admin_client()
     
+    if not supabase:
+        return None
+    
     update_data = {
         'name': data['name'],
         'description': data.get('description', ''),
@@ -4102,6 +4121,9 @@ def _delete_zone_supabase(zone_id):
     """Delete zone from Supabase"""
     from supabase_integration import get_supabase_admin_client
     supabase = get_supabase_admin_client()
+    
+    if not supabase:
+        return {"error": "Supabase client not available"}, 503
     
     result = supabase.table('zones').delete().eq('id', zone_id).execute()
     if result.data:

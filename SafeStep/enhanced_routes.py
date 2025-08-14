@@ -16,7 +16,7 @@ from flask import Blueprint, request, jsonify, session, render_template
 from functools import wraps
 import json
 from datetime import datetime, timedelta
-from supabase_enhanced import get_supabase_enhanced
+from supabase_integration import get_supabase_client, supabase_available
 import logging
 
 # Configure logging
@@ -26,8 +26,14 @@ logger = logging.getLogger(__name__)
 # Create blueprint
 enhanced_bp = Blueprint('enhanced', __name__, url_prefix='/api/enhanced')
 
-# Get Supabase client
-sb = get_supabase_enhanced()
+# Get Supabase client with error handling
+try:
+    sb = get_supabase_client() if supabase_available else None
+    supabase_enhanced_available = sb is not None
+except Exception as e:
+    logger.error(f"Failed to initialize Supabase client: {e}")
+    sb = None
+    supabase_enhanced_available = False
 
 # Authentication decorator
 def require_auth(f):
@@ -42,8 +48,20 @@ def require_auth(f):
 def require_admin(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or session.get('role') != 'admin':
+        if 'user_id' not in session or session.get('user_role') != 'admin':
             return jsonify({'success': False, 'error': 'Admin access required'}), 403
+        return f(*args, **kwargs)
+    return decorated_function
+
+# Supabase availability decorator
+def require_supabase(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not supabase_enhanced_available:
+            return jsonify({
+                'success': False, 
+                'error': 'Enhanced features are not available in offline mode. Please check your Supabase connection.'
+            }), 503
         return f(*args, **kwargs)
     return decorated_function
 
@@ -51,8 +69,66 @@ def require_admin(f):
 # MEDICATION MANAGEMENT ROUTES
 # ============================================================================
 
+@enhanced_bp.route('/medications', methods=['GET'])
+@require_auth
+@require_supabase
+def get_medications():
+    """Get all medications"""
+    try:
+        result = sb.table('medications').select('*').execute()
+        return jsonify({'success': True, 'medications': result.data})
+    except Exception as e:
+        logger.error(f"Error getting medications: {e}")
+        # If table doesn't exist or permission denied, return empty data instead of error
+        if 'permission denied' in str(e).lower() or 'does not exist' in str(e).lower():
+            logger.warning("Medications table not accessible, returning empty data")
+            return jsonify({'success': True, 'medications': []})
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@enhanced_bp.route('/medications/logs', methods=['GET'])
+@require_auth
+@require_supabase
+def get_medication_logs():
+    """Get medication logs"""
+    try:
+        result = sb.table('medication_logs').select('*').execute()
+        return jsonify({'success': True, 'logs': result.data})
+    except Exception as e:
+        logger.error(f"Error getting medication logs: {e}")
+        # If table doesn't exist or permission denied, return empty data instead of error
+        if 'permission denied' in str(e).lower() or 'does not exist' in str(e).lower():
+            logger.warning("Medication logs table not accessible, returning empty data")
+            return jsonify({'success': True, 'logs': []})
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@enhanced_bp.route('/medications/stats', methods=['GET'])
+@require_auth
+@require_supabase
+def get_medication_stats():
+    """Get medication statistics"""
+    try:
+        # Get basic stats from medications table
+        medications_result = sb.table('medications').select('*').execute()
+        logs_result = sb.table('medication_logs').select('*').execute()
+        
+        stats = {
+            'total_medications': len(medications_result.data),
+            'total_logs': len(logs_result.data),
+            'active_medications': len([m for m in medications_result.data if m.get('is_active', True)])
+        }
+        
+        return jsonify({'success': True, 'stats': stats})
+    except Exception as e:
+        logger.error(f"Error getting medication stats: {e}")
+        # If table doesn't exist or permission denied, return empty stats instead of error
+        if 'permission denied' in str(e).lower() or 'does not exist' in str(e).lower():
+            logger.warning("Medication tables not accessible, returning empty stats")
+            return jsonify({'success': True, 'stats': {'total_medications': 0, 'total_logs': 0, 'active_medications': 0}})
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @enhanced_bp.route('/medications', methods=['POST'])
 @require_auth
+@require_supabase
 def create_medication():
     """Create a new medication record"""
     try:
@@ -62,39 +138,36 @@ def create_medication():
         
         # Add audit fields
         data['created_by'] = session.get('user_id')
+        data['created_at'] = datetime.utcnow().isoformat()
         
-        result = sb.create_medication(data)
+        # Insert into medications table
+        result = sb.table('medications').insert(data).execute()
         
-        # Log feature usage
-        sb.log_feature_usage({
-            'user_id': session.get('user_id'),
-            'feature_name': 'medication_management',
-            'action': 'create',
-            'metadata': {'medication_name': data.get('medication_name')}
-        })
-        
-        return jsonify(result), 201 if result['success'] else 400
+        if result.data:
+            return jsonify({'success': True, 'data': result.data[0]}), 201
+        else:
+            return jsonify({'success': False, 'error': 'Failed to create medication'}), 400
+            
     except Exception as e:
         logger.error(f"Error creating medication: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @enhanced_bp.route('/medications/patient/<patient_id>', methods=['GET'])
 @require_auth
+@require_supabase
 def get_patient_medications(patient_id):
     """Get all medications for a patient"""
     try:
         active_only = request.args.get('active_only', 'true').lower() == 'true'
-        result = sb.get_patient_medications(patient_id, active_only)
         
-        # Log feature usage
-        sb.log_feature_usage({
-            'user_id': session.get('user_id'),
-            'feature_name': 'medication_management',
-            'action': 'view',
-            'metadata': {'patient_id': patient_id}
-        })
+        query = sb.table('medications').select('*').eq('patient_id', patient_id)
+        if active_only:
+            query = query.eq('is_active', True)
+            
+        result = query.execute()
         
-        return jsonify(result)
+        return jsonify({'success': True, 'contacts': result.data})
+        
     except Exception as e:
         logger.error(f"Error getting patient medications: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -175,8 +248,34 @@ def get_medication_adherence(patient_id):
 # HEALTHCARE PROVIDER MANAGEMENT ROUTES
 # ============================================================================
 
+# Add alias routes for frontend compatibility
+@enhanced_bp.route('/healthcare-providers', methods=['GET'])
+@require_auth
+@require_supabase
+def get_healthcare_providers():
+    """Get all healthcare providers"""
+    try:
+        result = sb.table('healthcare_providers').select('*').execute()
+        return jsonify({'success': True, 'providers': result.data})
+    except Exception as e:
+        logger.error(f"Error getting healthcare providers: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@enhanced_bp.route('/healthcare-providers/stats', methods=['GET'])
+@require_auth
+@require_supabase
+def get_healthcare_providers_stats():
+    """Get healthcare providers statistics"""
+    try:
+        result = sb.table('healthcare_providers').select('*', count='exact').execute()
+        return jsonify({'success': True, 'total': result.count, 'data': result.data})
+    except Exception as e:
+        logger.error(f"Error getting healthcare providers stats: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @enhanced_bp.route('/providers', methods=['POST'])
 @require_admin
+@require_supabase
 def create_healthcare_provider():
     """Create a new healthcare provider"""
     try:
@@ -184,40 +283,42 @@ def create_healthcare_provider():
         if not data:
             return jsonify({'success': False, 'error': 'No data provided'}), 400
         
-        result = sb.create_healthcare_provider(data)
+        # Add audit fields
+        data['created_at'] = datetime.utcnow().isoformat()
         
-        # Log feature usage
-        sb.log_feature_usage({
-            'user_id': session.get('user_id'),
-            'feature_name': 'provider_management',
-            'action': 'create',
-            'metadata': {'provider_name': data.get('name')}
-        })
+        # Insert into healthcare_providers table
+        result = sb.table('healthcare_providers').insert(data).execute()
         
-        return jsonify(result), 201 if result['success'] else 400
+        if result.data:
+            return jsonify({'success': True, 'data': result.data[0]}), 201
+        else:
+            return jsonify({'success': False, 'error': 'Failed to create healthcare provider'}), 400
+            
     except Exception as e:
         logger.error(f"Error creating healthcare provider: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @enhanced_bp.route('/providers', methods=['GET'])
 @require_auth
-def get_healthcare_providers():
+@require_supabase
+def get_providers_filtered():
     """Get healthcare providers with optional filtering"""
     try:
         specialty = request.args.get('specialty')
         active_only = request.args.get('active_only', 'true').lower() == 'true'
         
-        result = sb.get_healthcare_providers(specialty, active_only)
+        # Build query
+        query = sb.table('healthcare_providers').select('*')
         
-        # Log feature usage
-        sb.log_feature_usage({
-            'user_id': session.get('user_id'),
-            'feature_name': 'provider_management',
-            'action': 'view',
-            'metadata': {'specialty': specialty}
-        })
+        if specialty:
+            query = query.eq('specialty', specialty)
         
-        return jsonify(result)
+        if active_only:
+            query = query.eq('is_active', True)
+        
+        result = query.execute()
+        
+        return jsonify({'success': True, 'data': result.data})
     except Exception as e:
         logger.error(f"Error getting healthcare providers: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -274,8 +375,40 @@ def get_patient_providers(patient_id):
 # CARE PLAN MANAGEMENT ROUTES
 # ============================================================================
 
+@enhanced_bp.route('/care-plans', methods=['GET'])
+@require_auth
+@require_supabase
+def get_care_plans():
+    """Get all care plans"""
+    try:
+        result = sb.table('care_plans').select('*').execute()
+        return jsonify({'success': True, 'care_plans': result.data})
+    except Exception as e:
+        logger.error(f"Error getting care plans: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@enhanced_bp.route('/care-plans/stats', methods=['GET'])
+@require_auth
+@require_supabase
+def get_care_plans_stats():
+    """Get care plan statistics"""
+    try:
+        result = sb.table('care_plans').select('*').execute()
+        
+        stats = {
+            'total_plans': len(result.data),
+            'active_plans': len([p for p in result.data if p.get('status') == 'active']),
+            'completed_plans': len([p for p in result.data if p.get('status') == 'completed'])
+        }
+        
+        return jsonify({'success': True, 'stats': stats})
+    except Exception as e:
+        logger.error(f"Error getting care plan stats: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @enhanced_bp.route('/care-plans', methods=['POST'])
 @require_auth
+@require_supabase
 def create_care_plan():
     """Create a new care plan"""
     try:
@@ -283,20 +416,18 @@ def create_care_plan():
         if not data:
             return jsonify({'success': False, 'error': 'No data provided'}), 400
         
-        result = sb.create_care_plan(data)
+        # Add audit fields
+        data['created_by'] = session.get('user_id')
+        data['created_at'] = datetime.utcnow().isoformat()
         
-        # Log feature usage
-        sb.log_feature_usage({
-            'user_id': session.get('user_id'),
-            'feature_name': 'care_plan_management',
-            'action': 'create',
-            'metadata': {
-                'patient_id': data.get('patient_id'),
-                'plan_name': data.get('plan_name')
-            }
-        })
+        # Insert into care_plans table
+        result = sb.table('care_plans').insert(data).execute()
         
-        return jsonify(result), 201 if result['success'] else 400
+        if result.data:
+            return jsonify({'success': True, 'data': result.data[0]}), 201
+        else:
+            return jsonify({'success': False, 'error': 'Failed to create care plan'}), 400
+            
     except Exception as e:
         logger.error(f"Error creating care plan: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -403,6 +534,34 @@ def get_care_plan_progress(care_plan_id):
 # ============================================================================
 # EMERGENCY RESPONSE SYSTEM ROUTES
 # ============================================================================
+
+# Add alias routes for frontend compatibility
+@enhanced_bp.route('/emergency-contacts', methods=['GET'])
+@require_auth
+@require_supabase
+def get_emergency_contacts():
+    """Get all emergency contacts"""
+    try:
+        result = sb.table('emergency_contacts').select('*').execute()
+        return jsonify({'success': True, 'contacts': result.data})
+    except Exception as e:
+        logger.error(f"Error getting emergency contacts: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@enhanced_bp.route('/emergency-contacts/stats', methods=['GET'])
+@require_auth
+@require_supabase
+def get_emergency_contacts_stats():
+    """Get emergency contacts statistics"""
+    try:
+        result = sb.table('emergency_contacts').select('*', count='exact').execute()
+        stats = {
+            'total_contacts': result.count or 0
+        }
+        return jsonify({'success': True, 'stats': stats})
+    except Exception as e:
+        logger.error(f"Error getting emergency contacts stats: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @enhanced_bp.route('/emergency/contacts', methods=['POST'])
 @require_auth
@@ -688,7 +847,7 @@ def get_table_stats(table_name):
 @require_auth
 def medications_ui():
     """Medication management UI"""
-    if session.get('role') == 'admin':
+    if session.get('user_role') == 'admin':
         return render_template('admin/medications_admin.html')
     return render_template('caregiver/medications.html')
 
@@ -696,23 +855,25 @@ def medications_ui():
 @require_auth
 def providers_ui():
     """Healthcare provider management UI"""
-    if session.get('role') == 'admin':
+    if session.get('user_role') == 'admin':
         return render_template('admin/providers_admin.html')
     return render_template('caregiver/healthcare_providers.html')
 
 @enhanced_bp.route('/ui/care-plans')
+@enhanced_bp.route('/ui/care_plans')  # Alias for underscore version
 @require_auth
 def care_plans_ui():
     """Care plan management UI"""
-    if session.get('role') == 'admin':
+    if session.get('user_role') == 'admin':
         return render_template('admin/care_plans_admin.html')
     return render_template('caregiver/care_plans.html')
 
 @enhanced_bp.route('/ui/emergency')
+@enhanced_bp.route('/ui/emergency_contacts')  # Alias for underscore version
 @require_auth
 def emergency_ui():
     """Emergency contacts management UI"""
-    if session.get('role') == 'admin':
+    if session.get('user_role') == 'admin':
         return render_template('admin/emergency_admin.html')
     return render_template('caregiver/emergency_contacts.html')
 
