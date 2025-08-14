@@ -248,14 +248,28 @@
             
             <div class="completion-text">
                 and has demonstrated proficiency in epilepsy caregiving knowledge
-                with a score of <strong>{{ "%.1f"|format(progress.quiz_score) }}%</strong>
+                {% if certificate.final_score %}
+                    with a score of <strong>{{ certificate.final_score }}%</strong>
+                {% elif progress and progress.quiz_score %}
+                    with a score of <strong>{{ "%.1f"|format(progress.quiz_score) }}%</strong>
+                {% endif %}
             </div>
         </div>
         
         <div class="certificate-details">
             <div class="detail-item">
                 <div class="detail-label">Issue Date</div>
-                <div class="detail-value">{{ certificate.issued_date.strftime('%B %d, %Y') }}</div>
+                <div class="detail-value">
+                    {% if certificate.issued_date %}
+                        {% if certificate.issued_date is string %}
+                            {{ certificate.issued_date[:10] }}
+                        {% else %}
+                            {{ certificate.issued_date.strftime('%B %d, %Y') }}
+                        {% endif %}
+                    {% else %}
+                        {{ "Today" }}
+                    {% endif %}
+                </div>
             </div>
             
             <div class="detail-item">
@@ -265,7 +279,17 @@
             
             <div class="detail-item">
                 <div class="detail-label">Valid Until</div>
-                <div class="detail-value">{{ certificate.expiry_date.strftime('%B %d, %Y') }}</div>
+                <div class="detail-value">
+                    {% if certificate.expiry_date %}
+                        {% if certificate.expiry_date is string %}
+                            {{ certificate.expiry_date[:10] }}
+                        {% else %}
+                            {{ certificate.expiry_date.strftime('%B %d, %Y') }}
+                        {% endif %}
+                    {% else %}
+                        {{ "1 Year from Issue" }}
+                    {% endif %}
+                </div>
             </div>
         </div>
         

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory, send_file, Response
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_file, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -7,6 +7,7 @@ import os
 from functools import wraps
 import secrets
 import json
+import random
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -157,7 +158,6 @@ class TrainingModule(db.Model):
     # Relationships
     quizzes = db.relationship('Quiz', backref='module', lazy=True, cascade='all, delete-orphan')
     certificates = db.relationship('Certificate', backref='module', lazy=True)
-    ratings = db.relationship('ModuleRating', backref='module', lazy=True)
 
 class TrainingProgress(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -592,7 +592,6 @@ class Quiz(db.Model):
     
     # Relationships
     questions = db.relationship('QuizQuestion', backref='quiz', lazy=True, cascade='all, delete-orphan')
-    attempts = db.relationship('QuizAttempt', backref='quiz', lazy=True)
 
 class QuizQuestion(db.Model):
     """Individual quiz questions"""
@@ -619,41 +618,7 @@ class QuizOption(db.Model):
     is_correct = db.Column(db.Boolean, default=False)
     order_index = db.Column(db.Integer, default=0)
 
-class QuizAttempt(db.Model):
-    """User quiz attempts and scores"""
-    __tablename__ = 'quiz_attempts'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
-    score = db.Column(db.Float)  # Percentage score
-    total_questions = db.Column(db.Integer)
-    correct_answers = db.Column(db.Integer)
-    time_taken_minutes = db.Column(db.Integer)
-    passed = db.Column(db.Boolean, default=False)
-    attempt_number = db.Column(db.Integer, default=1)
-    started_at = db.Column(db.DateTime, default=datetime.utcnow)
-    completed_at = db.Column(db.DateTime)
-    
-    # Relationships
-    user = db.relationship('User', backref='quiz_attempts')
-    answers = db.relationship('QuizAnswer', backref='attempt', lazy=True)
-
-class QuizAnswer(db.Model):
-    """Individual answers for quiz attempts"""
-    __tablename__ = 'quiz_answers'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    attempt_id = db.Column(db.Integer, db.ForeignKey('quiz_attempts.id'), nullable=False)
-    question_id = db.Column(db.Integer, db.ForeignKey('quiz_questions.id'), nullable=False)
-    selected_option_id = db.Column(db.Integer, db.ForeignKey('quiz_options.id'))
-    answer_text = db.Column(db.Text)  # For short answer questions
-    is_correct = db.Column(db.Boolean, default=False)
-    points_earned = db.Column(db.Integer, default=0)
-    
-    # Relationships
-    question = db.relationship('QuizQuestion')
-    selected_option = db.relationship('QuizOption')
+# Removed unused QuizAttempt and QuizAnswer models - functionality handled by Supabase
 
 class Certificate(db.Model):
     """Digital certificates for completed modules"""
@@ -678,22 +643,7 @@ class Certificate(db.Model):
         self.certificate_code = f"SAFESTEP-{uuid.uuid4().hex[:8].upper()}"
         return self.certificate_code
 
-class ModuleRating(db.Model):
-    """User ratings and reviews for training modules"""
-    __tablename__ = 'module_ratings'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    module_id = db.Column(db.Integer, db.ForeignKey('training_module.id'), nullable=False)
-    rating = db.Column(db.Integer, nullable=False)  # 1-5 stars
-    review_text = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationships
-    user = db.relationship('User', backref='module_ratings')
-    
-    # Ensure one rating per user per module
-    __table_args__ = (db.UniqueConstraint('user_id', 'module_id', name='unique_user_module_rating'),)
+# Removed unused ModuleRating model - functionality handled by Supabase
 
 class LearningPath(db.Model):
     """Structured learning paths for different caregiver roles"""
@@ -1491,22 +1441,136 @@ def new_zone():
 @app.route('/caregiver/training')
 @login_required
 def training_modules():
-    modules = TrainingModule.query.filter_by(is_active=True).all()
-    user_progress = {p.module_id: p for p in TrainingProgress.query.filter_by(user_id=current_user.id).all()}
+    # Get modules from Supabase if available, otherwise from local DB
+    modules = []
+    user_progress = {}
+    
+    if supabase_available:
+        try:
+            from training_supabase import get_all_training_modules_supabase, get_user_training_progress_supabase
+            
+            # Get modules from Supabase
+            modules_data = get_all_training_modules_supabase()
+            
+            # Convert to expected format for template
+            for module_data in modules_data:
+                # Create a module-like object
+                class ModuleObj:
+                    def __init__(self, data):
+                        self.id = data.get('id')
+                        self.title = data.get('title')
+                        self.description = data.get('description')
+                        self.content = data.get('content')
+                        self.video_url = data.get('video_url')
+                        self.duration_minutes = data.get('duration_minutes', 30)
+                        self.difficulty_level = data.get('difficulty_level', 'beginner')
+                        self.module_type = data.get('module_type', 'video')
+                        self.is_active = data.get('is_active', True)
+                        self.created_at = data.get('created_at')
+                        self.quiz_questions = data.get('quiz_questions')
+                        self.learning_objectives = data.get('learning_objectives')
+                
+                modules.append(ModuleObj(module_data))
+            
+            # Get user progress from Supabase
+            user_progress_data = get_user_training_progress_supabase(current_user.id)
+            
+            # Convert to expected format
+            for module_id, progress_data in user_progress_data.items():
+                class ProgressObj:
+                    def __init__(self, data):
+                        self.module_id = data.get('module_id')
+                        self.completion_percentage = data.get('completion_percentage', 0)
+                        self.status = data.get('status', 'not_started')
+                        self.completed = data.get('completed', False)
+                        self.quiz_score = data.get('quiz_score')
+                        self.started_at = data.get('started_at')
+                        self.completed_at = data.get('completed_at')
+                
+                user_progress[module_id] = ProgressObj(progress_data)
+                
+        except Exception as e:
+            print(f"Error getting training data from Supabase: {e}")
+            # Fallback to local database
+            modules = TrainingModule.query.filter_by(is_active=True).all()
+            user_progress = {p.module_id: p for p in TrainingProgress.query.filter_by(user_id=current_user.id).all()}
+    else:
+        # Use local database
+        modules = TrainingModule.query.filter_by(is_active=True).all()
+        user_progress = {p.module_id: p for p in TrainingProgress.query.filter_by(user_id=current_user.id).all()}
+    
     return render_template('caregiver/Ethan/training.html', modules=modules, user_progress=user_progress)
 
 @app.route('/caregiver/training/<int:module_id>')
 @login_required
 def module_detail(module_id):
-    module = TrainingModule.query.get_or_404(module_id)
-    progress = TrainingProgress.query.filter_by(user_id=current_user.id, module_id=module_id).first()
+    # Get module from Supabase if available, otherwise from local DB
+    module = None
+    progress = None
+    
+    if supabase_available:
+        try:
+            from training_supabase import get_training_module_supabase, get_user_training_progress_supabase
+            
+            # Get module from Supabase
+            module_data = get_training_module_supabase(module_id)
+            if not module_data:
+                flash('Training module not found.', 'error')
+                return redirect(url_for('training_modules'))
+            
+            # Create module-like object
+            class ModuleObj:
+                def __init__(self, data):
+                    self.id = data.get('id')
+                    self.title = data.get('title')
+                    self.description = data.get('description')
+                    self.content = data.get('content')
+                    self.video_url = data.get('video_url')
+                    self.duration_minutes = data.get('duration_minutes', 30)
+                    self.difficulty_level = data.get('difficulty_level', 'beginner')
+                    self.module_type = data.get('module_type', 'video')
+                    self.quiz_questions = data.get('quiz_questions')
+                    self.learning_objectives = data.get('learning_objectives')
+                    self.is_active = data.get('is_active', True)
+            
+            module = ModuleObj(module_data)
+            
+            # Get user progress from Supabase
+            user_progress_data = get_user_training_progress_supabase(current_user.id)
+            progress_data = user_progress_data.get(module_id)
+            
+            if progress_data:
+                class ProgressObj:
+                    def __init__(self, data):
+                        self.module_id = data.get('module_id')
+                        self.completion_percentage = data.get('completion_percentage', 0)
+                        self.status = data.get('status', 'not_started')
+                        self.completed = data.get('completed', False)
+                        self.quiz_score = data.get('quiz_score')
+                        self.started_at = data.get('started_at')
+                        self.completed_at = data.get('completed_at')
+                
+                progress = ProgressObj(progress_data)
+            
+        except Exception as e:
+            print(f"Error getting module from Supabase: {e}")
+            # Fallback to local database
+            module = TrainingModule.query.get_or_404(module_id)
+            progress = TrainingProgress.query.filter_by(user_id=current_user.id, module_id=module_id).first()
+    else:
+        # Use local database
+        module = TrainingModule.query.get_or_404(module_id)
+        progress = TrainingProgress.query.filter_by(user_id=current_user.id, module_id=module_id).first()
     
     # Parse quiz questions if they exist
     quiz_questions = []
-    if module.quiz_questions:
+    if hasattr(module, 'quiz_questions') and module.quiz_questions:
         try:
             import json
-            quiz_questions = json.loads(module.quiz_questions)
+            if isinstance(module.quiz_questions, str):
+                quiz_questions = json.loads(module.quiz_questions)
+            else:
+                quiz_questions = module.quiz_questions  # Already parsed JSON from Supabase
         except:
             quiz_questions = []
     
@@ -1518,23 +1582,47 @@ def module_detail(module_id):
 @app.route('/caregiver/training/<int:module_id>/start', methods=['POST'])
 @login_required
 def start_module(module_id):
-    module = TrainingModule.query.get_or_404(module_id)
-    
-    # Create or update progress
-    progress = TrainingProgress.query.filter_by(user_id=current_user.id, module_id=module_id).first()
-    if not progress:
-        progress = TrainingProgress(
-            user_id=current_user.id,
-            module_id=module_id,
-            completion_percentage=0,
-            status='in_progress'
-        )
-        db.session.add(progress)
+    # Create or update progress in Supabase if available, otherwise local DB
+    if supabase_available:
+        try:
+            from training_supabase import create_user_progress_supabase, update_training_progress_supabase
+            
+            # Create or update progress in Supabase
+            progress = create_user_progress_supabase(current_user.id, module_id)
+            if progress:
+                # Update status to in_progress
+                update_data = {
+                    'status': 'in_progress',
+                    'completion_percentage': 0
+                }
+                update_training_progress_supabase(current_user.id, module_id, update_data)
+                flash('Module started successfully!', 'success')
+            else:
+                flash('Error starting module. Please try again.', 'error')
+                return redirect(url_for('module_detail', module_id=module_id))
+                
+        except Exception as e:
+            print(f"Error starting module in Supabase: {e}")
+            flash('Error starting module. Please try again.', 'error')
+            return redirect(url_for('module_detail', module_id=module_id))
     else:
-        progress.status = 'in_progress'
-        progress.started_at = datetime.utcnow()
+        # Fallback to local database
+        module = TrainingModule.query.get_or_404(module_id)
+        progress = TrainingProgress.query.filter_by(user_id=current_user.id, module_id=module_id).first()
+        if not progress:
+            progress = TrainingProgress(
+                user_id=current_user.id,
+                module_id=module_id,
+                completion_percentage=0,
+                status='in_progress'
+            )
+            db.session.add(progress)
+        else:
+            progress.status = 'in_progress'
+            progress.started_at = datetime.utcnow()
+        
+        db.session.commit()
     
-    db.session.commit()
     return redirect(url_for('module_content', module_id=module_id))
 
 @app.route('/caregiver/training/<int:module_id>/reset', methods=['POST'])
@@ -1563,17 +1651,89 @@ def reset_module_progress(module_id):
 @app.route('/caregiver/training/<int:module_id>/content')
 @login_required
 def module_content(module_id):
-    module = TrainingModule.query.get_or_404(module_id)
-    progress = TrainingProgress.query.filter_by(user_id=current_user.id, module_id=module_id).first()
-    
-    # Parse learning objectives and content
+    # Get module and progress from Supabase if available, otherwise from local DB
+    module = None
+    progress = None
     learning_objectives = []
-    if module.learning_objectives:
+    
+    if supabase_available:
         try:
-            import json
-            learning_objectives = json.loads(module.learning_objectives)
-        except:
-            learning_objectives = []
+            from training_supabase import get_training_module_supabase, get_user_training_progress_supabase
+            
+            # Get module from Supabase
+            module_data = get_training_module_supabase(module_id)
+            if not module_data:
+                flash('Training module not found.', 'error')
+                return redirect(url_for('training_modules'))
+            
+            # Create module-like object
+            class ModuleObj:
+                def __init__(self, data):
+                    self.id = data.get('id')
+                    self.title = data.get('title')
+                    self.description = data.get('description')
+                    self.content = data.get('content')
+                    self.video_url = data.get('video_url')
+                    self.duration_minutes = data.get('duration_minutes', 30)
+                    self.difficulty_level = data.get('difficulty_level', 'beginner')
+                    self.module_type = data.get('module_type', 'video')
+                    self.quiz_questions = data.get('quiz_questions')
+                    self.learning_objectives = data.get('learning_objectives')
+                    self.is_active = data.get('is_active', True)
+            
+            module = ModuleObj(module_data)
+            
+            # Get user progress from Supabase
+            user_progress_data = get_user_training_progress_supabase(current_user.id)
+            progress_data = user_progress_data.get(module_id)
+            
+            if progress_data:
+                class ProgressObj:
+                    def __init__(self, data):
+                        self.module_id = data.get('module_id')
+                        self.completion_percentage = data.get('completion_percentage', 0)
+                        self.status = data.get('status', 'not_started')
+                        self.completed = data.get('completed', False)
+                        self.quiz_score = data.get('quiz_score')
+                        self.started_at = data.get('started_at')
+                        self.completed_at = data.get('completed_at')
+                
+                progress = ProgressObj(progress_data)
+            
+            # Parse learning objectives
+            if hasattr(module, 'learning_objectives') and module.learning_objectives:
+                try:
+                    import json
+                    if isinstance(module.learning_objectives, str):
+                        learning_objectives = json.loads(module.learning_objectives)
+                    else:
+                        learning_objectives = module.learning_objectives
+                except:
+                    learning_objectives = []
+                    
+        except Exception as e:
+            print(f"Error getting module content from Supabase: {e}")
+            # Fallback to local database
+            module = TrainingModule.query.get_or_404(module_id)
+            progress = TrainingProgress.query.filter_by(user_id=current_user.id, module_id=module_id).first()
+            
+            if module.learning_objectives:
+                try:
+                    import json
+                    learning_objectives = json.loads(module.learning_objectives)
+                except:
+                    learning_objectives = []
+    else:
+        # Use local database
+        module = TrainingModule.query.get_or_404(module_id)
+        progress = TrainingProgress.query.filter_by(user_id=current_user.id, module_id=module_id).first()
+        
+        if module.learning_objectives:
+            try:
+                import json
+                learning_objectives = json.loads(module.learning_objectives)
+            except:
+                learning_objectives = []
     
     return render_template('caregiver/Ethan/module_content.html', 
                          module=module, 
@@ -1607,78 +1767,249 @@ def module_quiz(module_id):
 @app.route('/caregiver/training/<int:module_id>/submit_quiz', methods=['POST'])
 @login_required
 def submit_quiz(module_id):
-    module = TrainingModule.query.get_or_404(module_id)
-    progress = TrainingProgress.query.filter_by(user_id=current_user.id, module_id=module_id).first()
-    
-    if not progress:
-        flash('Progress not found.', 'error')
-        return redirect(url_for('module_detail', module_id=module_id))
-    
-    # Parse quiz questions and calculate score
+    # Get module and progress from Supabase if available, otherwise from local DB
+    module = None
     quiz_questions = []
-    if module.quiz_questions:
+    score = 0
+    
+    if supabase_available:
         try:
-            import json
-            quiz_questions = json.loads(module.quiz_questions)
-        except:
-            quiz_questions = []
+            from training_supabase import get_training_module_supabase, update_training_progress_supabase, create_certificate_supabase
+            
+            # Get module from Supabase
+            module_data = get_training_module_supabase(module_id)
+            if not module_data:
+                flash('Training module not found.', 'error')
+                return redirect(url_for('training_modules'))
+            
+            # Parse quiz questions
+            if module_data.get('quiz_questions'):
+                try:
+                    import json
+                    if isinstance(module_data['quiz_questions'], str):
+                        quiz_questions = json.loads(module_data['quiz_questions'])
+                    else:
+                        quiz_questions = module_data['quiz_questions']  # Already parsed JSON
+                except:
+                    quiz_questions = []
+            
+            # Calculate score
+            total_questions = len(quiz_questions)
+            correct_answers = 0
+            
+            for i, question in enumerate(quiz_questions):
+                user_answer = request.form.get(f'question_{i}')
+                if user_answer and int(user_answer) == question.get('correct', -1):
+                    correct_answers += 1
+            
+            score = (correct_answers / total_questions * 100) if total_questions > 0 else 0
+            
+            # Update progress in Supabase
+            progress_data = {
+                'completion_percentage': 100,
+                'quiz_score': int(score),
+                'status': 'completed' if score >= 70 else 'failed',
+                'completed': score >= 70
+            }
+            
+            result = update_training_progress_supabase(current_user.id, module_id, progress_data)
+            if result:
+                print(f"✅ Progress updated in Supabase: {score:.1f}%")
+            
+            # Create certificate if passed
+            if score >= 70:
+                certificate = create_certificate_supabase(current_user.id, module_id, score)
+                if certificate:
+                    print(f"✅ Certificate created for module completion")
+                
+                flash(f'Congratulations! You passed with {score:.1f}%. Certificate generated!', 'success')
+                return redirect(url_for('generate_certificate', module_id=module_id))
+            else:
+                flash(f'You scored {score:.1f}%. You need 70% to pass. Please try again.', 'warning')
+                return redirect(url_for('module_quiz', module_id=module_id))
+                
+        except Exception as e:
+            print(f"Error submitting quiz with Supabase: {e}")
+            # Fall back to local database
+            pass
     
-    total_questions = len(quiz_questions)
-    correct_answers = 0
-    
-    for i, question in enumerate(quiz_questions):
-        user_answer = request.form.get(f'question_{i}')
-        if user_answer and int(user_answer) == question.get('correct', -1):
-            correct_answers += 1
-    
-    score = (correct_answers / total_questions * 100) if total_questions > 0 else 0
-    
-    # Update progress
-    progress.completion_percentage = 100
-    progress.quiz_score = score
-    progress.status = 'completed' if score >= 70 else 'failed'
-    progress.completed = score >= 70  # Set the boolean completed field
-    progress.completed_at = datetime.utcnow()
-    
-    db.session.commit()
-    
-    if score >= 70:
-        flash(f'Congratulations! You passed with {score:.1f}%. Certificate generated!', 'success')
-        return redirect(url_for('generate_certificate', module_id=module_id))
-    else:
-        flash(f'You scored {score:.1f}%. You need 70% to pass. Please try again.', 'warning')
-        return redirect(url_for('module_quiz', module_id=module_id))
+    # Fallback to local database
+    if not supabase_available or not module:
+        module = TrainingModule.query.get_or_404(module_id)
+        progress = TrainingProgress.query.filter_by(user_id=current_user.id, module_id=module_id).first()
+        
+        if not progress:
+            flash('Progress not found.', 'error')
+            return redirect(url_for('module_detail', module_id=module_id))
+        
+        # Parse quiz questions and calculate score
+        quiz_questions = []
+        if module.quiz_questions:
+            try:
+                import json
+                quiz_questions = json.loads(module.quiz_questions)
+            except:
+                quiz_questions = []
+        
+        total_questions = len(quiz_questions)
+        correct_answers = 0
+        
+        for i, question in enumerate(quiz_questions):
+            user_answer = request.form.get(f'question_{i}')
+            if user_answer and int(user_answer) == question.get('correct', -1):
+                correct_answers += 1
+        
+        score = (correct_answers / total_questions * 100) if total_questions > 0 else 0
+        
+        # Update progress
+        progress.completion_percentage = 100
+        progress.quiz_score = score
+        progress.status = 'completed' if score >= 70 else 'failed'
+        progress.completed = score >= 70  # Set the boolean completed field
+        progress.completed_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        if score >= 70:
+            flash(f'Congratulations! You passed with {score:.1f}%. Certificate generated!', 'success')
+            return redirect(url_for('generate_certificate', module_id=module_id))
+        else:
+            flash(f'You scored {score:.1f}%. You need 70% to pass. Please try again.', 'warning')
+            return redirect(url_for('module_quiz', module_id=module_id))
 
 @app.route('/training/<int:module_id>/certificate')
 @app.route('/caregiver/training/<int:module_id>/certificate')
 @login_required
 def generate_certificate(module_id):
-    module = TrainingModule.query.get_or_404(module_id)
-    progress = TrainingProgress.query.filter_by(user_id=current_user.id, module_id=module_id).first()
+    # Get module and progress from Supabase if available, otherwise from local DB
+    module = None
+    progress = None
+    certificate = None
     
-    if not progress or not progress.completed or not progress.quiz_score or progress.quiz_score < 70:
-        flash('You must complete the module successfully with a score of 70% or higher to get a certificate.', 'warning')
-        return redirect(url_for('module_detail', module_id=module_id))
-    
-    # Check if certificate already exists
-    certificate = Certificate.query.filter_by(user_id=current_user.id, module_id=module_id).first()
-    
-    if not certificate:
-        # Generate unique certificate code
-        import uuid
-        certificate_code = f"SAFE-{uuid.uuid4().hex[:8].upper()}"
+    if supabase_available:
+        try:
+            from training_supabase import get_training_module_supabase, get_user_training_progress_supabase, get_certificate_supabase, create_certificate_supabase
+            
+            # Get module from Supabase
+            module_data = get_training_module_supabase(module_id)
+            if not module_data:
+                flash('Training module not found.', 'error')
+                return redirect(url_for('training_modules'))
+            
+            # Create module-like object
+            class ModuleObj:
+                def __init__(self, data):
+                    self.id = data.get('id')
+                    self.title = data.get('title')
+                    self.description = data.get('description')
+                    self.content = data.get('content')
+                    self.video_url = data.get('video_url')
+                    self.duration_minutes = data.get('duration_minutes', 30)
+                    self.difficulty_level = data.get('difficulty_level', 'beginner')
+                    self.module_type = data.get('module_type', 'video')
+                    self.quiz_questions = data.get('quiz_questions')
+                    self.learning_objectives = data.get('learning_objectives')
+                    self.is_active = data.get('is_active', True)
+                    self.created_at = data.get('created_at')
+            
+            module = ModuleObj(module_data)
+            
+            # Get user progress from Supabase
+            user_progress_data = get_user_training_progress_supabase(current_user.id)
+            progress_data = user_progress_data.get(module_id)
+            
+            if progress_data:
+                class ProgressObj:
+                    def __init__(self, data):
+                        self.module_id = data.get('module_id')
+                        self.completion_percentage = data.get('completion_percentage', 0)
+                        self.status = data.get('status', 'not_started')
+                        self.completed = data.get('completed', False)
+                        self.quiz_score = data.get('quiz_score')
+                        self.started_at = data.get('started_at')
+                        self.completed_at = data.get('completed_at')
+                
+                progress = ProgressObj(progress_data)
+            
+            # Check if module is completed with passing score
+            if not progress or not progress.completed or not progress.quiz_score or progress.quiz_score < 70:
+                flash('You must complete the module successfully with a score of 70% or higher to get a certificate.', 'warning')
+                return redirect(url_for('module_detail', module_id=module_id))
+            
+            # Get or create certificate
+            certificate_data = get_certificate_supabase(current_user.id, module_id)
+            if not certificate_data:
+                # Create certificate if it doesn't exist
+                certificate_data = create_certificate_supabase(current_user.id, module_id, progress.quiz_score)
+            
+            if certificate_data:
+                class CertificateObj:
+                    def __init__(self, data):
+                        self.id = data.get('id')
+                        self.certificate_code = data.get('certificate_code')
+                        self.issued_at = data.get('issued_at')
+                        self.expires_at = data.get('expires_at')
+                        self.is_valid = data.get('is_valid', True)
+                
+                certificate = CertificateObj(certificate_data)
+            
+        except Exception as e:
+            print(f"Error getting certificate data from Supabase: {e}")
+            # Fallback to local database
+            module = TrainingModule.query.get_or_404(module_id)
+            progress = TrainingProgress.query.filter_by(user_id=current_user.id, module_id=module_id).first()
+            
+            if not progress or not progress.completed or not progress.quiz_score or progress.quiz_score < 70:
+                flash('You must complete the module successfully with a score of 70% or higher to get a certificate.', 'warning')
+                return redirect(url_for('module_detail', module_id=module_id))
+            
+            # Check if certificate already exists
+            certificate = Certificate.query.filter_by(user_id=current_user.id, module_id=module_id).first()
+            
+            if not certificate:
+                # Generate unique certificate code
+                import uuid
+                certificate_code = f"SAFE-{uuid.uuid4().hex[:8].upper()}"
+                
+                certificate = Certificate(
+                    user_id=current_user.id,
+                    module_id=module_id,
+                    certificate_code=certificate_code,
+                    issued_date=datetime.utcnow(),
+                    expiry_date=datetime.utcnow() + timedelta(days=365),  # 1 year validity
+                    final_score=progress.quiz_score,
+                    is_active=True
+                )
+                db.session.add(certificate)
+                db.session.commit()
+    else:
+        # Use local database
+        module = TrainingModule.query.get_or_404(module_id)
+        progress = TrainingProgress.query.filter_by(user_id=current_user.id, module_id=module_id).first()
         
-        certificate = Certificate(
-            user_id=current_user.id,
-            module_id=module_id,
-            certificate_code=certificate_code,
-            issued_date=datetime.utcnow(),
-            expiry_date=datetime.utcnow() + timedelta(days=365),  # 1 year validity
-            final_score=progress.quiz_score,
-            is_active=True
-        )
-        db.session.add(certificate)
-        db.session.commit()
+        if not progress or not progress.completed or not progress.quiz_score or progress.quiz_score < 70:
+            flash('You must complete the module successfully with a score of 70% or higher to get a certificate.', 'warning')
+            return redirect(url_for('module_detail', module_id=module_id))
+        
+        # Check if certificate already exists
+        certificate = Certificate.query.filter_by(user_id=current_user.id, module_id=module_id).first()
+        
+        if not certificate:
+            # Generate unique certificate code
+            import uuid
+            certificate_code = f"SAFE-{uuid.uuid4().hex[:8].upper()}"
+            
+            certificate = Certificate(
+                user_id=current_user.id,
+                module_id=module_id,
+                certificate_code=certificate_code,
+                issued_date=datetime.utcnow(),
+                expiry_date=datetime.utcnow() + timedelta(days=365),  # 1 year validity
+                final_score=progress.quiz_score,
+                is_active=True
+            )
+            db.session.add(certificate)
+            db.session.commit()
     
     return render_template('caregiver/Ethan/certificate.html', 
                          module=module, 
@@ -1939,76 +2270,170 @@ def training_management():
         icon = request.form.get('icon', 'book')  # UI only; not stored unless you add a column
         content = request.form.get('content', '')
         video_url = request.form.get('video_url', '')
+        edit_module_id = request.form.get('edit_module_id')  # Check if this is an update
 
-        # 1) save locally (keeps your page working regardless of Supabase)
-        module = TrainingModule(
-            title=title,
-            description=description,
-            duration_minutes=duration,
-            difficulty_level=difficulty,
-            module_type='video',
-            content=content,
-            video_url=video_url,
-            is_active=True
-        )
-        db.session.add(module)
-        db.session.commit()
-
-        # 2) save to Supabase (server-side; service key recommended)
-        if supabase_available:
-            try:
-                # Prefer admin client (service key) so RLS doesn't block inserts
-                from supabase_integration import get_supabase_admin_client, get_supabase_client
-                supa = None
+        success = False
+        
+        # Check if this is an update or create
+        if edit_module_id:
+            # UPDATE existing module
+            module_id = int(edit_module_id)
+            
+            if supabase_available:
                 try:
-                    supa = get_supabase_admin_client()  # uses SUPABASE_SERVICE_KEY
-                except Exception:
-                    # fallback to anon client if no service key is set
-                    supa = get_supabase_client()
-
-                if supa:
-                    payload = {
-                        "title": title,
-                        "description": description,
-                        "content": content,
-                        "video_url": video_url,
-                        "quiz_questions": None,         # wire this up later if you like
-                        "duration_minutes": duration,
-                        "difficulty_level": difficulty,
-                        "module_type": "video",
-                        "is_active": True,
-                        "created_at": datetime.utcnow().isoformat()
+                    from training_supabase import update_training_module_supabase
+                    
+                    module_data = {
+                        'title': title,
+                        'description': description,
+                        'content': content,
+                        'video_url': video_url,
+                        'duration_minutes': duration,
+                        'difficulty_level': difficulty,
+                        'module_type': 'video'
                     }
-                    resp = supa.table("training_modules").insert(payload).execute()
-                    # supabase-py v2 returns object with .data; no reliable .status_code
-                    if not getattr(resp, "data", None):
-                        print(f"[Supabase] insert returned no data: {resp}")
-                else:
-                    print("[Supabase] client not available")
-            except Exception as e:
-                # Non-fatal: local DB already has it
-                print(f"[Supabase] insert failed: {e}")
-
-        flash('Training module created successfully!', 'success')
+                    
+                    result = update_training_module_supabase(module_id, module_data)
+                    if result:
+                        flash('Training module updated successfully in Supabase!', 'success')
+                        success = True
+                    else:
+                        flash('Failed to update module in Supabase.', 'error')
+                        
+                except Exception as e:
+                    print(f"Error updating module in Supabase: {e}")
+                    flash('Error updating module in Supabase.', 'error')
+            
+            # Fallback to local database if Supabase failed
+            if not success:
+                try:
+                    module = TrainingModule.query.get_or_404(module_id)
+                    module.title = title
+                    module.description = description
+                    module.content = content
+                    module.video_url = video_url
+                    module.duration_minutes = duration
+                    module.difficulty_level = difficulty
+                    module.updated_at = datetime.utcnow()
+                    db.session.commit()
+                    flash('Training module updated successfully (local database)!', 'success')
+                    success = True
+                except Exception as e:
+                    print(f"Error updating module in local database: {e}")
+                    flash('Error updating module. Please try again.', 'error')
+        else:
+            # CREATE new module
+            if supabase_available:
+                try:
+                    from training_supabase import create_training_module_supabase
+                    
+                    module_data = {
+                        'title': title,
+                        'description': description,
+                        'content': content,
+                        'video_url': video_url,
+                        'duration_minutes': duration,
+                        'difficulty_level': difficulty,
+                        'module_type': 'video'
+                    }
+                    
+                    result = create_training_module_supabase(module_data)
+                    if result:
+                        flash('Training module created successfully in Supabase!', 'success')
+                        success = True
+                    else:
+                        flash('Failed to create module in Supabase.', 'error')
+                        
+                except Exception as e:
+                    print(f"Error creating module in Supabase: {e}")
+                    flash('Error creating module in Supabase.', 'error')
+            
+            # Fallback to local database if Supabase failed
+            if not success:
+                try:
+                    module = TrainingModule(
+                        title=title,
+                        description=description,
+                        duration_minutes=duration,
+                        difficulty_level=difficulty,
+                        module_type='video',
+                        content=content,
+                        video_url=video_url,
+                        is_active=True
+                    )
+                    db.session.add(module)
+                    db.session.commit()
+                    flash('Training module created successfully (local database)!', 'success')
+                except Exception as e:
+                    print(f"Error creating module in local database: {e}")
+                    flash('Error creating module. Please try again.', 'error')
+        
         return redirect(url_for('training_management'))
 
-    modules = TrainingModule.query.order_by(TrainingModule.created_at.desc()).all()
-    # Convert SQLAlchemy objects to dicts for JSON serialization in template
-    def module_to_dict(module):
-        return {
-            'id': module.id,
-            'title': module.title,
-            'description': module.description,
-            'content': module.content,
-            'video_url': module.video_url,
-            'quiz_questions': module.quiz_questions,
-            'duration_minutes': module.duration_minutes,
-            'difficulty_level': module.difficulty_level,
-            'module_type': module.module_type,
-            'created_at': module.created_at.isoformat() if module.created_at else None,
-            'is_active': module.is_active,
-        }
-    modules_dict = [module_to_dict(m) for m in modules]
+    # Get modules from Supabase if available, otherwise from local DB
+    modules_dict = []
+    
+    if supabase_available:
+        try:
+            from training_supabase import get_all_training_modules_supabase
+            modules_data = get_all_training_modules_supabase()
+            
+            # Convert to expected format
+            for module in modules_data:
+                modules_dict.append({
+                    'id': module.get('id'),
+                    'title': module.get('title'),
+                    'description': module.get('description'),
+                    'content': module.get('content'),
+                    'video_url': module.get('video_url'),
+                    'quiz_questions': module.get('quiz_questions'),
+                    'duration_minutes': module.get('duration_minutes'),
+                    'difficulty_level': module.get('difficulty_level'),
+                    'module_type': module.get('module_type'),
+                    'created_at': module.get('created_at'),
+                    'is_active': module.get('is_active'),
+                })
+            
+            print(f"✅ Admin training: Found {len(modules_dict)} modules from Supabase")
+                
+        except Exception as e:
+            print(f"Error getting modules from Supabase for admin: {e}")
+            # Fallback to local DB
+            modules = TrainingModule.query.order_by(TrainingModule.created_at.desc()).all()
+            def module_to_dict(module):
+                return {
+                    'id': module.id,
+                    'title': module.title,
+                    'description': module.description,
+                    'content': module.content,
+                    'video_url': module.video_url,
+                    'quiz_questions': module.quiz_questions,
+                    'duration_minutes': module.duration_minutes,
+                    'difficulty_level': module.difficulty_level,
+                    'module_type': module.module_type,
+                    'created_at': module.created_at.isoformat() if module.created_at else None,
+                    'is_active': module.is_active,
+                }
+            modules_dict = [module_to_dict(m) for m in modules]
+    else:
+        # Use local database
+        modules = TrainingModule.query.order_by(TrainingModule.created_at.desc()).all()
+        def module_to_dict(module):
+            return {
+                'id': module.id,
+                'title': module.title,
+                'description': module.description,
+                'content': module.content,
+                'video_url': module.video_url,
+                'quiz_questions': module.quiz_questions,
+                'duration_minutes': module.duration_minutes,
+                'difficulty_level': module.difficulty_level,
+                'module_type': module.module_type,
+                'created_at': module.created_at.isoformat() if module.created_at else None,
+                'is_active': module.is_active,
+            }
+        modules_dict = [module_to_dict(m) for m in modules]
+    
     return render_template('admin/Ethan/admin_training.html', modules=modules_dict)
 
 # Delete module route
@@ -2016,10 +2441,44 @@ def training_management():
 @login_required
 @admin_required
 def delete_training_module(module_id):
-    module = TrainingModule.query.get_or_404(module_id)
-    db.session.delete(module)
-    db.session.commit()
-    return jsonify({'success': True, 'message': 'Module deleted'})
+    # Delete from Supabase if available, otherwise from local DB
+    success = False
+    message = ''
+    
+    if supabase_available:
+        try:
+            from supabase_integration import get_supabase_client, init_supabase
+            init_supabase()
+            supabase = get_supabase_client()
+            
+            if supabase:
+                result = supabase.table('training_modules').delete().eq('id', module_id).execute()
+                if result.data:
+                    success = True
+                    message = 'Module deleted from Supabase'
+                else:
+                    message = 'Failed to delete module from Supabase'
+            else:
+                message = 'Supabase client not available'
+                
+        except Exception as e:
+            print(f"Error deleting module from Supabase: {e}")
+            message = f'Error deleting from Supabase: {str(e)}'
+    
+    # Fallback to local database if Supabase failed
+    if not success:
+        try:
+            module = TrainingModule.query.get_or_404(module_id)
+            db.session.delete(module)
+            db.session.commit()
+            success = True
+            message = 'Module deleted from local database'
+        except Exception as e:
+            print(f"Error deleting module from local database: {e}")
+            success = False
+            message = f'Error deleting module: {str(e)}'
+    
+    return jsonify({'success': success, 'message': message})
     
 
 # Preview module (read-only)
@@ -2027,7 +2486,45 @@ def delete_training_module(module_id):
 @login_required
 @admin_required
 def preview_training_module(module_id):
-    module = TrainingModule.query.get_or_404(module_id)
+    # Get module from Supabase if available, otherwise from local DB
+    module = None
+    
+    if supabase_available:
+        try:
+            from training_supabase import get_training_module_supabase
+            
+            # Get module from Supabase
+            module_data = get_training_module_supabase(module_id)
+            if not module_data:
+                flash('Training module not found.', 'error')
+                return redirect(url_for('training_management'))
+            
+            # Create module-like object
+            class ModuleObj:
+                def __init__(self, data):
+                    self.id = data.get('id')
+                    self.title = data.get('title')
+                    self.description = data.get('description')
+                    self.content = data.get('content')
+                    self.video_url = data.get('video_url')
+                    self.duration_minutes = data.get('duration_minutes', 30)
+                    self.difficulty_level = data.get('difficulty_level', 'beginner')
+                    self.module_type = data.get('module_type', 'video')
+                    self.quiz_questions = data.get('quiz_questions')
+                    self.learning_objectives = data.get('learning_objectives')
+                    self.is_active = data.get('is_active', True)
+                    self.created_at = data.get('created_at')
+            
+            module = ModuleObj(module_data)
+            
+        except Exception as e:
+            print(f"Error getting module from Supabase for preview: {e}")
+            # Fallback to local database
+            module = TrainingModule.query.get_or_404(module_id)
+    else:
+        # Use local database
+        module = TrainingModule.query.get_or_404(module_id)
+    
     return render_template('admin/Ethan/preview_module.html', module=module)
     
 
@@ -2347,7 +2844,6 @@ def get_enhanced_seizure_trends():
             risk_scores = []
             
             # Generate realistic mock data for the past days
-            import random
             for i in range(days):
                 date = (datetime.utcnow() - timedelta(days=days-i-1))
                 labels.append(date.strftime('%m/%d'))
@@ -2480,7 +2976,6 @@ def get_enhanced_location_distribution():
         except Exception as e:
             print(f"SQLite location distribution failed: {e}")
             # Generate realistic mock data
-            import random
             locations = ['Home', 'Hospital', 'Public', 'Work', 'School']
             counts = [random.randint(20, 150) for _ in locations]
             
@@ -2635,7 +3130,6 @@ def get_seizure_frequency_by_hour():
             print(f"SQLite seizure frequency failed: {e}")
             # Fallback demo data
             labels = [f"{h:02d}:00" for h in range(24)]
-            import random
             values = [random.randint(0, 20) for _ in range(24)]
             return jsonify({
                 'success': True,
@@ -2871,7 +3365,6 @@ def get_response_time_chart():
         except Exception as e:
             print(f"Response time failed: {e}")
             labels = [(end_date - timedelta(days=i)).strftime('%m/%d') for i in range(days)][::-1]
-            import random
             values = [round(random.uniform(1.0, 10.0), 2) for _ in labels]
             return jsonify({
                 'success': True,
@@ -2920,7 +3413,6 @@ def get_prediction_results():
                     
                     # Create time-series data for the last 30 days
                     from datetime import datetime, timedelta
-                    import random
                     
                     end_date = datetime.utcnow()
                     start_date = end_date - timedelta(days=30)
@@ -2968,7 +3460,6 @@ def get_prediction_results():
             if supabase_data and supabase_data.get('predictions'):
                 # Generate time-series from existing data
                 from datetime import datetime, timedelta
-                import random
                 
                 predictions = supabase_data['predictions']
                 end_date = datetime.utcnow()
@@ -3007,7 +3498,6 @@ def get_prediction_results():
             
             if patients:
                 from datetime import datetime, timedelta
-                import random
                 
                 # Calculate average risk from existing patients
                 avg_risk = sum(p.risk_score or 0 for p in patients) / len(patients)
@@ -3042,7 +3532,6 @@ def get_prediction_results():
         
         # Final fallback - generate realistic demo data
         from datetime import datetime, timedelta
-        import random
         
         end_date = datetime.utcnow()
         start_date = end_date - timedelta(days=30)
@@ -3142,7 +3631,6 @@ def run_prediction_analysis():
         
         # Final fallback to SQLite
         try:
-            import random
             from datetime import datetime, timedelta
             
             # Simulate prediction engine analysis
@@ -3200,7 +3688,6 @@ def get_seizure_predictions():
             print(f"Supabase seizure predictions failed: {e}")
             
         # Fallback to comprehensive mock data
-        import random
         from datetime import datetime, timedelta
         
         # Realistic sample data for seizure predictions
@@ -3402,7 +3889,6 @@ def get_patient_seizure_predictions(patient_id):
             print(f"Supabase patient predictions failed: {e}")
             
         # Fallback to mock data
-        import random
         from datetime import datetime, timedelta
         
         predictions = []

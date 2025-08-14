@@ -315,21 +315,27 @@ endblock %} {% block extra_css %}
 
 <div class="container-fluid">
   <!-- Progress Overview -->
+  {% set completed_count = user_progress.values() | selectattr('completed', 'equalto', true) | list | length %}
+  {% set in_progress_count = user_progress.values() | selectattr('status', 'equalto', 'in_progress') | list | length %}
+  {% set total_modules = modules | length %}
+  {% set overall_progress = (completed_count / total_modules * 100) | round(0) if total_modules > 0 else 0 %}
+  {% set total_hours = (modules | sum(attribute='duration_minutes') / 60) | round(0) %}
+  
   <div class="stats-grid">
     <div class="stat-item">
-      <div class="stat-number">8</div>
+      <div class="stat-number">{{ completed_count }}</div>
       <div class="stat-label">Modules Completed</div>
     </div>
     <div class="stat-item">
-      <div class="stat-number">3</div>
+      <div class="stat-number">{{ in_progress_count }}</div>
       <div class="stat-label">In Progress</div>
     </div>
     <div class="stat-item">
-      <div class="stat-number">85%</div>
+      <div class="stat-number">{{ overall_progress | int }}%</div>
       <div class="stat-label">Overall Progress</div>
     </div>
     <div class="stat-item">
-      <div class="stat-number">24h</div>
+      <div class="stat-number">{{ total_hours | int }}h</div>
       <div class="stat-label">Training Hours</div>
     </div>
   </div>
@@ -368,88 +374,88 @@ endblock %} {% block extra_css %}
 
         <!-- Module List -->
         <div id="modulesList">
-          <div class="module-item module-beginner" data-difficulty="beginner">
-            <div class="row align-items-center">
-              <div class="col-md-2">
-                <div class="module-icon">
-                  <i class="fas fa-heart"></i>
+          {% for module in modules %}
+            {% set progress = user_progress.get(module.id) %}
+            {% set completion_percentage = progress.completion_percentage if progress else 0 %}
+            {% set status = progress.status if progress else 'not_started' %}
+            {% set is_completed = progress.completed if progress else false %}
+            
+            <div class="module-item module-{{ module.difficulty_level }}" data-difficulty="{{ module.difficulty_level }}">
+              <div class="row align-items-center">
+                <div class="col-md-2">
+                  <div class="module-icon">
+                    {% if module.difficulty_level == 'beginner' %}
+                      <i class="fas fa-heart"></i>
+                    {% elif module.difficulty_level == 'intermediate' %}
+                      <i class="fas fa-shield-alt"></i>
+                    {% elif module.difficulty_level == 'advanced' %}
+                      <i class="fas fa-brain"></i>
+                    {% else %}
+                      <i class="fas fa-book"></i>
+                    {% endif %}
+                  </div>
                 </div>
-              </div>
-              <div class="col-md-7">
-                <h6 class="fw-bold mb-2">Seizure First Aid Basics</h6>
-                <p class="text-muted small mb-2">
-                  Learn essential steps for immediate seizure care and emergency
-                  response protocols.
-                </p>
-                <div class="d-flex gap-2 mb-2">
-                  <span class="difficulty-badge difficulty-beginner">Beginner</span>
-                  <span class="completion-status status-completed">
-                    <i class="fas fa-check-circle me-1"></i>Completed
-                  </span>
+                <div class="col-md-7">
+                  <h6 class="fw-bold mb-2">{{ module.title }}</h6>
+                  <p class="text-muted small mb-2">
+                    {{ module.description[:120] }}{% if module.description|length > 120 %}...{% endif %}
+                  </p>
+                  <div class="d-flex gap-2 mb-2">
+                    <span class="difficulty-badge difficulty-{{ module.difficulty_level }}">
+                      {{ module.difficulty_level.title() }}
+                    </span>
+                    {% if is_completed %}
+                      <span class="completion-status status-completed">
+                        <i class="fas fa-check-circle me-1"></i>Completed
+                      </span>
+                    {% elif status == 'in_progress' %}
+                      <span class="completion-status status-in-progress">
+                        <i class="fas fa-play-circle me-1"></i>In Progress
+                      </span>
+                    {% else %}
+                      <span class="completion-status status-not-started">
+                        <i class="fas fa-circle me-1"></i>Not Started
+                      </span>
+                    {% endif %}
+                  </div>
+                  <small class="text-muted">
+                    <i class="fas fa-clock me-1"></i>{{ module.duration_minutes }} minutes
+                    <span class="mx-2">•</span>
+                    <i class="fas fa-star me-1"></i>4.7/5 rating
+                  </small>
                 </div>
-                <small class="text-muted">
-                  <i class="fas fa-clock me-1"></i>25 minutes
-                  <span class="mx-2">•</span>
-                  <i class="fas fa-star me-1"></i>4.9/5 rating
-                </small>
-              </div>
-              <div class="col-md-3">
-                <div class="progress-bar-custom">
-                  <div class="progress-fill" style="width: 100%"></div>
-                </div>
-                <div class="text-center">
-                  <small class="text-success fw-bold">100% Complete</small>
-                </div>
-                <div class="text-center mt-2">
-                  <a href="{{ url_for('generate_certificate', module_id=1) }}" class="btn btn-outline-success btn-sm">
-                    <i class="fas fa-certificate me-1"></i>Certificate
-                  </a>
+                <div class="col-md-3">
+                  <div class="progress-bar-custom">
+                    <div class="progress-fill" style="width: {{ completion_percentage }}%"></div>
+                  </div>
+                  <div class="text-center">
+                    {% if is_completed %}
+                      <small class="text-success fw-bold">{{ completion_percentage }}% Complete</small>
+                    {% elif status == 'in_progress' %}
+                      <small class="text-warning fw-bold">{{ completion_percentage }}% Complete</small>
+                    {% else %}
+                      <small class="text-muted fw-bold">{{ completion_percentage }}% Complete</small>
+                    {% endif %}
+                  </div>
+                  <div class="text-center mt-2">
+                    {% if is_completed %}
+                      <a href="{{ url_for('generate_certificate', module_id=module.id) }}" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-certificate me-1"></i>Certificate
+                      </a>
+                    {% elif status == 'in_progress' %}
+                      <a href="{{ url_for('module_detail', module_id=module.id) }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-play me-1"></i>Continue
+                      </a>
+                    {% else %}
+                      <a href="{{ url_for('module_detail', module_id=module.id) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-play me-1"></i>Start
+                      </a>
+                    {% endif %}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-
-          <div class="module-item module-intermediate" data-difficulty="intermediate" onclick="startModule(2)">
-            <div class="row align-items-center">
-              <div class="col-md-2">
-                <div class="module-icon">
-                  <i class="fas fa-shield-alt"></i>
-                </div>
-              </div>
-              <div class="col-md-7">
-                <h6 class="fw-bold mb-2">Safety Zone Management</h6>
-                <p class="text-muted small mb-2">
-                  Advanced techniques for setting up and monitoring GPS safety
-                  zones effectively.
-                </p>
-                <div class="d-flex gap-2 mb-2">
-                  <span class="difficulty-badge difficulty-intermediate">Intermediate</span>
-                  <span class="completion-status status-in-progress">
-                    <i class="fas fa-play-circle me-1"></i>In Progress
-                  </span>
-                </div>
-                <small class="text-muted">
-                  <i class="fas fa-clock me-1"></i>40 minutes
-                  <span class="mx-2">•</span>
-                  <i class="fas fa-star me-1"></i>4.7/5 rating
-                </small>
-              </div>
-              <div class="col-md-3">
-                <div class="progress-bar-custom">
-                  <div class="progress-fill" style="width: 60%"></div>
-                </div>
-                <div class="text-center">
-                  <small class="text-warning fw-bold">60% Complete</small>
-                </div>
-                <div class="text-center mt-2">
-                  <a href="{{ url_for('module_detail', module_id=2) }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-play me-1"></i>Continue
-                  </a>
-                </div>
-
-              </div>
-            </div>
-          </div>
+          {% endfor %}
 
           <div class="module-item module-advanced" data-difficulty="advanced">
             <div class="row align-items-center">
