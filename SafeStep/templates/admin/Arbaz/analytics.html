@@ -6,118 +6,69 @@
 
 {% block extra_css %}
 <style>
-    .analytics-container {
-        padding: 20px 30px;
+    .analytics-page {
         background-color: #f8f9fa;
         min-height: 100vh;
     }
 
-    .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-    }
-
-    .page-title {
-        font-size: 32px;
-        font-weight: 800;
-        color: #000 !important;
-        margin: 0;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        letter-spacing: -0.5px;
-    }
-
-    .header-buttons {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
-        color: #fff;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 8px;
-        font-weight: 600;
-    }
-
-    .btn-primary:hover {
-        filter: brightness(0.95);
-        color: #fff;
-    }
-
     .data-source-badge {
-        background: linear-gradient(135deg, #34a853 0%, #4285f4 100%);
-        color: #fff;
-        padding: 5px 12px;
-        border-radius: 15px;
+        background-color: #28a745;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
         font-size: 12px;
-        font-weight: 600;
+        font-weight: bold;
     }
 
     .filters-section {
         background: white;
-        border-radius: 12px;
-        padding: 25px;
-        margin-bottom: 25px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
     .filters-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 15px;
     }
 
     .filters-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
         align-items: end;
     }
 
     .filter-group {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        min-width: 150px;
     }
 
     .filter-label {
-        font-size: 13px;
+        font-size: 12px;
         color: #666;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+        font-weight: bold;
     }
 
     .filter-select {
-        padding: 12px 16px;
-        border: 2px solid #e1e5e9;
-        border-radius: 8px;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
         font-size: 14px;
-        background-color: #fff;
-        transition: border-color 0.2s;
-    }
-
-    .filter-select:focus {
-        outline: none;
-        border-color: #4285f4;
     }
 
     .analyze-btn {
-        background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+        background-color: #007bff;
         color: white;
         border: none;
-        padding: 12px 24px;
-        border-radius: 8px;
+        padding: 10px 20px;
+        border-radius: 4px;
         font-size: 14px;
-        font-weight: 600;
+        cursor: pointer;
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -678,11 +629,16 @@
 <div class="analytics-container">
     <!-- Page Header -->
     <div class="page-header">
-        <h1 class="page-title">Analytics & Reports</h1>
-        <div class="header-buttons">
+        <div>
+            <h1 class="page-title">Analytics & Reports</h1>
             <span class="data-source-badge">Live Data</span>
-            <button class="btn btn-primary" onclick="refreshAllData()">
+        </div>
+        <div class="header-buttons">
+            <button class="btn btn-primary" onclick="refreshAllData()" id="refreshBtn">
                 <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <button class="btn btn-primary" onclick="runPredictionAnalysis()" id="analyzeBtn">
+                <i class="fas fa-brain"></i> Run Analysis
             </button>
         </div>
     </div>
@@ -1230,37 +1186,7 @@
                     }
                 });
             } else {
-                console.warn('No prediction data available');
-                // Show empty chart with message
-                if (charts.riskTrend) {
-                    charts.riskTrend.destroy();
-                }
-                
-                charts.riskTrend = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: ['No Data'],
-                        datasets: [{
-                            label: 'Risk Score',
-                            data: [0],
-                            borderColor: 'rgb(200, 200, 200)',
-                            backgroundColor: 'rgba(200, 200, 200, 0.2)'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'top'
-                            },
-                            title: {
-                                display: true,
-                                text: 'AI Seizure Risk Prediction Trends - No Data Available'
-                            }
-                        }
-                    }
-                });
+                console.warn('No prediction data available, but chart should still load with demo data');
             }
         } catch (error) {
             console.error('Error loading risk trend chart:', error);
@@ -1718,7 +1644,7 @@
                     <button class="btn btn-sm btn-outline-primary me-1" onclick="viewPatientDetails('${patient.patient_id}')" title="View Details">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-warning" onclick="contactCaregiver('${patient.patient_id}')" title="Contact Caregiver">
+                    <button class="btn btn-sm btn-outline-warning me-1" onclick="contactCaregiver('${patient.patient_id}')" title="Contact Caregiver">
                         <i class="fas fa-phone"></i>
                     </button>
                 </td>
@@ -1795,11 +1721,13 @@
 
     function contactCaregiver(patientId) {
         showNotification(`Contacting caregiver for patient ${patientId}...`, 'info');
-        // Simulate contacting caregiver
+        // This would typically integrate with a communication system
         setTimeout(() => {
             showNotification('Caregiver has been notified', 'success');
-        }, 1500);
+        }, 1000);
     }
+
+
 
     function viewMedicationHistory(patientId) {
         showNotification(`Loading medication history for patient ${patientId}...`, 'info');

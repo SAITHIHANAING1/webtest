@@ -182,12 +182,13 @@
             <div class="question-number">{{ loop.index }}</div>
             <div class="question-text">{{ question.question }}</div>
             
+            {% set question_index = loop.index0 %}
             {% for option in question.options %}
             <div class="option-container">
                 <label class="option-label">
                     <input type="radio" 
-                           name="question_{{ loop.index0 }}" 
-                           value="{{ option }}" 
+                           name="question_{{ question_index }}" 
+                           value="{{ loop.index0 }}" 
                            onchange="updateProgress()">
                     <span class="option-text">{{ option }}</span>
                 </label>

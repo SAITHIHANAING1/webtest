@@ -74,21 +74,35 @@
     }
     
     .content-text {
-        line-height: 1.8;
-        font-size: 1.1rem;
+        line-height: 1.6;
         color: #333;
+        font-size: 16px;
+    }
+    
+    .content-text h3, .content-text h4, .content-text h5, .content-text h6 {
+        color: #2c3e50;
+        margin-top: 20px;
+        margin-bottom: 10px;
+        font-weight: 600;
     }
     
     .content-text h3 {
-        color: #667eea;
-        margin-top: 2rem;
-        margin-bottom: 1rem;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 5px;
     }
     
-    .content-text h4 {
-        color: #764ba2;
-        margin-top: 1.5rem;
-        margin-bottom: 0.8rem;
+    .content-text p {
+        margin-bottom: 15px;
+        text-align: justify;
+    }
+    
+    .content-text ul, .content-text ol {
+        margin-bottom: 15px;
+        padding-left: 20px;
+    }
+    
+    .content-text li {
+        margin-bottom: 5px;
     }
     
     .action-buttons {
@@ -184,7 +198,33 @@
     <div class="content-section">
         <h2><i class="fas fa-book-open text-info"></i> Training Content</h2>
         <div class="content-text">
-            {{ module.content | safe }}
+            {% if module.content %}
+                {% set content_lines = module.content.split('\n') %}
+                {% for line in content_lines %}
+                    {% if line.strip() %}
+                        {% if line.startswith('#') %}
+                            {% set heading_level = line.count('#') %}
+                            {% if heading_level == 1 %}
+                                <h3>{{ line.replace('#', '').strip() }}</h3>
+                            {% elif heading_level == 2 %}
+                                <h4>{{ line.replace('#', '').strip() }}</h4>
+                            {% elif heading_level == 3 %}
+                                <h5>{{ line.replace('#', '').strip() }}</h5>
+                            {% else %}
+                                <h6>{{ line.replace('#', '').strip() }}</h6>
+                            {% endif %}
+                        {% elif line.startswith('*') or line.startswith('-') %}
+                            <ul><li>{{ line[1:].strip() }}</li></ul>
+                        {% elif line.startswith('1.') or line.startswith('2.') or line.startswith('3.') %}
+                            <ol><li>{{ line[2:].strip() }}</li></ol>
+                        {% else %}
+                            <p>{{ line.strip() }}</p>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No content available for this module.</p>
+            {% endif %}
         </div>
     </div>
     
