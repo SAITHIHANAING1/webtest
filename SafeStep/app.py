@@ -2143,7 +2143,7 @@ def caregiver_alert():
 def location_share():
     """Public page for patients to share their location"""
     patient_id = request.args.get('pid', 'demo')
-    return render_template('caregiver/location_share.html', patient_id=patient_id)
+    return render_template('caregiver/Sai/patient_location_share.html', patient_id=patient_id)
 
 # Admin Routes
 @app.route('/admin')
