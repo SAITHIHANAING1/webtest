@@ -54,16 +54,24 @@ except ImportError:
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(16))
 
-# Database configuration - Supabase PostgreSQL only
+# Database configuration - PostgreSQL preferred, SQLite fallback
 database_url = os.environ.get('DATABASE_URL')
 print(f"🔍 DATABASE_URL from environment: {database_url}")
 print(f"🔍 supabase_available: {supabase_available}")
 
-if not (database_url and supabase_available):
-    raise RuntimeError("PostgreSQL (Supabase) connection required. DATABASE_URL or Supabase not available.")
-
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-print("🔗 Using Supabase PostgreSQL database")
+# Use PostgreSQL if available, otherwise fallback to SQLite
+if database_url and supabase_available:
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    print("🔗 Using Supabase PostgreSQL database")
+elif database_url and database_url.startswith('postgresql://'):
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    print("🔗 Using PostgreSQL database (without Supabase SDK)")
+else:
+    # Fallback to SQLite
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/safestep.db'
+    print("🔗 Using SQLite database (fallback)")
+    # Create instance directory if it doesn't exist
+    os.makedirs('instance', exist_ok=True)
     
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
