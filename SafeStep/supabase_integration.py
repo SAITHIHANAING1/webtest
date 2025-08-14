@@ -9,12 +9,14 @@ from supabase import create_client, Client
 from datetime import datetime, timedelta
 import json
 
-# Load environment variables from config.env
-load_dotenv('config.env')
+# Load environment variables from .env
+load_dotenv('.env')
 
-# If not found, try loading from the parent directory (for imports from app.py)
+# If not found, try loading from config.env or parent directory
 if not os.environ.get('SUPABASE_URL'):
-    load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+    load_dotenv('config.env')
+    if not os.environ.get('SUPABASE_URL'):
+        load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 # Global Supabase client and availability flag
 supabase: Client = None
@@ -25,7 +27,8 @@ def init_supabase():
     global supabase, supabase_available
     
     url = os.environ.get('SUPABASE_URL')
-    key = os.environ.get('SUPABASE_KEY')
+    # Use anon key since it's working, fallback to service key if needed
+    key = os.environ.get('SUPABASE_KEY') or os.environ.get('SUPABASE_SERVICE_KEY')
     
     print(f"🔍 Supabase URL from env: {url}")
     print(f"🔍 Supabase KEY from env: {'***' + key[-10:] if key else 'None'}")
@@ -58,8 +61,7 @@ def get_supabase_admin_client() -> Client:
     """Get the Supabase client instance (admin access)"""
     return supabase
 
-# Add this variable to check if supabase is available
-supabase_available = False
+# Remove duplicate declaration - already declared above
 
 def test_supabase_features():
     """Test Supabase-specific features"""

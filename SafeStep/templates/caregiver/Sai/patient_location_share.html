@@ -13,7 +13,7 @@
         .portal-icon { width: 50px; height: 50px; background: #667eea; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; }
         .portal-icon i { font-size: 1.25rem; color: white; }
         .patient-info { background: #f8f9fa; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; text-align: center; }
-        .status-card { border-radius: 10px; padding: 1rem; text-align: center; margin-bottom: 1rem; }
+        .status-card { border-radius: 10px; padding: 1rem; text-align: center; margin-bottom: 1rem; transition: all 0.3s; }
         .status-waiting { background: #e2e3e5; color: #495057; }
         .status-sharing { background: #d4edda; color: #155724; }
         .status-error { background: #f8d7da; color: #721c24; }
@@ -107,19 +107,37 @@
                     body: JSON.stringify({
                         patient_id: patientId,
                         latitude: latitude,
-                        longitude: longitude
+                        longitude: longitude,
+                        timestamp: new Date().toISOString(),
+                        accuracy: position?.coords?.accuracy || null
                     })
                 });
 
                 if (response.ok) {
-                    updateStatus('sharing', '<i class="fas fa-check me-2"></i>Location shared successfully');
+                    const result = await response.json();
+                    updateStatus('sharing', '<i class="fas fa-broadcast-tower me-2"></i>Live tracking active');
                     updateLocationDisplay(latitude, longitude);
+                    
+                    // Show sharing indicator
+                    if (navigator.vibrate) {
+                        navigator.vibrate(50); // Short vibration feedback
+                    }
                 } else {
                     throw new Error('Failed to send location');
                 }
             } catch (error) {
                 console.error('Error sending location:', error);
-                updateStatus('error', '<i class="fas fa-exclamation-triangle me-2"></i>Failed to share location');
+                updateStatus('error', '<i class="fas fa-exclamation-triangle me-2"></i>Connection failed - retrying...');
+                
+                // Auto-retry after 5 seconds if sharing is still active
+                setTimeout(() => {
+                    if (isSharing && navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            pos => sendLocation(pos.coords.latitude, pos.coords.longitude),
+                            err => console.log('Retry failed:', err)
+                        );
+                    }
+                }, 5000);
             }
         }
 

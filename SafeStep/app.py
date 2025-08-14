@@ -1,4 +1,3 @@
-import random
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory, send_file, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -9,12 +8,9 @@ from functools import wraps
 import secrets
 import json
 from dotenv import load_dotenv
-import psycopg2
-import socket
 
-# Import models
-# Load environment variables from config.env file
-load_dotenv('config.env')
+# Load environment variables
+load_dotenv('.env')
 
 # Try to initialize Supabase client
 try:
@@ -54,16 +50,14 @@ except ImportError:
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(16))
 
-# Database configuration - Optimized for Supabase
+# Database configuration - Supabase PostgreSQL only
 database_url = os.environ.get('DATABASE_URL')
-use_sqlite_override = os.environ.get('USE_SQLITE', 'false').lower() == 'true'
 
 print(f"🔍 DATABASE_URL from environment: {database_url}")
 print(f"🔍 supabase_available: {supabase_available}")
-print(f"🔍 USE_SQLITE override: {use_sqlite_override}")
 
-# Prioritize Supabase PostgreSQL for production
-if database_url and database_url.startswith('postgresql://') and not use_sqlite_override:
+# Use Supabase PostgreSQL only
+if database_url and database_url.startswith('postgresql://'):
     # Use Supabase PostgreSQL
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     print("🔗 Using Supabase PostgreSQL database")
@@ -78,16 +72,11 @@ if database_url and database_url.startswith('postgresql://') and not use_sqlite_
             'options': '-c statement_timeout=30000'
         }
     }
-elif use_sqlite_override:
-    # SQLite fallback for development/testing
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/safestep.db'
-    print("🔗 Using SQLite database (development override)")
-    os.makedirs('instance', exist_ok=True)
 else:
-    # Emergency fallback
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/safestep.db'
-    print("🔗 Using SQLite database (fallback - no valid DATABASE_URL)")
-    os.makedirs('instance', exist_ok=True)
+    # Require Supabase PostgreSQL - no SQLite fallback
+    print("❌ ERROR: DATABASE_URL is required for Supabase PostgreSQL")
+    print("Please set DATABASE_URL environment variable")
+    exit(1)
     
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -1460,6 +1449,8 @@ def session_detail(session_id):
 @login_required
 def safety_zones():
     zones = get_zones_for_user(current_user.id)
+    if not zones and supabase_available:
+        print(f"⚠️ No zones found for user {current_user.id}. This might be due to RLS permissions.")
     return render_template('caregiver/Sai/safety_zones.html', zones=zones)
 
 @app.route('/caregiver/zones/new', methods=['GET', 'POST'])
@@ -2111,11 +2102,10 @@ def get_analytics_metrics():
         location_filter = request.args.get('locationFilter', '')
         incident_type_filter = request.args.get('incidentType', '')
         
-        # Try Supabase first, fallback to SQLite
+        # Get data from Supabase
         try:
             from supabase_integration import get_analytics_metrics_supabase
             
-            # Try to get data from Supabase
             supabase_data = get_analytics_metrics_supabase(
                 date_range=int(date_range),
                 pwid_filter=pwid_filter,
@@ -2125,142 +2115,12 @@ def get_analytics_metrics():
             
             if supabase_data:
                 return jsonify(supabase_data)
+            else:
+                return jsonify({'success': False, 'error': 'No data available from Supabase'}), 500
                 
         except Exception as e:
-            print(f"Supabase analytics failed, falling back to SQLite: {e}")
-        
-        # Fallback to SQLite
-        from sqlalchemy import func, and_
-        
-        try:
-            # Models are already defined in this file
-            
-            # Calculate date ranges based on filter
-            end_date = datetime.utcnow()
-            days = int(date_range)
-            start_date = end_date - timedelta(days=days)
-            start_date_prev = end_date - timedelta(days=days * 2)
-            
-            # Build base query with filters
-            base_query = IncidentRecord.query.filter(
-                IncidentRecord.incident_date >= start_date
-            )
-            
-            # Apply filters
-            if location_filter:
-                base_query = base_query.filter(IncidentRecord.environment == location_filter)
-            
-            if incident_type_filter:
-                base_query = base_query.filter(IncidentRecord.incident_type == incident_type_filter)
-            
-            if pwid_filter == 'high-risk':
-                # Get high-risk patient IDs
-                high_risk_patients = [p.patient_id for p in PwidProfile.query.filter(
-                    PwidProfile.risk_status.in_(['High', 'Critical'])
-                ).all()]
-                if high_risk_patients:
-                    base_query = base_query.filter(IncidentRecord.patient_id.in_(high_risk_patients))
-            elif pwid_filter == 'recent-incidents':
-                # Patients with incidents in last 7 days
-                recent_date = end_date - timedelta(days=7)
-                recent_patients = [r[0] for r in db.session.query(IncidentRecord.patient_id).filter(
-                    IncidentRecord.incident_date >= recent_date
-                ).distinct().all()]
-                if recent_patients:
-                    base_query = base_query.filter(IncidentRecord.patient_id.in_(recent_patients))
-            
-            # Current period metrics
-            total_incidents = base_query.count()
-            
-            seizure_count = base_query.filter(IncidentRecord.incident_type == 'seizure').count()
-            
-            # Average response time
-            avg_response = db.session.query(func.avg(IncidentRecord.response_time_minutes)).filter(
-                and_(
-                    IncidentRecord.incident_date >= start_date,
-                    IncidentRecord.response_time_minutes.isnot(None)
-                )
-            )
-            
-            # Apply same filters to response time query
-            if location_filter:
-                avg_response = avg_response.filter(IncidentRecord.environment == location_filter)
-            if incident_type_filter:
-                avg_response = avg_response.filter(IncidentRecord.incident_type == incident_type_filter)
-            
-            avg_response = avg_response.scalar()
-            
-            # High risk cases (filter applied if specified)
-            if pwid_filter == 'high-risk':
-                high_risk_cases = PwidProfile.query.filter(
-                    PwidProfile.risk_status.in_(['High', 'Critical'])
-                ).count()
-            else:
-                high_risk_cases = PwidProfile.query.filter(
-                    PwidProfile.risk_status.in_(['High', 'Critical'])
-                ).count()
-            
-            # Previous period for comparison (same filters)
-            prev_query = IncidentRecord.query.filter(
-                and_(
-                    IncidentRecord.incident_date >= start_date_prev,
-                    IncidentRecord.incident_date < start_date
-                )
-            )
-            
-            # Apply same filters to previous period
-            if location_filter:
-                prev_query = prev_query.filter(IncidentRecord.environment == location_filter)
-            if incident_type_filter:
-                prev_query = prev_query.filter(IncidentRecord.incident_type == incident_type_filter)
-            
-            prev_incidents = prev_query.count()
-            prev_seizures = prev_query.filter(IncidentRecord.incident_type == 'seizure').count()
-            
-            # Calculate changes
-            def calc_change(old_val, new_val):
-                if old_val == 0:
-                    return f"+{new_val * 100}%" if new_val > 0 else "No change"
-                change = ((new_val - old_val) / old_val) * 100
-                sign = "+" if change > 0 else ""
-                return f"{sign}{change:.1f}%"
-            
-            incident_change = calc_change(prev_incidents, total_incidents)
-            seizure_change = calc_change(prev_seizures, seizure_count)
-            
-            return jsonify({
-                'success': True,
-                'total_incidents': total_incidents,
-                'seizure_count': seizure_count,
-                'avg_response_time': f"{avg_response:.1f}m" if avg_response else "0m",
-                'high_risk_cases': high_risk_cases,
-                'incidents_change': incident_change,
-                'seizure_change': seizure_change,
-                'response_time_change': "2% improvement",
-                'risk_cases_change': f"{high_risk_cases} active cases"
-            })
-            
-        except (ImportError, Exception):
-            # Fallback to existing logic with old models
-            total_users = User.query.filter_by(is_active=True).count()
-            total_sessions = SeizureSession.query.count()
-            total_alerts = SeizureSession.query.filter(SeizureSession.severity.in_(['moderate', 'severe'])).count()
-            
-            # Calculate some derived metrics
-            response_time_minutes = 2 + (total_alerts * 0.1)
-            
-            return jsonify({
-                "success": True,
-                "total_incidents": max(1, total_sessions),
-                "seizure_count": total_sessions,
-                "avg_response_time": f"{int(response_time_minutes)}m {int((response_time_minutes % 1) * 60)}s",
-                "high_risk_cases": min(total_users, 3),
-                "incidents_change": "+ 15% from last month",
-                "seizure_change": "+ 8% from last month", 
-                "response_time_change": "1% improvement",
-                "risk_cases_change": "1 new case"
-            })
-        
+            print(f"Supabase analytics failed: {e}")
+            return jsonify({'success': False, 'error': str(e)}), 500
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 

@@ -15,15 +15,55 @@
   .status-danger { background: #f8d7da; color: #721c24; }
   .status-outside { background: #e2e3e5; color: #383d41; }
   .floating-controls { position: absolute; top: 10px; right: 10px; z-index: 1000; }
+  
+  /* Enhanced Alert System */
+  .alert-panel { position: fixed; top: 20px; right: 20px; z-index: 2000; max-width: 350px; }
+  .alert-item { border-radius: 10px; padding: 1rem; margin-bottom: 0.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: slideInRight 0.3s ease-out; }
+  .alert-safe { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+  .alert-warning { background: #fff3cd; color: #856404; border-left: 4px solid #ffc107; }
+  .alert-danger { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; animation: pulse-danger 1s infinite; }
+  
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  
+  @keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+  
+  @keyframes pulse-danger {
+    0% { background: #f8d7da; }
+    50% { background: #f5c6cb; }
+    100% { background: #f8d7da; }
+  }
+  
+  /* QR Code Modal */
+  .qr-container { text-align: center; padding: 2rem; }
+  .qr-code { margin: 1rem auto; padding: 1rem; background: white; border-radius: 10px; display: inline-block; }
+  
+  /* Sound Controls */
+  .sound-controls { background: #f8f9fa; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+  .sound-toggle { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+  .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+  .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+  input:checked + .slider { background-color: #28a745; }
+  input:checked + .slider:before { transform: translateX(26px); }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- Alert Panel (Fixed Position) -->
+<div id="alertPanel" class="alert-panel"></div>
+
 <div class="container-fluid py-3">
   <div class="row mb-3">
     <div class="col">
       <h3><i class="fas fa-shield-alt me-2 text-primary"></i>Safety Zones Monitor</h3>
-      <p class="text-muted mb-0">Real-time patient location tracking</p>
+      <p class="text-muted mb-0">Real-time patient location tracking & geofencing alerts</p>
     </div>
   </div>
 
@@ -54,6 +94,26 @@
     
     <!-- Sidebar -->
     <div class="col-lg-4">
+      <!-- Alert & Sound Controls -->
+      <div class="sound-controls">
+        <h6><i class="fas fa-volume-up me-2"></i>Alert Settings</h6>
+        <div class="sound-toggle">
+          <span>Sound Alerts</span>
+          <label class="switch">
+            <input type="checkbox" id="soundAlertsToggle" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="sound-toggle">
+          <span>Danger Zone Alarm</span>
+          <label class="switch">
+            <input type="checkbox" id="dangerAlarmToggle" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <small class="text-muted">🔊 Audio alerts notify you of zone violations</small>
+      </div>
+
       <!-- Patient Tracker -->
       <div class="control-panel">
         <h6 class="mb-3"><i class="fas fa-users me-2"></i>Patient Tracker</h6>
@@ -61,8 +121,13 @@
           <input id="pidInput" class="form-control" placeholder="Patient ID (e.g., demo)">
           <button id="startTrack" class="btn btn-primary">Track</button>
         </div>
+        <div class="mb-3">
+          <button id="generateQR" class="btn btn-success btn-sm w-100">
+            <i class="fas fa-qrcode me-2"></i>Generate QR Code for Patient
+          </button>
+        </div>
         <div class="alert alert-light border-0 p-2 mb-3">
-          <small><strong>Share:</strong> <code>/caregiver/zones/share?pid=PATIENT_ID</code></small>
+          <small><strong>Share Link:</strong> <br><code id="shareLink">/caregiver/zones/share?pid=demo</code></small>
         </div>
         <div id="patientList"></div>
       </div>
@@ -75,14 +140,53 @@
     </div>
   </div>
 </div>
+
+<!-- QR Code Modal -->
+<div class="modal fade" id="qrModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fas fa-qrcode me-2"></i>Patient Tracking QR Code</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body qr-container">
+        <p>Share this QR code with the patient to start location tracking:</p>
+        <div id="qrCodeContainer" class="qr-code"></div>
+        <div class="mt-3">
+          <strong>Patient ID:</strong> <span id="qrPatientId">demo</span><br>
+          <small class="text-muted">Patient can scan this QR code to start sharing location</small>
+        </div>
+        <div class="mt-3">
+          <button id="copyLink" class="btn btn-outline-primary btn-sm">
+            <i class="fas fa-copy me-2"></i>Copy Link
+          </button>
+          <button id="downloadQR" class="btn btn-outline-success btn-sm">
+            <i class="fas fa-download me-2"></i>Download QR
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script>
 const SG_BOUNDS = L.latLngBounds(L.latLng(1.16,103.6), L.latLng(1.47,104.0));
 let map, zones = [], zoneLayers = [], patientMarkers = new Map();
 let myLocationMarker = null, locationWatchId = null, isTrackingMyLocation = false, currentTrackedPatient = null;
+
+// Enhanced features
+let soundAlertsEnabled = true;
+let dangerAlarmEnabled = true;
+let alertSounds = {
+  warning: new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LHdSMFl'), // Short beep
+  danger: new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LHdSMFl') // Alarm sound
+};
+let patientZoneStatus = new Map(); // Track zone status for each patient
+let activeAlerts = new Map(); // Track active alerts
 
 function setStatus(msg){ document.getElementById('status').textContent = msg; }
 
@@ -338,6 +442,209 @@ function startPolling(){
   }, 3000);
 }
 
+// Enhanced Alert System
+function checkGeofencing(patientId, lat, lng) {
+  const currentStatus = checkPatientZoneStatus(lat, lng);
+  const previousStatus = patientZoneStatus.get(patientId);
+  
+  // Update status tracking
+  patientZoneStatus.set(patientId, currentStatus);
+  
+  // Check for status changes and trigger alerts
+  if (previousStatus !== currentStatus) {
+    triggerZoneAlert(patientId, currentStatus, previousStatus, lat, lng);
+  }
+  
+  return currentStatus;
+}
+
+function triggerZoneAlert(patientId, newStatus, oldStatus, lat, lng) {
+  const alertId = `${patientId}_${Date.now()}`;
+  let alertType, message, soundType;
+  
+  switch(newStatus) {
+    case 'danger':
+      alertType = 'alert-danger';
+      message = `🚨 DANGER ZONE ALERT!<br><strong>${patientId}</strong> has entered a danger zone`;
+      soundType = 'danger';
+      break;
+    case 'outside':
+      if (oldStatus === 'safe') {
+        alertType = 'alert-warning';
+        message = `⚠️ Zone Exit Alert<br><strong>${patientId}</strong> has left a safe zone`;
+        soundType = 'warning';
+      }
+      break;
+    case 'safe':
+      if (oldStatus === 'danger') {
+        alertType = 'alert-safe';
+        message = `✅ Safe Zone Entered<br><strong>${patientId}</strong> is now in a safe zone`;
+        soundType = null; // No sound for entering safe zone
+      }
+      break;
+  }
+  
+  if (message) {
+    showAlert(alertId, alertType, message, soundType);
+    
+    // For danger zones, also send notification to caregiver
+    if (newStatus === 'danger') {
+      sendCaregiverNotification(patientId, lat, lng);
+    }
+  }
+}
+
+function showAlert(alertId, alertType, message, soundType) {
+  const alertPanel = document.getElementById('alertPanel');
+  
+  // Remove existing alert for this patient if any
+  const existingAlert = alertPanel.querySelector(`[data-alert-id="${alertId}"]`);
+  if (existingAlert) {
+    existingAlert.remove();
+  }
+  
+  // Create new alert
+  const alertDiv = document.createElement('div');
+  alertDiv.className = `alert-item ${alertType}`;
+  alertDiv.setAttribute('data-alert-id', alertId);
+  alertDiv.innerHTML = `
+    <div class="d-flex justify-content-between align-items-start">
+      <div>
+        ${message}
+        <br><small class="text-muted">${new Date().toLocaleTimeString()}</small>
+      </div>
+      <button class="btn btn-sm btn-outline-secondary" onclick="removeAlert('${alertId}')">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  `;
+  
+  alertPanel.appendChild(alertDiv);
+  
+  // Play sound if enabled
+  if (soundType && ((soundType === 'warning' && soundAlertsEnabled) || 
+                    (soundType === 'danger' && dangerAlarmEnabled))) {
+    playAlertSound(soundType);
+  }
+  
+  // Auto-remove warning alerts after 10 seconds
+  if (alertType === 'alert-warning') {
+    setTimeout(() => removeAlert(alertId), 10000);
+  }
+}
+
+function removeAlert(alertId) {
+  const alertElement = document.querySelector(`[data-alert-id="${alertId}"]`);
+  if (alertElement) {
+    alertElement.style.animation = 'slideOutRight 0.3s ease-out';
+    setTimeout(() => alertElement.remove(), 300);
+  }
+}
+
+function playAlertSound(type) {
+  try {
+    const sound = alertSounds[type];
+    if (sound) {
+      sound.currentTime = 0;
+      sound.play().catch(e => console.log('Audio play failed:', e));
+    }
+  } catch (e) {
+    console.log('Sound play error:', e);
+  }
+}
+
+function sendCaregiverNotification(patientId, lat, lng) {
+  // Send notification to caregiver system
+  fetch('/api/caregiver/alert', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      type: 'danger_zone',
+      patient_id: patientId,
+      latitude: lat,
+      longitude: lng,
+      timestamp: new Date().toISOString()
+    })
+  }).catch(e => console.log('Notification failed:', e));
+}
+
+// QR Code Generation
+function generateQRCode(patientId) {
+  const shareUrl = `${window.location.origin}/caregiver/zones/share?pid=${patientId}`;
+  const qrContainer = document.getElementById('qrCodeContainer');
+  
+  // Clear previous QR code
+  qrContainer.innerHTML = '';
+  
+  // Generate new QR code
+  QRCode.toCanvas(qrContainer, shareUrl, {
+    width: 200,
+    margin: 2,
+    color: {
+      dark: '#000000',
+      light: '#FFFFFF'
+    }
+  }, (error) => {
+    if (error) {
+      qrContainer.innerHTML = '<p class="text-danger">Error generating QR code</p>';
+    }
+  });
+  
+  // Update modal content
+  document.getElementById('qrPatientId').textContent = patientId;
+  document.getElementById('shareLink').textContent = shareUrl;
+  
+  // Show modal
+  new bootstrap.Modal(document.getElementById('qrModal')).show();
+}
+
+function copyShareLink() {
+  const shareLink = document.getElementById('shareLink').textContent;
+  navigator.clipboard.writeText(shareLink).then(() => {
+    const btn = document.getElementById('copyLink');
+    const original = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';
+    setTimeout(() => btn.innerHTML = original, 2000);
+  });
+}
+
+function downloadQR() {
+  const canvas = document.querySelector('#qrCodeContainer canvas');
+  if (canvas) {
+    const link = document.createElement('a');
+    link.download = `patient_${document.getElementById('qrPatientId').textContent}_qr.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+  }
+}
+
+// Enhanced pollPatient function with geofencing
+const originalPollPatient = pollPatient;
+pollPatient = function(pid) {
+  fetch(`/caregiver/api/location/${pid}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.latitude && data.longitude) {
+        const lat = parseFloat(data.latitude);
+        const lng = parseFloat(data.longitude);
+        
+        // Check geofencing and trigger alerts
+        const zoneStatus = checkGeofencing(pid, lat, lng);
+        
+        // Update patient marker and UI
+        updatePatientMarker(pid, lat, lng);
+        updatePatientRow(pid, zoneStatus, data.last_update || 'Unknown', lat, lng);
+        
+        if (pid === currentTrackedPatient) {
+          updateLocationStatus(zoneStatus, 
+            `Patient ${pid}: ${zoneStatus.toUpperCase()} zone`, 
+            lat, lng, data.accuracy, pid);
+        }
+      }
+    })
+    .catch(err => console.log('Poll error:', err));
+};
+
 // Event listeners
 document.getElementById('btnFit').addEventListener('click', fitAll);
 document.getElementById('btnCenter').addEventListener('click', centerSG);
@@ -347,6 +654,31 @@ document.getElementById('startTrack').addEventListener('click', ()=>{
   if(!pid) return;
   addPatient(pid);
   pollPatient(pid);
+  // Update share link
+  document.getElementById('shareLink').textContent = `/caregiver/zones/share?pid=${pid}`;
+});
+
+// Enhanced event listeners
+document.getElementById('generateQR').addEventListener('click', () => {
+  const pid = document.getElementById('pidInput').value.trim() || 'demo';
+  generateQRCode(pid);
+});
+
+document.getElementById('copyLink').addEventListener('click', copyShareLink);
+document.getElementById('downloadQR').addEventListener('click', downloadQR);
+
+document.getElementById('soundAlertsToggle').addEventListener('change', (e) => {
+  soundAlertsEnabled = e.target.checked;
+});
+
+document.getElementById('dangerAlarmToggle').addEventListener('change', (e) => {
+  dangerAlarmEnabled = e.target.checked;
+});
+
+// Update patient ID input to update share link
+document.getElementById('pidInput').addEventListener('input', (e) => {
+  const pid = e.target.value.trim() || 'demo';
+  document.getElementById('shareLink').textContent = `/caregiver/zones/share?pid=${pid}`;
 });
 
 // Initialize
