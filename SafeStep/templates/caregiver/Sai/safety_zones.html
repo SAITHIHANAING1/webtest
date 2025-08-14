@@ -355,7 +355,7 @@
             <div class="card-body">
               <p class="small text-muted mb-3">Share this link with the patient to enable location tracking:</p>
               <div class="input-group mb-2">
-                <input type="text" id="shareLink" class="form-control form-control-sm" value="http://localhost:8080/caregiver/zones/share?pid=demo" readonly>
+                <input type="text" id="shareLink" class="form-control form-control-sm" value="" readonly>
                 <button id="copyLinkBtn" class="btn btn-outline-secondary btn-sm" type="button">
                   <i class="fas fa-copy"></i>
                 </button>
@@ -1197,6 +1197,12 @@ document.getElementById('pidInput').addEventListener('input', (e) => {
 document.addEventListener('DOMContentLoaded', function() {
   initializeAudio();
   initMap();
+  
+  // Initialize share link with current domain
+  const pid = document.getElementById('pidInput').value.trim() || 'demo';
+  const fullUrl = `${window.location.origin}/caregiver/zones/share?pid=${pid}`;
+  document.getElementById('shareLink').value = fullUrl;
+  
   loadZones().then(() => {
     startPolling();
   });
