@@ -15,18 +15,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy and install Python dependencies
-COPY requirements.txt /app/requirements.txt
+COPY requirements.txt .
 RUN python -m pip install --upgrade pip setuptools wheel && \
     pip install -r requirements.txt
 
-# Copy application code
-COPY SafeStep/ /app/
+# Copy entire project
+COPY . .
 
 # Create instance directory for SQLite database
-RUN mkdir -p /app/instance
+RUN mkdir -p instance
 
 # Set port
 ENV PORT=8080
 
-# Use array syntax for CMD to avoid shell issues
-CMD ["gunicorn", "wsgi:app", "--bind", "0.0.0.0:8080", "--workers", "3", "--threads", "8", "--timeout", "120"]
+# Use simple Python startup script
+CMD ["python", "start.py"]
