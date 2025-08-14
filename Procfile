@@ -1,1 +1,1 @@
-web: python SafeStep/wsgi.py
+web: python wsgi.py
