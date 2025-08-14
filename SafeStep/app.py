@@ -46,6 +46,15 @@ try:
 except ImportError:
     print("ℹ️ Enhanced routes not available")
 
+# Initialize Admin Routes
+try:
+    from admin_routes import admin_bp
+    app.register_blueprint(admin_bp)
+    print("✅ Admin routes enabled")
+except ImportError as e:
+    print(f"❌ Could not import admin routes: {e}")
+    print("ℹ️ Admin routes disabled")
+
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(16))
 

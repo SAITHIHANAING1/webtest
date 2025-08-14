@@ -243,33 +243,33 @@
         </div>
     </div>
     <!-- Statistics Row -->
-    <div class="metrics-grid">
+    <div class="metrics-grid" id="userStatsGrid">
         <div class="metric-card">
             <div class="metric-icon">
                 <i class="fas fa-users"></i>
             </div>
-            <div class="metric-value">{{ users|length or 24 }}</div>
+            <div class="metric-value" id="totalUsers">{{ users|length or 0 }}</div>
             <div class="metric-label">Total Users</div>
         </div>
         <div class="metric-card">
             <div class="metric-icon">
                 <i class="fas fa-user-check"></i>
             </div>
-            <div class="metric-value">{{ users|selectattr("is_active")|list|length or 22 }}</div>
+            <div class="metric-value" id="activeUsers">{{ users|selectattr("is_active")|list|length or 0 }}</div>
             <div class="metric-label">Active Users</div>
         </div>
         <div class="metric-card">
             <div class="metric-icon">
                 <i class="fas fa-user-shield"></i>
             </div>
-            <div class="metric-value">{{ users|selectattr("role", "equalto", "admin")|list|length or 2 }}</div>
+            <div class="metric-value" id="adminCount">{{ users|selectattr("role", "equalto", "admin")|list|length or 0 }}</div>
             <div class="metric-label">Administrators</div>
         </div>
         <div class="metric-card">
             <div class="metric-icon">
                 <i class="fas fa-user-md"></i>
             </div>
-            <div class="metric-value">{{ users|selectattr("role", "equalto", "caregiver")|list|length or 22 }}</div>
+            <div class="metric-value" id="caregiverCount">{{ users|selectattr("role", "equalto", "caregiver")|list|length or 0 }}</div>
             <div class="metric-label">Caregivers</div>
         </div>
     </div>
@@ -539,6 +539,8 @@
 <script>
 // User Management JavaScript
 document.addEventListener('DOMContentLoaded', function() {
+    loadUserStats();
+    
     // Search functionality
     document.getElementById('userSearch').addEventListener('input', function() {
         const searchTerm = this.value.toLowerCase();
@@ -587,9 +589,45 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add user form
     document.getElementById('addUserForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        // Handle form submission
-        showNotification('User created successfully!', 'success');
-        bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
+        
+        // Get form data
+        const formData = new FormData(this);
+        const userData = {
+            first_name: formData.get('first_name'),
+            last_name: formData.get('last_name'),
+            username: formData.get('username'),
+            email: formData.get('email'),
+            role: formData.get('role'),
+            password: formData.get('password'),
+            is_active: formData.get('is_active') === 'on'
+        };
+        
+        // Send request to create user
+        fetch('/admin/api/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('User created successfully!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
+                // Refresh user stats and reload page after delay
+                loadUserStats();
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showNotification(data.error || 'Failed to create user', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error creating user:', error);
+            showNotification('An error occurred while creating the user', 'danger');
+        });
     });
 });
 
@@ -625,6 +663,24 @@ function editUser(userId) {
     });
 }
 
+// Load user statistics
+async function loadUserStats() {
+    try {
+        const response = await fetch('/admin/api/users/stats');
+        const data = await response.json();
+        
+        if (data.success) {
+            const stats = data.stats;
+            document.getElementById('totalUsers').textContent = stats.total_users || 0;
+            document.getElementById('activeUsers').textContent = stats.active_users || 0;
+            document.getElementById('adminCount').textContent = stats.admin_count || 0;
+            document.getElementById('caregiverCount').textContent = stats.caregiver_count || 0;
+        }
+    } catch (error) {
+        console.error('Error loading user stats:', error);
+    }
+}
+
 function toggleUserStatus(userId, activate) {
     const action = activate ? 'activate' : 'deactivate';
     
@@ -633,7 +689,7 @@ function toggleUserStatus(userId, activate) {
         showNotification(`${activate ? 'Activating' : 'Deactivating'} user...`, 'info');
         
         // Send request to toggle user status
-        fetch(`/admin/users/toggle-status/${userId}`, {
+        fetch(`/admin/api/users/${userId}/toggle-status`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -689,11 +745,10 @@ function deleteUser(userId) {
         showNotification('Deleting user...', 'info');
         
         // Send DELETE request to the server
-        fetch(`/admin/users/delete/${userId}`, {
-            method: 'POST',
+        fetch(`/admin/api/users/${userId}`, {
+            method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken(),
             }
         })
         .then(response => response.json())

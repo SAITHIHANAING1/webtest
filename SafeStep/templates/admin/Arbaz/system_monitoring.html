@@ -380,53 +380,53 @@
     </div>
 
     <!-- System Metrics -->
-    <div class="metrics-grid">
+    <div class="metrics-grid" id="metricsGrid">
         <div class="metric-card metric-cpu">
             <div class="metric-icon">
                 <i class="fas fa-microchip"></i>
             </div>
-            <div class="metric-value">32%</div>
+            <div class="metric-value" id="cpuValue">--%</div>
             <div class="metric-label">CPU Usage</div>
             <div class="progress-bar-custom">
-                <div class="progress-fill progress-cpu" style="width: 32%"></div>
+                <div class="progress-fill progress-cpu" id="cpuProgress" style="width: 0%"></div>
             </div>
-            <small class="text-muted">Avg: 28% | Peak: 45%</small>
+            <small class="text-muted" id="cpuDetails">Loading...</small>
         </div>
         
         <div class="metric-card metric-memory">
             <div class="metric-icon">
                 <i class="fas fa-memory"></i>
             </div>
-            <div class="metric-value">68%</div>
+            <div class="metric-value" id="memoryValue">--%</div>
             <div class="metric-label">Memory Usage</div>
             <div class="progress-bar-custom">
-                <div class="progress-fill progress-memory" style="width: 68%"></div>
+                <div class="progress-fill progress-memory" id="memoryProgress" style="width: 0%"></div>
             </div>
-            <small class="text-muted">12.3 GB / 18 GB</small>
+            <small class="text-muted" id="memoryDetails">Loading...</small>
         </div>
         
         <div class="metric-card metric-disk">
             <div class="metric-icon">
                 <i class="fas fa-hdd"></i>
             </div>
-            <div class="metric-value">45%</div>
+            <div class="metric-value" id="diskValue">--%</div>
             <div class="metric-label">Disk Usage</div>
             <div class="progress-bar-custom">
-                <div class="progress-fill progress-warning" style="width: 45%"></div>
+                <div class="progress-fill progress-warning" id="diskProgress" style="width: 0%"></div>
             </div>
-            <small class="text-muted">450 GB / 1 TB</small>
+            <small class="text-muted" id="diskDetails">Loading...</small>
         </div>
         
         <div class="metric-card metric-network">
             <div class="metric-icon">
                 <i class="fas fa-network-wired"></i>
             </div>
-            <div class="metric-value">142ms</div>
-            <div class="metric-label">Response Time</div>
+            <div class="metric-value" id="networkValue">-- MB/s</div>
+            <div class="metric-label">Network Speed</div>
             <div class="progress-bar-custom">
-                <div class="progress-fill progress-healthy" style="width: 85%"></div>
+                <div class="progress-fill progress-healthy" id="networkProgress" style="width: 0%"></div>
             </div>
-            <small class="text-muted">↑ 23.4 MB/s ↓ 45.6 MB/s</small>
+            <small class="text-muted" id="networkDetails">Loading...</small>
         </div>
     </div>
 
@@ -689,6 +689,10 @@
 <script>
 // System Monitoring JavaScript
 document.addEventListener('DOMContentLoaded', function() {
+    loadSystemMetrics();
+    loadSystemServices();
+    loadSystemLogs();
+    loadSystemAlerts();
     initializePerformanceChart();
     startAutoRefresh();
     
@@ -770,19 +774,134 @@ function updatePerformanceChart(metric) {
 function startAutoRefresh() {
     setInterval(() => {
         // Update metrics and logs automatically
-        updateMetrics();
-        updateLogs();
+        loadSystemMetrics();
+        loadSystemServices();
+        loadSystemLogs();
+        loadSystemAlerts();
     }, 30000); // Refresh every 30 seconds
+}
+
+// Load real-time system metrics
+async function loadSystemMetrics() {
+    try {
+        const response = await fetch('/admin/api/system/metrics');
+        const data = await response.json();
+        
+        if (data.success) {
+            const metrics = data.metrics;
+            
+            // Update CPU
+            if (metrics.cpu) {
+                document.getElementById('cpuValue').textContent = metrics.cpu.value + '%';
+                document.getElementById('cpuProgress').style.width = metrics.cpu.value + '%';
+                document.getElementById('cpuDetails').textContent = `Status: ${metrics.cpu.status}`;
+            }
+            
+            // Update Memory
+            if (metrics.memory) {
+                document.getElementById('memoryValue').textContent = metrics.memory.value + '%';
+                document.getElementById('memoryProgress').style.width = metrics.memory.value + '%';
+                document.getElementById('memoryDetails').textContent = `${metrics.memory.used_gb} GB / ${metrics.memory.total_gb} GB`;
+            }
+            
+            // Update Disk
+            if (metrics.disk) {
+                document.getElementById('diskValue').textContent = metrics.disk.value + '%';
+                document.getElementById('diskProgress').style.width = metrics.disk.value + '%';
+                document.getElementById('diskDetails').textContent = `${metrics.disk.used_gb} GB / ${metrics.disk.total_gb} GB`;
+            }
+            
+            // Update Network
+            if (metrics.network) {
+                document.getElementById('networkValue').textContent = metrics.network.value + ' MB/s';
+                document.getElementById('networkProgress').style.width = Math.min(100, metrics.network.value * 2) + '%';
+                document.getElementById('networkDetails').textContent = `Up: ${(metrics.network.bytes_sent / (1024*1024)).toFixed(1)} MB | Down: ${(metrics.network.bytes_recv / (1024*1024)).toFixed(1)} MB`;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading system metrics:', error);
+        showNotification('Failed to load system metrics', 'danger');
+    }
+}
+
+// Load system services status
+async function loadSystemServices() {
+    try {
+        const response = await fetch('/admin/api/system/services');
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update services UI - this would need a more complete implementation
+            // For now, we'll just log the services data
+            console.log('System services loaded:', data.services);
+        }
+    } catch (error) {
+        console.error('Error loading system services:', error);
+    }
+}
+
+// Load system logs
+async function loadSystemLogs() {
+    try {
+        const response = await fetch('/admin/api/system/logs?limit=20');
+        const data = await response.json();
+        
+        if (data.success) {
+            const logContainer = document.getElementById('logContainer');
+            logContainer.innerHTML = '';
+            
+            data.logs.forEach(log => {
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                
+                const timestamp = new Date(log.timestamp).toLocaleString();
+                logEntry.innerHTML = `
+                    <span class="log-timestamp">[${timestamp}]</span>
+                    <span class="log-level-${log.level.toLowerCase()}">[${log.level}]</span>
+                    <span>${log.message}</span>
+                `;
+                
+                logContainer.appendChild(logEntry);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading system logs:', error);
+    }
+}
+
+// Load system alerts
+async function loadSystemAlerts() {
+    try {
+        const response = await fetch('/admin/api/system/alerts');
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update alerts UI - this would need implementation in the HTML
+            console.log('System alerts loaded:', data.alerts);
+        }
+    } catch (error) {
+        console.error('Error loading system alerts:', error);
+    }
 }
 
 function refreshData() {
     const refreshIcon = document.getElementById('refreshIcon');
     refreshIcon.classList.add('refresh-indicator');
     
-    setTimeout(() => {
+    // Load all data
+    Promise.all([
+        loadSystemMetrics(),
+        loadSystemServices(),
+        loadSystemLogs(),
+        loadSystemAlerts()
+    ]).then(() => {
         refreshIcon.classList.remove('refresh-indicator');
         showNotification('System data refreshed successfully', 'success');
-    }, 1000);
+    }).catch(error => {
+        refreshIcon.classList.remove('refresh-indicator');
+        showNotification('Failed to refresh system data', 'danger');
+        console.error('Refresh error:', error);
+    });
 }
 
 function refreshServices() {
