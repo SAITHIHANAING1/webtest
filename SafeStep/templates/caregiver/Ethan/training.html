@@ -368,7 +368,7 @@ endblock %} {% block extra_css %}
 
         <!-- Module List -->
         <div id="modulesList">
-          <div class="module-item module-beginner" data-difficulty="beginner" onclick="startModule(1)">
+          <div class="module-item module-beginner" data-difficulty="beginner">
             <div class="row align-items-center">
               <div class="col-md-2">
                 <div class="module-icon">
@@ -401,9 +401,9 @@ endblock %} {% block extra_css %}
                   <small class="text-success fw-bold">100% Complete</small>
                 </div>
                 <div class="text-center mt-2">
-                  <button class="btn btn-outline-success btn-sm">
+                  <a href="{{ url_for('generate_certificate', module_id=1) }}" class="btn btn-outline-success btn-sm">
                     <i class="fas fa-certificate me-1"></i>Certificate
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>
@@ -451,7 +451,7 @@ endblock %} {% block extra_css %}
             </div>
           </div>
 
-          <div class="module-item module-advanced" data-difficulty="advanced" onclick="startModule(3)">
+          <div class="module-item module-advanced" data-difficulty="advanced">
             <div class="row align-items-center">
               <div class="col-md-2">
                 <div class="module-icon">
@@ -484,16 +484,15 @@ endblock %} {% block extra_css %}
                   <small class="text-muted fw-bold">0% Complete</small>
                 </div>
                 <div class="text-center mt-2">
-                  <button class="btn btn-outline-primary btn-sm">
+                  <a href="{{ url_for('module_detail', module_id=3) }}" class="btn btn-outline-primary btn-sm">
                     <i class="fas fa-play me-1"></i>Start
-                  </button>
-
+                  </a>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="module-item module-beginner" data-difficulty="beginner" onclick="startModule(4)">
+          <div class="module-item module-beginner" data-difficulty="beginner">
             <div class="row align-items-center">
               <div class="col-md-2">
                 <div class="module-icon">
@@ -526,6 +525,9 @@ endblock %} {% block extra_css %}
                   <small class="text-success fw-bold">100% Complete</small>
                 </div>
                 <div class="text-center mt-2">
+                  <a href="{{ url_for('generate_certificate', module_id=4) }}" class="btn btn-outline-success btn-sm">
+                    <i class="fas fa-certificate me-1"></i>Certificate
+                  </a>
                   <button class="btn btn-outline-secondary btn-sm" onclick="confirmRetake(4, this)">
                     <i class="fas fa-redo me-1"></i>Retake
                   </button>

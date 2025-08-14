@@ -299,6 +299,56 @@ def get_location_distribution_supabase(date_range=30):
         print(f"Error getting location distribution from Supabase: {e}")
         return None
 
+def get_response_time_supabase(date_range=30):
+    """Get response time analytics from Supabase"""
+    if not supabase:
+        return None
+    
+    try:
+        end_date = datetime.utcnow()
+        start_date = end_date - timedelta(days=date_range)
+        
+        # Get incidents with response times
+        query = supabase.table('incidents').select('incident_date, response_time_minutes').gte('incident_date', start_date.isoformat()).not_.is_('response_time_minutes', 'null')
+        response = query.execute()
+        
+        # Group by date and calculate average response times
+        date_groups = {}
+        for incident in response.data:
+            date = incident['incident_date'][:10]  # Get date part only
+            response_time = incident.get('response_time_minutes', 0)
+            
+            if date not in date_groups:
+                date_groups[date] = []
+            date_groups[date].append(response_time)
+        
+        # Calculate averages
+        dates = []
+        avg_times = []
+        
+        sorted_dates = sorted(date_groups.keys())
+        for date in sorted_dates:
+            dates.append(date)
+            times = date_groups[date]
+            avg_time = sum(times) / len(times) if times else 0
+            avg_times.append(round(avg_time, 1))
+        
+        return {
+            'success': True,
+            'labels': dates,
+            'datasets': [{
+                'label': 'Average Response Time (minutes)',
+                'data': avg_times,
+                'borderColor': '#3f5efb',
+                'backgroundColor': 'rgba(63, 94, 251, 0.1)',
+                'fill': True
+            }]
+        }
+        
+    except Exception as e:
+        print(f"Error getting response time from Supabase: {e}")
+        return None
+
 def get_prediction_results_supabase():
     """Get AI prediction results from Supabase"""
     if not supabase:

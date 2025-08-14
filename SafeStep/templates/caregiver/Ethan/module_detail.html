@@ -27,17 +27,51 @@
                             <p>{{ module.description }}</p>
                             
                             <h5>Learning Objectives</h5>
-                            <ul>
-                                <li>Understanding seizure triggers</li>
-                                <li>Emergency response procedures</li>
-                                <li>Medication management</li>
-                            </ul>
+                            {% if quiz_questions %}
+                                <ul>
+                                    {% for question in quiz_questions[:3] %}
+                                    <li>{{ question.question[:50] }}...</li>
+                                    {% endfor %}
+                                    {% if quiz_questions|length > 3 %}
+                                    <li><em>And {{ quiz_questions|length - 3 }} more topics...</em></li>
+                                    {% endif %}
+                                </ul>
+                            {% else %}
+                                <ul>
+                                    <li>Understanding seizure triggers and management</li>
+                                    <li>Emergency response procedures</li>
+                                    <li>Medication management and safety</li>
+                                </ul>
+                            {% endif %}
                             
                             <div class="mt-4">
-                                <button class="btn btn-success me-2">
-                                    <i class="fas fa-play me-1"></i>
-                                    Continue Module
-                                </button>
+                                {% if progress and progress.status == 'completed' %}
+                                    <a href="{{ url_for('generate_certificate', module_id=module.id) }}" class="btn btn-success me-2">
+                                        <i class="fas fa-certificate me-1"></i>
+                                        View Certificate
+                                    </a>
+                                    <a href="{{ url_for('module_content', module_id=module.id) }}" class="btn btn-info me-2">
+                                        <i class="fas fa-eye me-1"></i>
+                                        Review Content
+                                    </a>
+                                {% elif progress and progress.status == 'in_progress' %}
+                                    <a href="{{ url_for('module_content', module_id=module.id) }}" class="btn btn-primary me-2">
+                                        <i class="fas fa-play me-1"></i>
+                                        Continue Module
+                                    </a>
+                                    <a href="{{ url_for('module_quiz', module_id=module.id) }}" class="btn btn-warning me-2">
+                                        <i class="fas fa-question-circle me-1"></i>
+                                        Take Quiz
+                                    </a>
+                                {% else %}
+                                    <form method="POST" action="{{ url_for('start_module', module_id=module.id) }}" style="display: inline;">
+                                        <button type="submit" class="btn btn-success me-2">
+                                            <i class="fas fa-play me-1"></i>
+                                            Start Module
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                
                                 <a href="{{ url_for('training_modules') }}" class="btn btn-secondary">
                                     <i class="fas fa-arrow-left me-1"></i>
                                     Back to Modules

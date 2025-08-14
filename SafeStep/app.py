@@ -146,8 +146,21 @@ class TrainingModule(db.Model):
     duration_minutes = db.Column(db.Integer, default=30)
     difficulty_level = db.Column(db.String(20), default='beginner')  # 'beginner', 'intermediate', 'advanced'
     module_type = db.Column(db.String(50), default='video')  # 'video', 'interactive', 'reading'
+    category = db.Column(db.String(100), default='general')  # 'seizure_response', 'medication', 'safety', etc.
+    learning_objectives = db.Column(db.Text)  # JSON array of learning objectives
+    prerequisites = db.Column(db.Text)  # JSON array of prerequisite module IDs
+    tags = db.Column(db.Text)  # JSON array of tags for search/filtering
+    thumbnail_url = db.Column(db.String(200))
+    rating_avg = db.Column(db.Float, default=0.0)
+    rating_count = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
+    
+    # Relationships
+    quizzes = db.relationship('Quiz', backref='module', lazy=True, cascade='all, delete-orphan')
+    certificates = db.relationship('Certificate', backref='module', lazy=True)
+    ratings = db.relationship('ModuleRating', backref='module', lazy=True)
 
 class TrainingProgress(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -158,6 +171,8 @@ class TrainingProgress(db.Model):
     quiz_score = db.Column(db.Integer)
     completed_at = db.Column(db.DateTime)
     started_at = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(20), default='not_started')  # 'not_started', 'in_progress', 'completed', 'failed'
+    video_watched = db.Column(db.Boolean, default=False)
     
     module = db.relationship('TrainingModule', backref='progress', lazy=True)
 
@@ -562,6 +577,217 @@ class ReportLog(db.Model):
             'export_timestamp': self.export_timestamp.isoformat() if self.export_timestamp else None,
             'export_timestamp_formatted': self.export_timestamp.strftime('%Y-%m-%d %H:%M:%S') if self.export_timestamp else None
         }
+
+# Enhanced Educational Models
+class Quiz(db.Model):
+    """Quiz model for training modules"""
+    __tablename__ = 'quizzes'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    module_id = db.Column(db.Integer, db.ForeignKey('training_module.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    passing_score = db.Column(db.Integer, default=70)  # Percentage
+    time_limit_minutes = db.Column(db.Integer)  # Optional time limit
+    max_attempts = db.Column(db.Integer, default=3)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    questions = db.relationship('QuizQuestion', backref='quiz', lazy=True, cascade='all, delete-orphan')
+    attempts = db.relationship('QuizAttempt', backref='quiz', lazy=True)
+
+class QuizQuestion(db.Model):
+    """Individual quiz questions"""
+    __tablename__ = 'quiz_questions'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
+    question_text = db.Column(db.Text, nullable=False)
+    question_type = db.Column(db.String(20), default='multiple_choice')  # 'multiple_choice', 'true_false', 'short_answer'
+    points = db.Column(db.Integer, default=1)
+    explanation = db.Column(db.Text)  # Explanation for correct answer
+    order_index = db.Column(db.Integer, default=0)
+    
+    # Relationships
+    options = db.relationship('QuizOption', backref='question', lazy=True, cascade='all, delete-orphan')
+
+class QuizOption(db.Model):
+    """Answer options for quiz questions"""
+    __tablename__ = 'quiz_options'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    question_id = db.Column(db.Integer, db.ForeignKey('quiz_questions.id'), nullable=False)
+    option_text = db.Column(db.Text, nullable=False)
+    is_correct = db.Column(db.Boolean, default=False)
+    order_index = db.Column(db.Integer, default=0)
+
+class QuizAttempt(db.Model):
+    """User quiz attempts and scores"""
+    __tablename__ = 'quiz_attempts'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
+    score = db.Column(db.Float)  # Percentage score
+    total_questions = db.Column(db.Integer)
+    correct_answers = db.Column(db.Integer)
+    time_taken_minutes = db.Column(db.Integer)
+    passed = db.Column(db.Boolean, default=False)
+    attempt_number = db.Column(db.Integer, default=1)
+    started_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime)
+    
+    # Relationships
+    user = db.relationship('User', backref='quiz_attempts')
+    answers = db.relationship('QuizAnswer', backref='attempt', lazy=True)
+
+class QuizAnswer(db.Model):
+    """Individual answers for quiz attempts"""
+    __tablename__ = 'quiz_answers'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    attempt_id = db.Column(db.Integer, db.ForeignKey('quiz_attempts.id'), nullable=False)
+    question_id = db.Column(db.Integer, db.ForeignKey('quiz_questions.id'), nullable=False)
+    selected_option_id = db.Column(db.Integer, db.ForeignKey('quiz_options.id'))
+    answer_text = db.Column(db.Text)  # For short answer questions
+    is_correct = db.Column(db.Boolean, default=False)
+    points_earned = db.Column(db.Integer, default=0)
+    
+    # Relationships
+    question = db.relationship('QuizQuestion')
+    selected_option = db.relationship('QuizOption')
+
+class Certificate(db.Model):
+    """Digital certificates for completed modules"""
+    __tablename__ = 'certificates'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    module_id = db.Column(db.Integer, db.ForeignKey('training_module.id'), nullable=False)
+    certificate_code = db.Column(db.String(50), unique=True, nullable=False)
+    issued_date = db.Column(db.DateTime, default=datetime.utcnow)
+    expiry_date = db.Column(db.DateTime)  # Optional expiry
+    final_score = db.Column(db.Float)
+    verification_url = db.Column(db.String(200))
+    is_active = db.Column(db.Boolean, default=True)
+    
+    # Relationships
+    user = db.relationship('User', backref='certificates')
+    
+    def generate_certificate_code(self):
+        """Generate unique certificate code"""
+        import uuid
+        self.certificate_code = f"SAFESTEP-{uuid.uuid4().hex[:8].upper()}"
+        return self.certificate_code
+
+class ModuleRating(db.Model):
+    """User ratings and reviews for training modules"""
+    __tablename__ = 'module_ratings'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    module_id = db.Column(db.Integer, db.ForeignKey('training_module.id'), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)  # 1-5 stars
+    review_text = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='module_ratings')
+    
+    # Ensure one rating per user per module
+    __table_args__ = (db.UniqueConstraint('user_id', 'module_id', name='unique_user_module_rating'),)
+
+class LearningPath(db.Model):
+    """Structured learning paths for different caregiver roles"""
+    __tablename__ = 'learning_paths'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    target_audience = db.Column(db.String(100))  # 'new_caregiver', 'experienced', 'professional'
+    estimated_hours = db.Column(db.Integer)
+    difficulty_level = db.Column(db.String(20), default='beginner')
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    modules = db.relationship('LearningPathModule', backref='path', lazy=True)
+    enrollments = db.relationship('PathEnrollment', backref='path', lazy=True)
+
+class LearningPathModule(db.Model):
+    """Modules within a learning path with order"""
+    __tablename__ = 'learning_path_modules'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    path_id = db.Column(db.Integer, db.ForeignKey('learning_paths.id'), nullable=False)
+    module_id = db.Column(db.Integer, db.ForeignKey('training_module.id'), nullable=False)
+    order_index = db.Column(db.Integer, nullable=False)
+    is_required = db.Column(db.Boolean, default=True)
+    
+    # Relationships
+    module = db.relationship('TrainingModule')
+
+class PathEnrollment(db.Model):
+    """User enrollment in learning paths"""
+    __tablename__ = 'path_enrollments'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    path_id = db.Column(db.Integer, db.ForeignKey('learning_paths.id'), nullable=False)
+    enrolled_date = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_date = db.Column(db.DateTime)
+    progress_percentage = db.Column(db.Float, default=0.0)
+    is_active = db.Column(db.Boolean, default=True)
+    
+    # Relationships
+    user = db.relationship('User', backref='path_enrollments')
+
+class DiscussionForum(db.Model):
+    """Discussion forums for each training module"""
+    __tablename__ = 'discussion_forums'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    module_id = db.Column(db.Integer, db.ForeignKey('training_module.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    posts = db.relationship('ForumPost', backref='forum', lazy=True)
+
+class ForumPost(db.Model):
+    """Posts in discussion forums"""
+    __tablename__ = 'forum_posts'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    forum_id = db.Column(db.Integer, db.ForeignKey('discussion_forums.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    is_pinned = db.Column(db.Boolean, default=False)
+    is_locked = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='forum_posts')
+    replies = db.relationship('ForumReply', backref='post', lazy=True)
+
+class ForumReply(db.Model):
+    """Replies to forum posts"""
+    __tablename__ = 'forum_replies'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('forum_posts.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='forum_replies')
 
 
 @login_manager.user_loader
@@ -1274,7 +1500,178 @@ def training_modules():
 def module_detail(module_id):
     module = TrainingModule.query.get_or_404(module_id)
     progress = TrainingProgress.query.filter_by(user_id=current_user.id, module_id=module_id).first()
-    return render_template('caregiver/Ethan/module_detail.html', module=module, progress=progress)
+    
+    # Parse quiz questions if they exist
+    quiz_questions = []
+    if module.quiz_questions:
+        try:
+            import json
+            quiz_questions = json.loads(module.quiz_questions)
+        except:
+            quiz_questions = []
+    
+    return render_template('caregiver/Ethan/module_detail.html', 
+                         module=module, 
+                         progress=progress, 
+                         quiz_questions=quiz_questions)
+
+@app.route('/caregiver/training/<int:module_id>/start', methods=['POST'])
+@login_required
+def start_module(module_id):
+    module = TrainingModule.query.get_or_404(module_id)
+    
+    # Create or update progress
+    progress = TrainingProgress.query.filter_by(user_id=current_user.id, module_id=module_id).first()
+    if not progress:
+        progress = TrainingProgress(
+            user_id=current_user.id,
+            module_id=module_id,
+            completion_percentage=0,
+            status='in_progress'
+        )
+        db.session.add(progress)
+    else:
+        progress.status = 'in_progress'
+        progress.started_at = datetime.utcnow()
+    
+    db.session.commit()
+    return redirect(url_for('module_content', module_id=module_id))
+
+@app.route('/caregiver/training/<int:module_id>/content')
+@login_required
+def module_content(module_id):
+    module = TrainingModule.query.get_or_404(module_id)
+    progress = TrainingProgress.query.filter_by(user_id=current_user.id, module_id=module_id).first()
+    
+    # Parse learning objectives and content
+    learning_objectives = []
+    if module.learning_objectives:
+        try:
+            import json
+            learning_objectives = json.loads(module.learning_objectives)
+        except:
+            learning_objectives = []
+    
+    return render_template('caregiver/Ethan/module_content.html', 
+                         module=module, 
+                         progress=progress,
+                         learning_objectives=learning_objectives)
+
+@app.route('/caregiver/training/<int:module_id>/quiz')
+@login_required
+def module_quiz(module_id):
+    module = TrainingModule.query.get_or_404(module_id)
+    progress = TrainingProgress.query.filter_by(user_id=current_user.id, module_id=module_id).first()
+    
+    if not progress or progress.status != 'in_progress':
+        flash('Please start the module first before taking the quiz.', 'warning')
+        return redirect(url_for('module_detail', module_id=module_id))
+    
+    # Parse quiz questions
+    quiz_questions = []
+    if module.quiz_questions:
+        try:
+            import json
+            quiz_questions = json.loads(module.quiz_questions)
+        except:
+            quiz_questions = []
+    
+    return render_template('caregiver/Ethan/module_quiz.html', 
+                         module=module, 
+                         progress=progress,
+                         quiz_questions=quiz_questions)
+
+@app.route('/caregiver/training/<int:module_id>/submit_quiz', methods=['POST'])
+@login_required
+def submit_quiz(module_id):
+    module = TrainingModule.query.get_or_404(module_id)
+    progress = TrainingProgress.query.filter_by(user_id=current_user.id, module_id=module_id).first()
+    
+    if not progress:
+        flash('Progress not found.', 'error')
+        return redirect(url_for('module_detail', module_id=module_id))
+    
+    # Parse quiz questions and calculate score
+    quiz_questions = []
+    if module.quiz_questions:
+        try:
+            import json
+            quiz_questions = json.loads(module.quiz_questions)
+        except:
+            quiz_questions = []
+    
+    total_questions = len(quiz_questions)
+    correct_answers = 0
+    
+    for i, question in enumerate(quiz_questions):
+        user_answer = request.form.get(f'question_{i}')
+        if user_answer and int(user_answer) == question.get('correct'):
+            correct_answers += 1
+    
+    score = (correct_answers / total_questions * 100) if total_questions > 0 else 0
+    
+    # Update progress
+    progress.completion_percentage = 100
+    progress.quiz_score = score
+    progress.status = 'completed' if score >= 70 else 'failed'
+    progress.completed_at = datetime.utcnow()
+    
+    db.session.commit()
+    
+    if score >= 70:
+        flash(f'Congratulations! You passed with {score:.1f}%. Certificate generated!', 'success')
+        return redirect(url_for('generate_certificate', module_id=module_id))
+    else:
+        flash(f'You scored {score:.1f}%. You need 70% to pass. Please try again.', 'warning')
+        return redirect(url_for('module_quiz', module_id=module_id))
+
+@app.route('/caregiver/training/<int:module_id>/certificate')
+@login_required
+def generate_certificate(module_id):
+    module = TrainingModule.query.get_or_404(module_id)
+    progress = TrainingProgress.query.filter_by(user_id=current_user.id, module_id=module_id).first()
+    
+    if not progress or progress.status != 'completed':
+        flash('You must complete the module successfully to get a certificate.', 'warning')
+        return redirect(url_for('module_detail', module_id=module_id))
+    
+    # Check if certificate already exists
+    certificate = Certificate.query.filter_by(user_id=current_user.id, module_id=module_id).first()
+    
+    if not certificate:
+        # Generate unique certificate code
+        import uuid
+        certificate_code = f"SAFE-{uuid.uuid4().hex[:8].upper()}"
+        
+        certificate = Certificate(
+            user_id=current_user.id,
+            module_id=module_id,
+            certificate_code=certificate_code,
+            issued_date=datetime.utcnow(),
+            expiry_date=datetime.utcnow() + timedelta(days=365)  # 1 year validity
+        )
+        db.session.add(certificate)
+        db.session.commit()
+    
+    return render_template('caregiver/Ethan/certificate.html', 
+                         module=module, 
+                         progress=progress,
+                         certificate=certificate)
+
+@app.route('/caregiver/training/<int:module_id>/mark_video_complete', methods=['POST'])
+@login_required
+def mark_video_complete(module_id):
+    progress = TrainingProgress.query.filter_by(user_id=current_user.id, module_id=module_id).first()
+    
+    if progress:
+        # Mark video as watched and update progress
+        progress.video_watched = True
+        if progress.completion_percentage < 50:
+            progress.completion_percentage = 50  # Video completion is 50% of the module
+        db.session.commit()
+        return {'status': 'success', 'message': 'Video marked as complete'}
+    
+    return {'status': 'error', 'message': 'Progress not found'}, 404
 
 @app.route('/caregiver/predictions')
 @login_required
@@ -2298,8 +2695,22 @@ def get_risk_factors_radar():
 def get_response_time_chart():
     """Average response time per day over the selected range"""
     try:
-        from sqlalchemy import func
         date_range = request.args.get('dateRange', '30')
+        
+        # Try Supabase first
+        try:
+            from supabase_integration import get_response_time_supabase
+            
+            supabase_data = get_response_time_supabase(int(date_range))
+            
+            if supabase_data:
+                return jsonify(supabase_data)
+                
+        except Exception as e:
+            print(f"Supabase response time failed, falling back to SQLite: {e}")
+        
+        # Fallback to SQLite
+        from sqlalchemy import func
         days = int(date_range)
         end_date = datetime.utcnow()
         start_date = end_date - timedelta(days=days)
@@ -3723,6 +4134,260 @@ def create_incident():
         except Exception as e:
             db.session.rollback()
             return jsonify({'success': False, 'error': f'Database error: {str(e)}'}), 500
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/analytics/critical-alerts')
+@login_required
+@admin_required
+def get_critical_alerts():
+    """Get critical alerts for analytics dashboard"""
+    try:
+        # Try Supabase first
+        try:
+            from supabase_integration import get_supabase_client
+            supabase_client = get_supabase_client()
+            
+            if supabase_client:
+                # Get high-priority alerts from the last 24 hours
+                from datetime import datetime, timedelta
+                yesterday = (datetime.utcnow() - timedelta(days=1)).isoformat()
+                
+                # Query for critical incidents and medication alerts
+                incidents_response = supabase_client.table('incidents').select('*').gte('incident_date', yesterday).in_('severity', ['High', 'Critical']).execute()
+                
+                alerts = []
+                for incident in incidents_response.data:
+                    alerts.append({
+                        'patient_id': incident.get('patient_id'),
+                        'alert_type': incident.get('incident_type', 'incident'),
+                        'message': f"{incident.get('incident_type', 'Incident').title()} - {incident.get('severity', 'Unknown')} severity",
+                        'severity': incident.get('severity', 'medium').lower(),
+                        'timestamp': incident.get('incident_date')
+                    })
+                
+                # Get medication compliance alerts
+                pwids_response = supabase_client.table('pwids').select('*').in_('risk_status', ['High', 'Critical']).execute()
+                
+                for pwid in pwids_response.data:
+                    if pwid.get('risk_status') in ['High', 'Critical']:
+                        alerts.append({
+                            'patient_id': pwid.get('pwid'),
+                            'alert_type': 'medication',
+                            'message': f"High risk patient - {pwid.get('risk_status', 'Unknown')} risk level",
+                            'severity': 'high' if pwid.get('risk_status') == 'High' else 'critical',
+                            'timestamp': pwid.get('updated_at')
+                        })
+                
+                return jsonify({
+                    'success': True,
+                    'alerts': alerts[:10]  # Limit to 10 most recent
+                })
+                
+        except Exception as e:
+            print(f"Supabase critical alerts failed: {e}")
+        
+        # Fallback to sample data
+        return jsonify({
+            'success': True,
+            'alerts': [
+                {
+                    'patient_id': 'P001',
+                    'alert_type': 'medication',
+                    'message': 'Missed medication dose',
+                    'severity': 'high',
+                    'timestamp': datetime.utcnow().isoformat()
+                },
+                {
+                    'patient_id': 'P003',
+                    'alert_type': 'seizure',
+                    'message': 'High seizure risk detected',
+                    'severity': 'critical',
+                    'timestamp': datetime.utcnow().isoformat()
+                }
+            ]
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/risk-monitoring')
+@login_required
+@admin_required
+def get_risk_monitoring():
+    """Get risk monitoring data for analytics dashboard"""
+    try:
+        # Try Supabase first
+        try:
+            from supabase_integration import get_supabase_client
+            supabase_client = get_supabase_client()
+            
+            if supabase_client:
+                # Get PWIDs with risk assessments
+                pwids_response = supabase_client.table('pwids').select('*').execute()
+                
+                patients = []
+                for pwid in pwids_response.data:
+                    # Get latest incident for this patient
+                    incidents_response = supabase_client.table('incidents').select('*').eq('patient_id', pwid.get('pwid')).order('incident_date', desc=True).limit(1).execute()
+                    
+                    last_incident = incidents_response.data[0] if incidents_response.data else None
+                    
+                    # Calculate days since last seizure
+                    days_since_seizure = 0
+                    if last_incident and last_incident.get('incident_type') == 'seizure':
+                        incident_date = datetime.fromisoformat(last_incident['incident_date'].replace('Z', '+00:00'))
+                        days_since_seizure = (datetime.utcnow() - incident_date.replace(tzinfo=None)).days
+                    
+                    patients.append({
+                        'patient_id': pwid.get('pwid'),
+                        'last_assessment': pwid.get('updated_at', datetime.utcnow().isoformat()),
+                        'risk_level': pwid.get('risk_status', 'Low'),
+                        'alert_type': 'medication' if pwid.get('risk_status') in ['High', 'Critical'] else 'none',
+                        'last_medication': pwid.get('updated_at', datetime.utcnow().isoformat()),
+                        'days_since_seizure': days_since_seizure
+                    })
+                
+                return jsonify({
+                    'success': True,
+                    'patients': patients
+                })
+                
+        except Exception as e:
+            print(f"Supabase risk monitoring failed: {e}")
+        
+        # Fallback to sample data
+        return jsonify({
+            'success': True,
+            'patients': [
+                {
+                    'patient_id': 'P001',
+                    'last_assessment': '2024-01-15',
+                    'risk_level': 'High',
+                    'alert_type': 'medication',
+                    'last_medication': '2024-01-14 08:00',
+                    'days_since_seizure': 12
+                },
+                {
+                    'patient_id': 'P003',
+                    'last_assessment': '2024-01-15',
+                    'risk_level': 'Critical',
+                    'alert_type': 'seizure',
+                    'last_medication': '2024-01-15 07:30',
+                    'days_since_seizure': 2
+                }
+            ]
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/analytics/medication-compliance')
+@login_required
+@admin_required
+def get_medication_compliance():
+    """Get medication compliance data for analytics dashboard"""
+    try:
+        # Get filter parameters
+        date_range = request.args.get('dateRange', '30')
+        pwid_filter = request.args.get('pwidFilter', '')
+        location_filter = request.args.get('locationFilter', '')
+        
+        # Try Supabase first
+        try:
+            from supabase_integration import get_supabase_client
+            supabase_client = get_supabase_client()
+            
+            if supabase_client:
+                # Get PWIDs with medication compliance data
+                pwids_response = supabase_client.table('pwids').select('*').execute()
+                
+                compliance_counts = {'excellent': 0, 'good': 0, 'fair': 0, 'poor': 0}
+                
+                for pwid in pwids_response.data:
+                    compliance = pwid.get('medication_compliance', 'fair').lower()
+                    if compliance in compliance_counts:
+                        compliance_counts[compliance] += 1
+                    else:
+                        compliance_counts['fair'] += 1
+                
+                labels = ['Excellent', 'Good', 'Fair', 'Poor']
+                data = [compliance_counts['excellent'], compliance_counts['good'], 
+                       compliance_counts['fair'], compliance_counts['poor']]
+                
+                return jsonify({
+                    'success': True,
+                    'labels': labels,
+                    'datasets': [{
+                        'label': 'Medication Compliance',
+                        'data': data,
+                        'backgroundColor': [
+                            '#4CAF50',  # Green for excellent
+                            '#8BC34A',  # Light green for good
+                            '#FF9800',  # Orange for fair
+                            '#F44336'   # Red for poor
+                        ],
+                        'borderWidth': 2
+                    }]
+                })
+                
+        except Exception as e:
+            print(f"Supabase medication compliance failed: {e}")
+        
+        # Fallback to SQLite
+        try:
+            # Get compliance data from PwidProfile
+            patients = PwidProfile.query.all()
+            
+            compliance_counts = {'excellent': 0, 'good': 0, 'fair': 0, 'poor': 0}
+            
+            for patient in patients:
+                compliance = getattr(patient, 'medication_compliance', 'fair')
+                if compliance and compliance.lower() in compliance_counts:
+                    compliance_counts[compliance.lower()] += 1
+                else:
+                    compliance_counts['fair'] += 1
+            
+            labels = ['Excellent', 'Good', 'Fair', 'Poor']
+            data = [compliance_counts['excellent'], compliance_counts['good'], 
+                   compliance_counts['fair'], compliance_counts['poor']]
+            
+            return jsonify({
+                'success': True,
+                'labels': labels,
+                'datasets': [{
+                    'label': 'Medication Compliance',
+                    'data': data,
+                    'backgroundColor': [
+                        '#4CAF50',  # Green for excellent
+                        '#8BC34A',  # Light green for good
+                        '#FF9800',  # Orange for fair
+                        '#F44336'   # Red for poor
+                    ],
+                    'borderWidth': 2
+                }]
+            })
+            
+        except Exception as e:
+            print(f"SQLite medication compliance failed: {e}")
+            
+        # Fallback to sample data
+        return jsonify({
+            'success': True,
+            'labels': ['Excellent', 'Good', 'Fair', 'Poor'],
+            'datasets': [{
+                'label': 'Medication Compliance',
+                'data': [25, 35, 20, 10],
+                'backgroundColor': [
+                    '#4CAF50',  # Green for excellent
+                    '#8BC34A',  # Light green for good
+                    '#FF9800',  # Orange for fair
+                    '#F44336'   # Red for poor
+                ],
+                'borderWidth': 2
+            }]
+        })
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500

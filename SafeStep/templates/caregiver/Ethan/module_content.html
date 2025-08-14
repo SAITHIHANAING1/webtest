@@ -1,2 +1,280 @@
+{% extends "base.html" %}
 
+{% block title %}{{ module.title }} - Training Content{% endblock %}
 
+{% block extra_css %}
+<style>
+    .content-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .module-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .progress-bar-container {
+        background: rgba(255,255,255,0.2);
+        border-radius: 10px;
+        padding: 10px;
+        margin-top: 15px;
+    }
+    
+    .video-container {
+        position: relative;
+        width: 100%;
+        height: 0;
+        padding-bottom: 56.25%; /* 16:9 aspect ratio */
+        margin-bottom: 2rem;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    
+    .video-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+    
+    .content-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    .objectives-list {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .objectives-list li {
+        background: #f8f9fa;
+        margin: 10px 0;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 4px solid #667eea;
+        transition: all 0.3s ease;
+    }
+    
+    .objectives-list li:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .content-text {
+        line-height: 1.8;
+        font-size: 1.1rem;
+        color: #333;
+    }
+    
+    .content-text h3 {
+        color: #667eea;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .content-text h4 {
+        color: #764ba2;
+        margin-top: 1.5rem;
+        margin-bottom: 0.8rem;
+    }
+    
+    .action-buttons {
+        text-align: center;
+        margin-top: 3rem;
+    }
+    
+    .btn-quiz {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        border: none;
+        padding: 15px 30px;
+        font-size: 1.2rem;
+        border-radius: 50px;
+        color: white;
+        transition: all 0.3s ease;
+        margin: 0 10px;
+    }
+    
+    .btn-quiz:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(40, 167, 69, 0.3);
+        color: white;
+    }
+    
+    .completion-badge {
+        display: inline-block;
+        background: #28a745;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        margin-left: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-container">
+    <!-- Module Header -->
+    <div class="module-header">
+        <h1>{{ module.title }}</h1>
+        <p class="lead">{{ module.description }}</p>
+        <div class="progress-bar-container">
+            <div class="d-flex justify-content-between align-items-center">
+                <span>Progress:</span>
+                <span>{{ progress.completion_percentage if progress else 0 }}%</span>
+            </div>
+            <div class="progress mt-2">
+                <div class="progress-bar bg-success" id="progress-bar"></div>
+            </div>
+            <script>
+                document.getElementById('progress-bar').style.width = '{% if progress %}{{ progress.completion_percentage }}{% else %}0{% endif %}%';
+            </script>
+        </div>
+    </div>
+    
+    <!-- Video Section -->
+    {% if module.video_url %}
+    <div class="content-section">
+        <h2><i class="fas fa-play-circle text-primary"></i> Training Video</h2>
+        <div class="video-container">
+            {% if 'youtube.com' in module.video_url or 'youtu.be' in module.video_url %}
+                {% set video_id = module.video_url.split('/')[-1].split('?')[0] %}
+                {% if 'watch?v=' in module.video_url %}
+                    {% set video_id = module.video_url.split('watch?v=')[1].split('&')[0] %}
+                {% endif %}
+                <iframe src="https://www.youtube.com/embed/{{ video_id }}" 
+                        allowfullscreen></iframe>
+            {% else %}
+                <video controls style="width: 100%; height: 100%;">
+                    <source src="{{ module.video_url }}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Learning Objectives -->
+    {% if learning_objectives %}
+    <div class="content-section">
+        <h2><i class="fas fa-bullseye text-success"></i> Learning Objectives</h2>
+        <p>By the end of this module, you will be able to:</p>
+        <ul class="objectives-list">
+            {% for objective in learning_objectives %}
+            <li><i class="fas fa-check-circle text-success me-2"></i>{{ objective }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    
+    <!-- Module Content -->
+    <div class="content-section">
+        <h2><i class="fas fa-book-open text-info"></i> Training Content</h2>
+        <div class="content-text">
+            {{ module.content | safe }}
+        </div>
+    </div>
+    
+    <!-- Module Information -->
+    <div class="content-section">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="text-center">
+                    <i class="fas fa-clock fa-2x text-primary mb-2"></i>
+                    <h5>Duration</h5>
+                    <p>{{ module.duration_minutes }} minutes</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <i class="fas fa-signal fa-2x text-warning mb-2"></i>
+                    <h5>Difficulty</h5>
+                    <p>{{ module.difficulty_level | title }}</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <i class="fas fa-tag fa-2x text-info mb-2"></i>
+                    <h5>Category</h5>
+                    <p>{{ module.category | title }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        {% if progress and progress.status == 'completed' %}
+            <span class="completion-badge">
+                <i class="fas fa-check-circle"></i> Completed
+            </span>
+            <a href="{{ url_for('generate_certificate', module_id=module.id) }}" 
+               class="btn btn-success btn-lg">
+                <i class="fas fa-certificate me-2"></i>View Certificate
+            </a>
+        {% else %}
+            <a href="{{ url_for('module_quiz', module_id=module.id) }}" 
+               class="btn btn-quiz btn-lg">
+                <i class="fas fa-question-circle me-2"></i>Take Quiz
+            </a>
+        {% endif %}
+        
+        <a href="{{ url_for('training_modules') }}" 
+           class="btn btn-outline-secondary btn-lg">
+            <i class="fas fa-arrow-left me-2"></i>Back to Modules
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-mark video as watched when it ends
+document.addEventListener('DOMContentLoaded', function() {
+    const video = document.querySelector('video');
+    const iframe = document.querySelector('iframe');
+    
+    if (video) {
+        video.addEventListener('ended', function() {
+            // Mark video as completed
+            fetch(`/caregiver/training/{{ module.id }}/mark_video_complete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                }
+            });
+        });
+    }
+});
+
+// Helper to get CSRF token from cookies
+function getCSRFToken() {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, 10) === ('csrftoken=')) {
+                cookieValue = decodeURIComponent(cookie.substring(10));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

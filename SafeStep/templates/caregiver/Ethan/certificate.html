@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block title %}Certificate - {{ module.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .certificate-container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 20px;
+    }
+    
+    .certificate {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        border: 8px solid #ffd700;
+        border-image: linear-gradient(45deg, #ffd700, #ffed4e, #ffd700) 1;
+        border-radius: 20px;
+        padding: 3rem;
+        text-align: center;
+        position: relative;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .certificate::before {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        right: 20px;
+        bottom: 20px;
+        border: 2px solid #ffd700;
+        border-radius: 15px;
+        pointer-events: none;
+    }
+    
+    .certificate-header {
+        margin-bottom: 2rem;
+    }
+    
+    .certificate-title {
+        font-size: 3rem;
+        font-weight: 900;
+        color: #2c3e50;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 0.5rem;
+        font-family: 'Georgia', serif;
+    }
+    
+    .certificate-subtitle {
+        font-size: 1.3rem;
+        color: #7f8c8d;
+        font-style: italic;
+    }
+    
+    .recipient-section {
+        margin: 3rem 0;
+    }
+    
+    .recipient-text {
+        font-size: 1.2rem;
+        color: #34495e;
+        margin-bottom: 1rem;
+    }
+    
+    .recipient-name {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #2c3e50;
+        border-bottom: 3px solid #3498db;
+        display: inline-block;
+        padding-bottom: 10px;
+        margin: 1rem 0;
+    }
+    
+    .completion-text {
+        font-size: 1.1rem;
+        color: #34495e;
+        line-height: 1.6;
+        margin: 2rem 0;
+    }
+    
+    .module-title {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #e74c3c;
+        margin: 1rem 0;
+    }
+    
+    .certificate-details {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 3rem;
+        flex-wrap: wrap;
+    }
+    
+    .detail-item {
+        text-align: center;
+        margin: 1rem;
+    }
+    
+    .detail-label {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .detail-value {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #2c3e50;
+        margin-top: 5px;
+    }
+    
+    .certificate-code {
+        background: #3498db;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 25px;
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        letter-spacing: 2px;
+    }
+    
+    .signature-section {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 3rem;
+        flex-wrap: wrap;
+    }
+    
+    .signature {
+        text-align: center;
+        margin: 1rem;
+    }
+    
+    .signature-line {
+        width: 200px;
+        height: 2px;
+        background: #34495e;
+        margin: 0 auto 10px;
+    }
+    
+    .signature-title {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+        font-weight: bold;
+    }
+    
+    .actions-section {
+        text-align: center;
+        margin-top: 2rem;
+    }
+    
+    .btn-download {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        border: none;
+        padding: 15px 30px;
+        font-size: 1.1rem;
+        border-radius: 50px;
+        color: white;
+        transition: all 0.3s ease;
+        margin: 0 10px;
+    }
+    
+    .btn-download:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(52, 152, 219, 0.3);
+        color: white;
+    }
+    
+    .achievement-badge {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        background: #e74c3c;
+        color: white;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+    }
+    
+    @media print {
+        .actions-section {
+            display: none;
+        }
+        
+        .certificate-container {
+            margin: 0;
+            padding: 0;
+        }
+        
+        .certificate {
+            box-shadow: none;
+            border: 4px solid #000;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .certificate {
+            padding: 2rem 1rem;
+        }
+        
+        .certificate-title {
+            font-size: 2rem;
+        }
+        
+        .recipient-name {
+            font-size: 1.8rem;
+        }
+        
+        .certificate-details {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="certificate-container">
+    <!-- Certificate -->
+    <div class="certificate" id="certificate">
+        <div class="achievement-badge">
+            <i class="fas fa-medal"></i>
+        </div>
+        
+        <div class="certificate-header">
+            <div class="certificate-title">CERTIFICATE</div>
+            <div class="certificate-subtitle">of Completion</div>
+        </div>
+        
+        <div class="recipient-section">
+            <div class="recipient-text">This is to certify that</div>
+            <div class="recipient-name">{{ current_user.first_name }} {{ current_user.last_name }}</div>
+            
+            <div class="completion-text">
+                has successfully completed the training module
+            </div>
+            
+            <div class="module-title">{{ module.title }}</div>
+            
+            <div class="completion-text">
+                and has demonstrated proficiency in epilepsy caregiving knowledge
+                with a score of <strong>{{ "%.1f"|format(progress.quiz_score) }}%</strong>
+            </div>
+        </div>
+        
+        <div class="certificate-details">
+            <div class="detail-item">
+                <div class="detail-label">Issue Date</div>
+                <div class="detail-value">{{ certificate.issued_date.strftime('%B %d, %Y') }}</div>
+            </div>
+            
+            <div class="detail-item">
+                <div class="detail-label">Certificate ID</div>
+                <div class="detail-value certificate-code">{{ certificate.certificate_code }}</div>
+            </div>
+            
+            <div class="detail-item">
+                <div class="detail-label">Valid Until</div>
+                <div class="detail-value">{{ certificate.expiry_date.strftime('%B %d, %Y') }}</div>
+            </div>
+        </div>
+        
+        <div class="signature-section">
+            <div class="signature">
+                <div class="signature-line"></div>
+                <div class="signature-title">SafeStep Training Director</div>
+            </div>
+            
+            <div class="signature">
+                <div class="signature-line"></div>
+                <div class="signature-title">Medical Advisor</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Actions -->
+    <div class="actions-section">
+        <button onclick="downloadCertificate()" class="btn btn-download">
+            <i class="fas fa-download me-2"></i>Download PDF
+        </button>
+        
+        <button onclick="printCertificate()" class="btn btn-download">
+            <i class="fas fa-print me-2"></i>Print Certificate
+        </button>
+        
+        <a href="{{ url_for('training_modules') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Training
+        </a>
+    </div>
+    
+    <!-- Certificate Verification -->
+    <div class="mt-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Certificate Verification</h5>
+            </div>
+            <div class="card-body">
+                <p>This certificate can be verified using the certificate ID: <strong>{{ certificate.certificate_code }}</strong></p>
+                <p class="mb-0">For verification inquiries, contact SafeStep Training at verify@safestep.com</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+function downloadCertificate() {
+    const element = document.getElementById('certificate');
+    const opt = {
+        margin: 0.5,
+        filename: `SafeStep_Certificate_${new Date().getTime()}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+    };
+    
+    // Show loading
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating PDF...';
+    btn.disabled = true;
+    
+    html2pdf().set(opt).from(element).save().then(() => {
+        // Restore button
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+function printCertificate() {
+    window.print();
+}
+
+// Add some animation when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const certificate = document.getElementById('certificate');
+    certificate.style.opacity = '0';
+    certificate.style.transform = 'scale(0.9)';
+    certificate.style.transition = 'all 0.5s ease';
+    
+    setTimeout(() => {
+        certificate.style.opacity = '1';
+        certificate.style.transform = 'scale(1)';
+    }, 100);
+});
+</script>
+{% endblock %}

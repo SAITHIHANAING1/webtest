@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz: {{ module.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .quiz-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .quiz-header {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .question-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        border-left: 5px solid #ff6b6b;
+    }
+    
+    .question-number {
+        background: #ff6b6b;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-bottom: 1rem;
+    }
+    
+    .question-text {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: #333;
+    }
+    
+    .option-container {
+        margin-bottom: 1rem;
+    }
+    
+    .option-label {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .option-label:hover {
+        background: #e9ecef;
+        transform: translateX(5px);
+    }
+    
+    .option-label input[type="radio"] {
+        margin-right: 15px;
+        transform: scale(1.2);
+    }
+    
+    .option-label input[type="radio"]:checked + .option-text {
+        font-weight: bold;
+        color: #ff6b6b;
+    }
+    
+    .option-label:has(input[type="radio"]:checked) {
+        background: #fff5f5;
+        border-color: #ff6b6b;
+    }
+    
+    .quiz-progress {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .submit-section {
+        text-align: center;
+        margin-top: 3rem;
+        padding: 2rem;
+        background: #f8f9fa;
+        border-radius: 15px;
+    }
+    
+    .btn-submit-quiz {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        border: none;
+        padding: 15px 40px;
+        font-size: 1.3rem;
+        border-radius: 50px;
+        color: white;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-submit-quiz:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(40, 167, 69, 0.3);
+        color: white;
+    }
+    
+    .quiz-instructions {
+        background: #e3f2fd;
+        border-left: 4px solid #2196f3;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
+    
+    .timer-display {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        margin-bottom: 2rem;
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="quiz-container">
+    <!-- Quiz Header -->
+    <div class="quiz-header">
+        <h1><i class="fas fa-question-circle"></i> Quiz Assessment</h1>
+        <h2>{{ module.title }}</h2>
+        <p class="lead">Test your knowledge and earn your certificate!</p>
+    </div>
+    
+    <!-- Quiz Instructions -->
+    <div class="quiz-instructions">
+        <h5><i class="fas fa-info-circle text-primary"></i> Instructions</h5>
+        <ul class="mb-0">
+            <li>Answer all questions to complete the quiz</li>
+            <li>You need 70% or higher to pass and earn your certificate</li>
+            <li>Take your time and read each question carefully</li>
+            <li>You can retake the quiz if needed</li>
+        </ul>
+    </div>
+    
+    <!-- Quiz Progress -->
+    <div class="quiz-progress">
+        <div class="d-flex justify-content-between align-items-center">
+            <span><strong>Progress:</strong></span>
+            <span id="progress-text">0 of {{ quiz_questions|length }} questions</span>
+        </div>
+        <div class="progress mt-2">
+            <div class="progress-bar bg-info" id="progress-bar" style="width: 0%"></div>
+        </div>
+    </div>
+    
+    <!-- Hidden data for JavaScript -->
+    <div id="quiz-data" data-total-questions="{% if quiz_questions %}{{ quiz_questions|length }}{% else %}0{% endif %}" style="display: none;"></div>
+    
+    <!-- Timer (Optional) -->
+    <div class="timer-display" id="timer" style="display: none;">
+        <i class="fas fa-clock"></i> Time Remaining: <span id="time-left">30:00</span>
+    </div>
+    
+    <!-- Quiz Form -->
+    <form method="POST" action="{{ url_for('submit_quiz', module_id=module.id) }}" id="quiz-form">
+        {% for question in quiz_questions %}
+        <div class="question-card">
+            <div class="question-number">{{ loop.index }}</div>
+            <div class="question-text">{{ question.question }}</div>
+            
+            {% for option in question.options %}
+            <div class="option-container">
+                <label class="option-label">
+                    <input type="radio" 
+                           name="question_{{ loop.index0 }}" 
+                           value="{{ option }}" 
+                           onchange="updateProgress()">
+                    <span class="option-text">{{ option }}</span>
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+        
+        <!-- Submit Section -->
+        <div class="submit-section">
+            <div class="alert alert-warning" id="incomplete-warning" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                Please answer all questions before submitting.
+            </div>
+            
+            <button type="submit" class="btn btn-submit-quiz" id="submit-btn" disabled>
+                <i class="fas fa-paper-plane me-2"></i>Submit Quiz
+            </button>
+            
+            <div class="mt-3">
+                <a href="{{ url_for('module_content', module_id=module.id) }}" 
+                   class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Content
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Get total questions count from template
+let totalQuestions = parseInt(document.querySelector('#quiz-data').dataset.totalQuestions) || 0;
+let answeredQuestions = 0;
+
+function updateProgress() {
+    // Count answered questions
+    answeredQuestions = 0;
+    for (let i = 0; i < totalQuestions; i++) {
+        const radios = document.getElementsByName(`question_${i}`);
+        for (let radio of radios) {
+            if (radio.checked) {
+                answeredQuestions++;
+                break;
+            }
+        }
+    }
+    
+    // Update progress bar
+    const progressPercent = (answeredQuestions / totalQuestions) * 100;
+    document.getElementById('progress-bar').style.width = progressPercent + '%';
+    document.getElementById('progress-text').textContent = `${answeredQuestions} of ${totalQuestions} questions`;
+    
+    // Enable submit button if all questions answered
+    const submitBtn = document.getElementById('submit-btn');
+    if (answeredQuestions === totalQuestions) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('btn-secondary');
+        submitBtn.classList.add('btn-submit-quiz');
+    } else {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('btn-secondary');
+        submitBtn.classList.remove('btn-submit-quiz');
+    }
+}
+
+// Form submission validation
+document.getElementById('quiz-form').addEventListener('submit', function(e) {
+    if (answeredQuestions < totalQuestions) {
+        e.preventDefault();
+        document.getElementById('incomplete-warning').style.display = 'block';
+        document.getElementById('incomplete-warning').scrollIntoView({ behavior: 'smooth' });
+        return false;
+    }
+    
+    // Show loading state
+    const submitBtn = document.getElementById('submit-btn');
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+    submitBtn.disabled = true;
+});
+
+// Optional: Add timer functionality
+function startTimer(minutes = 30) {
+    const timerDisplay = document.getElementById('timer');
+    const timeLeft = document.getElementById('time-left');
+    
+    if (minutes > 0) {
+        timerDisplay.style.display = 'block';
+        
+        let totalSeconds = minutes * 60;
+        
+        const timer = setInterval(function() {
+            const mins = Math.floor(totalSeconds / 60);
+            const secs = totalSeconds % 60;
+            
+            timeLeft.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            
+            if (totalSeconds <= 0) {
+                clearInterval(timer);
+                alert('Time is up! Submitting quiz automatically.');
+                document.getElementById('quiz-form').submit();
+            }
+            
+            totalSeconds--;
+        }, 1000);
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    updateProgress();
+    // Uncomment to enable 30-minute timer
+    // startTimer(30);
+});
+</script>
+{% endblock %}
