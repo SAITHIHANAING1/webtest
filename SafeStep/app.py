@@ -54,64 +54,21 @@ except ImportError:
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(16))
 
-# Database configuration - Smart fallback system
-use_sqlite = os.environ.get('USE_SQLITE', 'false').lower() == 'true'
+# Database configuration - Optimized for Supabase
 database_url = os.environ.get('DATABASE_URL')
+use_sqlite_override = os.environ.get('USE_SQLITE', 'false').lower() == 'true'
+
 print(f"🔍 DATABASE_URL from environment: {database_url}")
 print(f"🔍 supabase_available: {supabase_available}")
-print(f"🔍 USE_SQLITE flag: {use_sqlite}")
+print(f"🔍 USE_SQLITE override: {use_sqlite_override}")
 
-# Database selection logic  
-if use_sqlite and not os.environ.get('FORCE_POSTGRES'):
-    # Force SQLite if explicitly requested
-    # Try multiple paths for Railway/container environments
-    sqlite_paths = [
-        '/app/data/safestep.db',  # Writable data directory
-        '/app/instance/safestep.db',  # Instance directory
-        '/tmp/safestep.db',  # Temporary directory (always writable)
-        'safestep.db'  # Current directory fallback
-    ]
+# Prioritize Supabase PostgreSQL for production
+if database_url and database_url.startswith('postgresql://') and not use_sqlite_override:
+    # Use Supabase PostgreSQL
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    print("🔗 Using Supabase PostgreSQL database")
     
-    sqlite_db_path = None
-    for path in sqlite_paths:
-        try:
-            # Test if we can create the directory and file
-            if '/' in path:
-                os.makedirs(os.path.dirname(path), exist_ok=True)
-            # Test write permissions
-            test_path = path + '.test'
-            with open(test_path, 'w') as f:
-                f.write('test')
-            os.remove(test_path)
-            sqlite_db_path = path
-            break
-        except (OSError, PermissionError):
-            continue
-    
-    if sqlite_db_path:
-        app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{sqlite_db_path}'
-        print(f"🔗 Using SQLite database at: {sqlite_db_path}")
-    else:
-        # Last resort - in-memory database
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-        print("🔗 Using SQLite in-memory database (fallback)")
-    
-    # Ensure directory exists for non-memory databases
-    if sqlite_db_path and '/' in sqlite_db_path:
-        os.makedirs(os.path.dirname(sqlite_db_path), exist_ok=True)
-elif database_url and database_url.startswith('postgresql://'):
-    # Try PostgreSQL/Supabase first
-    # Auto-fix common connection issues
-    if ':5432/' in database_url and 'supabase.co' in database_url:
-        # Use connection pooling port for Supabase
-        database_url_pooled = database_url.replace(':5432/', ':6543/')
-        app.config['SQLALCHEMY_DATABASE_URI'] = database_url_pooled
-        print("🔗 Using Supabase PostgreSQL database (connection pooled port 6543)")
-    else:
-        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-        print("🔗 Using PostgreSQL database")
-    
-    # Add connection timeout and retry settings
+    # Optimized connection settings for Supabase
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         'pool_timeout': 10,
         'pool_recycle': 300,
@@ -121,10 +78,15 @@ elif database_url and database_url.startswith('postgresql://'):
             'options': '-c statement_timeout=30000'
         }
     }
-else:
-    # Fallback to SQLite
+elif use_sqlite_override:
+    # SQLite fallback for development/testing
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/safestep.db'
-    print("🔗 Using SQLite database (fallback - no DATABASE_URL)")
+    print("🔗 Using SQLite database (development override)")
+    os.makedirs('instance', exist_ok=True)
+else:
+    # Emergency fallback
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/safestep.db'
+    print("🔗 Using SQLite database (fallback - no valid DATABASE_URL)")
     os.makedirs('instance', exist_ok=True)
     
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
