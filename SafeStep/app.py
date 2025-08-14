@@ -61,8 +61,8 @@ print(f"🔍 DATABASE_URL from environment: {database_url}")
 print(f"🔍 supabase_available: {supabase_available}")
 print(f"🔍 USE_SQLITE flag: {use_sqlite}")
 
-# Database selection logic
-if use_sqlite:
+# Database selection logic  
+if use_sqlite and not os.environ.get('FORCE_POSTGRES'):
     # Force SQLite if explicitly requested
     # Try multiple paths for Railway/container environments
     sqlite_paths = [
