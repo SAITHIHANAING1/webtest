@@ -54,23 +54,45 @@ except ImportError:
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(16))
 
-# Database configuration - PostgreSQL preferred, SQLite fallback
+# Database configuration - Smart fallback system
+use_sqlite = os.environ.get('USE_SQLITE', 'false').lower() == 'true'
 database_url = os.environ.get('DATABASE_URL')
 print(f"🔍 DATABASE_URL from environment: {database_url}")
 print(f"🔍 supabase_available: {supabase_available}")
+print(f"🔍 USE_SQLITE flag: {use_sqlite}")
 
-# Use PostgreSQL if available, otherwise fallback to SQLite
-if database_url and supabase_available:
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    print("🔗 Using Supabase PostgreSQL database")
+# Database selection logic
+if use_sqlite:
+    # Force SQLite if explicitly requested
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/safestep.db'
+    print("🔗 Using SQLite database (forced by USE_SQLITE flag)")
+    os.makedirs('instance', exist_ok=True)
 elif database_url and database_url.startswith('postgresql://'):
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    print("🔗 Using PostgreSQL database (without Supabase SDK)")
+    # Try PostgreSQL/Supabase first
+    # Auto-fix common connection issues
+    if ':5432/' in database_url and 'supabase.co' in database_url:
+        # Use connection pooling port for Supabase
+        database_url_pooled = database_url.replace(':5432/', ':6543/')
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url_pooled
+        print("🔗 Using Supabase PostgreSQL database (connection pooled port 6543)")
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+        print("🔗 Using PostgreSQL database")
+    
+    # Add connection timeout and retry settings
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_timeout': 10,
+        'pool_recycle': 300,
+        'pool_pre_ping': True,
+        'connect_args': {
+            'connect_timeout': 10,
+            'options': '-c statement_timeout=30000'
+        }
+    }
 else:
     # Fallback to SQLite
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/safestep.db'
-    print("🔗 Using SQLite database (fallback)")
-    # Create instance directory if it doesn't exist
+    print("🔗 Using SQLite database (fallback - no DATABASE_URL)")
     os.makedirs('instance', exist_ok=True)
     
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

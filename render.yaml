@@ -16,3 +16,17 @@ services:
         value: "true"
       - key: PORT
         value: "8080"
+      # Supabase Database Configuration
+      - key: DATABASE_URL
+        sync: false   # set in Render dashboard - use port 6543 for connection pooling
+      - key: SUPABASE_URL
+        sync: false   # set in Render dashboard
+      - key: SUPABASE_ANON_KEY
+        sync: false   # set in Render dashboard
+      - key: SUPABASE_KEY
+        sync: false   # set in Render dashboard
+      # Optional: AI Chatbot
+      - key: GEMINI_API_KEY
+        sync: false   # set in Render dashboard
+      - key: GEMINI_MODEL
+        value: "gemini-1.5-pro"
