@@ -114,19 +114,14 @@ A comprehensive web application for epilepsy management, featuring real-time ana
 - timestamps
 ```
 
-## 🚀 Quick Start
+## 🚀 Quick Start Guide
 
-### Option 1: Automated Setup (Recommended)
-```bash
-# Clone the repository
-git clone <repository-url>
-cd SafeStep
+### Prerequisites
+- Python 3.8 or higher
+- Git
+- Internet connection (for Supabase integration)
 
-# Run the automated setup script
-python setup.py
-```
-
-### Option 2: Manual Setup
+### Step 1: Clone and Setup
 ```bash
 # Clone the repository
 git clone <repository-url>
@@ -134,85 +129,109 @@ cd SafeStep
 
 # Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Activate virtual environment
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
+```
 
+### Step 2: Environment Configuration
+Create a `.env` file in the SafeStep directory with the following content:
+```env
+# Supabase Configuration (Required for full functionality)
+SUPABASE_URL=https://hduukqxhrebuifafooxv.supabase.co
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkdXVrcXhocmVidWlmYWZvb3h2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwNjA4NjAsImV4cCI6MjA2OTYzNjg2MH0.IBG_hPMoeM0_TAfhhZseiug0wI_o7_rTsIeGMWvy8o8
+
+# Flask Configuration
+SECRET_KEY=your-secret-key-here
+FLASK_ENV=development
+
+# Optional: Email Configuration
+MAIL_SERVER=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USE_TLS=true
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+
+# Security
+SESSION_COOKIE_SECURE=false
+
+# AI Configuration
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+
+### Step 3: Database Setup
+The application uses Supabase as the primary database with SQLite fallback:
+
+```bash
 # Run database migration (IMPORTANT!)
 python migrate_db.py
 ```
 
-### Database Migration (IMPORTANT!)
-After cloning the repository, you MUST run the database migration to fix schema issues:
-
-```bash
-# Run the database migration script
-python migrate_db.py
-```
-
 This script will:
-- Add missing database columns (like `patient_id` in `seizure_session` table)
+- Add missing database columns
 - Fix demo user password hashes
 - Create missing demo users if needed
+- Set up proper database schema
 
-### Environment Configuration
-Create a `config.env` file in the SafeStep directory:
-```env
-SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_KEY=your_supabase_service_key
-FLASK_SECRET_KEY=your_secret_key
-DATABASE_URL=your_database_url_if_using_postgresql
-```
-
-### Database Setup
-1. **Option A (Recommended)**: Create a Supabase project
-   - Execute the SQL schema in Supabase SQL Editor
-   - Populate with sample data using the provided SQL scripts
-   
-2. **Option B**: Use local SQLite (for development)
-   - The app will automatically create a local SQLite database
-   - Run the migration script to ensure proper schema
-
-### Run the Application
+### Step 4: Run the Application
 ```bash
+# Start the Flask server
 python app.py
 ```
 
-### Demo Login Credentials
-After running the migration script, use these credentials:
+The application will be available at: `http://localhost:5000`
+
+### Step 5: Login and Access Features
+Use these demo credentials:
 - **Admin**: username=`admin`, password=`admin123`
 - **Caregiver**: username=`demo`, password=`demo123`
 - **Caregiver**: username=`caregiver`, password=`caregiver123`
 
+### Available Pages
+After logging in, you can access:
+- **Dashboard**: `http://localhost:5000/dashboard`
+- **Analytics**: `http://localhost:5000/analytics`
+- **Enhanced Features**:
+  - Medications: `http://localhost:5000/enhanced/medications`
+  - Care Plans: `http://localhost:5000/enhanced/care-plans`
+  - Emergency Contacts: `http://localhost:5000/enhanced/emergency-contacts`
+  - Providers: `http://localhost:5000/enhanced/providers`
+
 ## 🛠️ Troubleshooting
 
-### Common Issues After Cloning
+### Common Issues and Solutions
 
-#### 1. SQLite Database Error: `no such column: seizure_session.patient_id`
+#### 1. "Failed to load medications/care-plans/emergency-contacts" Error
+**Cause**: Missing database tables or permission issues
+**Solution**: The application now handles this gracefully by returning empty data. If you want full functionality:
+```bash
+# Run the migration script to create missing tables
+python run_migration.py
+```
+
+#### 2. SQLite Database Error: `no such column: seizure_session.patient_id`
 **Solution**: Run the database migration script
 ```bash
 python migrate_db.py
 ```
 
-#### 2. Login Failed: Invalid password for demo users
-**Solution**: The migration script will fix this, but you can also manually update:
+#### 3. Login Failed: Invalid password for demo users
+**Solution**: The migration script will fix this automatically:
 ```bash
-python -c "
-import sqlite3
-from werkzeug.security import generate_password_hash
-conn = sqlite3.connect('../instance/safestep.db')
-cursor = conn.cursor()
-cursor.execute('UPDATE user SET password_hash = ? WHERE username = ?', 
-               (generate_password_hash('demo123'), 'demo'))
-conn.commit()
-conn.close()
-print('Demo password updated')
-"
+python migrate_db.py
 ```
 
-#### 3. Database File Not Found
+#### 4. "Permission denied for table users" in Supabase
+**Cause**: Medications table doesn't exist or has permission restrictions
+**Solution**: The app gracefully handles this and shows empty data. For full functionality, create the tables in Supabase using the migration SQL.
+
+#### 5. Database File Not Found
 **Solution**: Start the app once to create the database, then run migration:
 ```bash
 # Start app (it will create the database then exit with error)
@@ -223,27 +242,56 @@ python migrate_db.py
 python app.py
 ```
 
-#### 4. Missing Dependencies
+#### 6. Missing Dependencies
 **Solution**: Install requirements
 ```bash
 pip install -r requirements.txt
 ```
 
-#### 5. Supabase Connection Issues
-**Solution**: The app falls back to SQLite. Check your config.env file:
+#### 7. Supabase Connection Issues
+**Solution**: The app falls back to SQLite. Check your `.env` file:
 ```env
-SUPABASE_URL=your_actual_supabase_url
+SUPABASE_URL=https://hduukqxhrebuifafooxv.supabase.co
 SUPABASE_KEY=your_actual_anon_key
 ```
 
+#### 8. "TypeError: Cannot read properties of undefined" in Frontend
+**Cause**: API response format mismatch
+**Solution**: This has been fixed in the latest version. Restart the server:
+```bash
+# Stop the server (Ctrl+C) and restart
+python app.py
+```
+
+#### 9. Enhanced Features Not Loading
+**Solution**: Ensure you're accessing the correct URLs:
+- Medications: `http://localhost:5000/enhanced/medications`
+- Care Plans: `http://localhost:5000/enhanced/care-plans`
+- Emergency Contacts: `http://localhost:5000/enhanced/emergency-contacts`
+- Providers: `http://localhost:5000/enhanced/providers`
+
 ### Development Workflow
 1. Clone repository
-2. Run `python setup.py` (automated) or follow manual setup
-3. Always run `python migrate_db.py` after cloning
-4. Create/update `config.env` with your credentials
+2. Create virtual environment and install dependencies
+3. Create `.env` file with proper configuration
+4. Run `python migrate_db.py` after cloning
 5. Start development with `python app.py`
+6. Access application at `http://localhost:5000`
 
-Access the application at: `http://localhost:5000`
+### Verification Steps
+After setup, verify everything works:
+1. Login with demo credentials
+2. Check dashboard loads without errors
+3. Test enhanced features (medications, care plans, etc.)
+4. Verify API endpoints return proper JSON responses
+
+### Getting Help
+If you encounter issues:
+1. Check the terminal/console for error messages
+2. Verify your `.env` file configuration
+3. Ensure all dependencies are installed
+4. Try running the migration script again
+5. Check that you're using the correct URLs for enhanced features
 
 ## 📈 Analytics Dashboard
 
