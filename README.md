@@ -56,19 +56,29 @@ safe-step/
 
 ## ⚙️ Configuration
 
-App settings are loaded from `Config` in `config.py`. Provide environment variables as needed:
+Create a `.env` file in the SafeStep directory with the following content:
+```env
+# Supabase Configuration (Required for full functionality)
+SUPABASE_URL=https://hduukqxhrebuifafooxv.supabase.co
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkdXVrcXhocmVidWlmYWZvb3h2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwNjA4NjAsImV4cCI6MjA2OTYzNjg2MH0.IBG_hPMoeM0_TAfhhZseiug0wI_o7_rTsIeGMWvy8o8
 
-- `SECRET_KEY` – Flask secret (required for sessions)
-- `DATABASE_URL` – SQLAlchemy connection string (defaults to SQLite `sqlite:///safe-step.db`)
+# Flask Configuration
+SECRET_KEY=your-secret-key-here
+FLASK_ENV=development
 
-Example `.env` (optional if you export vars another way):
+# Optional: Email Configuration
+MAIL_SERVER=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USE_TLS=true
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
 
+# Security
+SESSION_COOKIE_SECURE=false
+
+# AI Configuration
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
-
-SECRET\_KEY=replace-me
-DATABASE\_URL=sqlite:///safe-step.db
-
-````
 
 ## 🚀 Getting Started
 
@@ -105,6 +115,11 @@ python app.py
 ```
 http://127.0.0.1:5000/
 ```
+### Login and Access Features
+Use these demo credentials:
+- **Admin**: username=`admin`, password=`admin123`
+- **Caregiver**: username=`demo`, password=`demo123`
+- **Caregiver**: username=`caregiver`, password=`caregiver123`
 
 ## 🧭 App Routing
 
@@ -115,10 +130,15 @@ http://127.0.0.1:5000/
 > The app registers `admin` and `caregiver` blueprints in `app.py`. Make sure their packages expose `routes.py` that defines `admin_bp` and `caregiver_bp`.
 
 ## 🧪 Development Notes
+```
+```bash
+# Using Gunicorn
+gunicorn -w 4 -b 0.0.0.0:5000 wsgi:app
 
-* UI uses Bootstrap 5 + Font Awesome via CDN (see `base.html`).
-* Global styles live in `static/css/style.css`.
-* Page-level behavior can go in `static/js/main.js`. A sample handler for zone delete buttons is included.
+# Run the application
+python app.py
+```
+
 
 ## 🤝 Contributing
 
@@ -139,4 +159,12 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - **Ethan**: Training System
 - **Issac**: Monitoring and Predictions
 - **Cheng Yan**: User Authentication and Management
+  
+## 🆘 Support
+
+For support and questions:
+- Create an issue in the repository
+- Contact the development team
+- Check the documentation
+
 
