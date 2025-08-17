@@ -75,7 +75,7 @@ DATABASE\_URL=sqlite:///safe-step.db
 1) **Clone & enter the project**
 ```bash
 git clone https://github.com/SAITHIHANAING1/webtest.git
-cd webtest
+cd safestep
 ````
 
 2. **Create & activate a virtual environment**
@@ -138,4 +138,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - **Arbaz**: Analytics and User Management
 - **Ethan**: Training System
 - **Issac**: Monitoring and Predictions
+- **Cheng Yan**: User Authentication and Management
 
