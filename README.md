@@ -1,6 +1,8 @@
 # SAFE-Step – Seizure Monitoring & Caregiver Support
 
 SAFE-Step is a Flask-based web app that helps caregivers and admins coordinate safety zones, monitor activity, and manage training resources.
+![Uploading image.png…]()
+
 
 ## ✨ Features
 
